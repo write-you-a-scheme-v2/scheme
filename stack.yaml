@@ -1,0 +1,5 @@
+resolver: lts-4.2
+packages:
+- '.'
+extra-deps: []
+extra-package-dbs: []

@@ -3,5 +3,4 @@ dist/
 cabal.sandbox.config
 .stack-work
 .shake
-output
-output/scheme.html
+output/*

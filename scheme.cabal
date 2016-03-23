@@ -16,7 +16,8 @@ library
     mtl            >= 2.2 && <2.3,
     parsec         >= 3.1 && <3.2,
     containers     >= 0.5 && <0.6,
-    wl-pprint-text >= 1.1 && <1.2
+    wl-pprint-text >= 1.1 && <1.2,
+    text           -any
   hs-source-dirs: src
   default-language: Haskell2010
 

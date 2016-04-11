@@ -5,6 +5,7 @@ module Eval (
 ) where
 
 import Parser
+import Text.Parsec
 import LispVal
 
 import Data.Text as T
@@ -12,29 +13,54 @@ import Data.Text as T
 import Data.Map as Map
 -- monadic transforms
 import Control.Monad.Trans
-import Control.Monad.Identity
-import Control.Monad.Error
+--import Control.Monad.Identity
+--import Control.Monad.Error
 import Control.Monad.Reader
-import Control.Monad.Except
+import Control.Monad.Trans.Except
 import Control.Monad.Trans.Either
+import Control.Monad.Error.Class
 
+data LispError = NumArgs Integer [LispVal]
+               | TypeMismatch String LispVal
+               | Parser ParseError
+               | BadSpecialForm String LispVal
+               | NotFunction String String
+               | UnboundVar String String
+               | Default String
+               | LispErr T.Text
+
+instance Error LispError where
+     noMsg = Default "An error has occurred"
+     strMsg = Default
+
+readTextExpr :: Text -> Either LispError LispVal
+readTextExpr input = case (readExpr input) of
+                (Right val) -> Right val
+                (Left  err) -> Left $ Parser err
 
 
 
 -- TODO
--- Clean up Lisp error throwing
--- Figure out way to raed in values from Eval monad
--- Proper Throw/Catch mechanism
--- Bind multiple vars (using MapM?)
-data LispError = LispErr T.Text
+-- Add pop/push environments to Reader's EnvCtx
 
+-- criticism we need to address: https://www.schoolofhaskell.com/user/commercial/content/exceptions-best-practices
+-- basically saying that ExceptT can through any error since it's wrapped in an IO monad
+-- however, our use of the IO monad IS NOT to throw errors, but to allow functions to read IO
 newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ExceptT LispError IO ) a
 } deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadError LispError, MonadIO)
 
 
 type EnvCtx = Map.Map T.Text LispVal
 
-runAppT :: EnvCtx -> Eval a -> EitherT LispError  IO a
+-- Basic Input from going from String -> Evalualated Lisp code
+-- for a given input string, runTextToEval, then pass the result into runAppT along with the prim environment
+textToEval :: Text -> Eval LispVal 
+textToEval input = case (readTextExpr input) of
+                      (Right val) -> return val
+                      (Left err)  -> throwError err
+
+-- possible change -> replace (Eval a) with lispExprText, then call textToEval within this fn...
+runAppT :: EnvCtx -> Eval a -> EitherT LispError IO a
 runAppT code action = do
     res <- liftIO $ runExceptT $ runReaderT (unEval action) code
 
@@ -42,15 +68,22 @@ runAppT code action = do
       Left b -> Left b
       Right a  -> Right a
 
+
+-- helper function for setting ReaderT's local function
+setLocal :: Text -> LispVal -> Map Text LispVal -> Eval LispVal
+setLocal atom exp env = local (const $ Map.insert atom exp env) (eval exp)
+
+-- set a defined var within the local environment
 setVar :: LispVal -> LispVal -> Eval LispVal
 setVar n@(Atom atom) exp = do
   env <- ask 
   case Map.lookup atom env of
-      Just x -> local (const $ Map.insert atom exp env) (eval exp)
+      Just x -> setLocal  atom exp env
       Nothing -> throwError $ LispErr $ T.pack "setting an unbound var"
 setVar _ exp = 
   throwError $ LispErr $ T.pack $ "variables can only be assigned to atoms"
 
+--get a var within the local environment
 getVar :: LispVal ->  Eval LispVal
 getVar n@(Atom atom) = do
   env <- ask
@@ -64,14 +97,13 @@ defineVar :: LispVal -> LispVal -> Eval LispVal
 defineVar n@(Atom atom) exp = 
   do 
     env <- ask 
-    case (Map.lookup atom env) of
-         Just x  -> local (const $ Map.insert atom exp env) (eval exp)
-         Nothing -> local (const $ Map.insert atom exp env) (eval exp)
+    setLocal atom exp env
 defineVar _ exp = throwError $ LispErr $ T.pack "can only bind to Atom type valaues"
-{-
-bindVars :: [(LispVal, LispVal)] -> Eval ()
-bindVars def = return $ liftM $ mapM_ (uncurry defineVar) def
--}
+
+-- Stephen, is this crazy enough to work?
+bindVars :: [(LispVal, LispVal)] -> Eval LispVal
+bindVars def = Prelude.foldr1 (>>) $ Prelude.map (uncurry defineVar) def
+
 eval :: LispVal -> Eval LispVal
 eval (Number i) = return $ Number i
 eval (String s) = return $ String s
@@ -86,6 +118,6 @@ eval (List [Atom "if", pred,ant,cons]) =
          _           -> throwError (LispErr $ T.pack "ifelse must by T/F")
 eval (List [Atom "define", (Atom val), exp]) = 
    defineVar (Atom val) exp
-eval (List (Atom func : args)) = apply func $ Prelude.map eval args
+--eval (List (Atom func : args)) = apply func $ Prelude.map eval args
 
 

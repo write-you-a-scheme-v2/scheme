@@ -39,7 +39,7 @@ runAppT code action = do
     res <- liftIO $ runExceptT $ runReaderT (unEval action) code
 
     EitherT $ return $ case res of
-      Left (b) -> Left b
+      Left b -> Left b
       Right a  -> Right a
 
 setVar :: LispVal -> LispVal -> Eval LispVal
@@ -86,6 +86,6 @@ eval (List [Atom "if", pred,ant,cons]) =
          _           -> throwError (LispErr $ T.pack "ifelse must by T/F")
 eval (List [Atom "define", (Atom val), exp]) = 
    defineVar (Atom val) exp
-
+eval (List (Atom func : args)) = apply func $ Prelude.map eval args
 
 

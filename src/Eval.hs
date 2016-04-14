@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-
+{-# LANGUAGE FlexibleContexts #-}
 module Eval (
 ) where
 
@@ -13,12 +13,10 @@ import Data.Text as T
 import Data.Map as Map
 -- monadic transforms
 import Control.Monad.Trans
---import Control.Monad.Identity
---import Control.Monad.Error
+import Control.Monad.Except
 import Control.Monad.Reader
-import Control.Monad.Trans.Except
 import Control.Monad.Trans.Either
-import Control.Monad.Error.Class
+--import Control.Monad.Error.Class
 
 data LispError = NumArgs Integer [LispVal]
                | TypeMismatch String LispVal
@@ -29,9 +27,6 @@ data LispError = NumArgs Integer [LispVal]
                | Default String
                | LispErr T.Text
 
-instance Error LispError where
-     noMsg = Default "An error has occurred"
-     strMsg = Default
 
 readTextExpr :: Text -> Either LispError LispVal
 readTextExpr input = case (readExpr input) of
@@ -43,21 +38,21 @@ readTextExpr input = case (readExpr input) of
 -- TODO
 -- Add pop/push environments to Reader's EnvCtx
 
--- criticism we need to address: https://www.schoolofhaskell.com/user/commercial/content/exceptions-best-practices
--- basically saying that ExceptT can through any error since it's wrapped in an IO monad
--- however, our use of the IO monad IS NOT to throw errors, but to allow functions to read IO
+-- Note: the use of IO here is limited to lisp functions that read/write to
+-- files and catch exceptions. 
 newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ExceptT LispError IO ) a
-} deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadError LispError, MonadIO)
+} deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadExcept LispError, MonadIO)
 
 
 type EnvCtx = Map.Map T.Text LispVal
 
 -- Basic Input from going from String -> Evalualated Lisp code
 -- for a given input string, runTextToEval, then pass the result into runAppT along with the prim environment
-textToEval :: Text -> Eval LispVal 
-textToEval input = case (readTextExpr input) of
-                      (Right val) -> return val
-                      (Left err)  -> throwError err
+
+textToEval :: T.Text -> Eval LispVal
+textToEval input = either throwError return (readTextExpr input) 
+
+
 
 -- possible change -> replace (Eval a) with lispExprText, then call textToEval within this fn...
 runAppT :: EnvCtx -> Eval a -> EitherT LispError IO a
@@ -101,8 +96,12 @@ defineVar n@(Atom atom) exp =
 defineVar _ exp = throwError $ LispErr $ T.pack "can only bind to Atom type valaues"
 
 -- Stephen, is this crazy enough to work?
+bindVars :: [(LispVal, LispVal)] -> Eval ()
+bindVars  = sequence_ . fmap (uncurry defineVar) 
+{-
 bindVars :: [(LispVal, LispVal)] -> Eval LispVal
 bindVars def = Prelude.foldr1 (>>) $ Prelude.map (uncurry defineVar) def
+-}
 
 eval :: LispVal -> Eval LispVal
 eval (Number i) = return $ Number i

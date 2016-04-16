@@ -41,7 +41,7 @@ readTextExpr input = case (readExpr input) of
 -- Note: the use of IO here is limited to lisp functions that read/write to
 -- files and catch exceptions. 
 newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ExceptT LispError IO ) a
-} deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadExcept LispError, MonadIO)
+} deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadError LispError, MonadIO)
 
 
 type EnvCtx = Map.Map T.Text LispVal

@@ -8,9 +8,20 @@ data LispVal
   | DottedList [LispVal] LispVal
   | Number Integer
   | String T.Text
+  {-   ADD ME BACK IN
+  | Internal Func
+  | Lambda Func Env
+  -}
   | Bool Bool deriving (Show)
 
+
+data Func = Func {
+      args :: [LispVal]
+     --, body :: [LispVal] -> Eval LispVal
+--     , body :: [LispVal] -> undefined
+     }
 {-
+use to get T.Text values, instead of typeclass show's String
 showVal :: LispVal -> T.Text
 showVal val =
   case val of

@@ -52,11 +52,15 @@ contents p = do
 
 parseString :: Parser LispVal
 parseString = do
+  x <- strLit
+  return $ String x
+{-
+parseString = do
   reservedOp "\""
   x <- strLit
   reservedOp "\""
   return $ String x
-
+-}
 parseAtom :: Parser LispVal
 parseAtom = do
   atom <- symbol

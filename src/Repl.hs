@@ -1,12 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Repl (
-repl
-,mainLoop
+  mainLoop,
 ) where
 
 import Eval
-import Data.Text as T 
+import Data.Text as T
 
 import Control.Monad.Trans
 import System.Console.Haskeline

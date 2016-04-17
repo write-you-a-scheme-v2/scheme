@@ -11,18 +11,17 @@ library
     LispVal
     Pretty
     Eval
+
   build-depends:       
     base           >= 4.8 && <5.0,
     mtl            >= 2.2 && <2.3,
     parsec         >= 3.1 && <3.2,
     containers     >= 0.5 && <0.6,
     wl-pprint-text >= 1.1 && <1.2,
-    text           -any,
-    transformers   -any,
-    either         -any,
-    haskeline     -any,
+    text           >= 1.2 && <1.3,
+    transformers   >= 0.5 && <0.6,
+    haskeline      >= 0.7 && <0.8,
     mtl            >= 2.2.1
-
 
   hs-source-dirs: src
   default-language: Haskell2010

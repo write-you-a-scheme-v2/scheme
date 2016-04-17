@@ -2,37 +2,27 @@
 
 module Repl (
 repl
+,mainLoop
 ) where
 
 import Eval
-import System.Console.Haskeline
 import Data.Text as T 
 
-{-
-replInner :: IO ()
-replInner = do 
-  line <- getInputLine "> "
-  evalTextExpr line
-  replInner
+import Control.Monad.Trans
+import System.Console.Haskeline
+
+type Repl a = InputT IO a
+
+process :: String -> IO ()
+process str = evalText $ T.pack str
 
 
-repl :: IO ()
+repl :: Repl ()
 repl = do
-  print "Hey, I just met you, and this is crazy, but lets use monads, we'll start with Maybe"
-  replInner
--}
- 
-repl :: IO ()
-repl = runInputT defaultSettings loop
-  where 
-    loop :: InputT IO ()
-    loop = do
-      minput <- getInputLine "% "
-      case minput of
-        Nothing -> return ()
-        Just "quit" -> return ()
-        Just input -> do 
-                        outputStrLn "test"
-        -- $ T.unpack $  evalTextExpr $#-} 
-                        loop
-        --Just input -> (x <- return $ evalTextExpr $ T.pack input) >> return loop
+  minput <- getInputLine "Repl> "
+  case minput of
+    Nothing -> outputStrLn "Goodbye."
+    Just input -> (liftIO $ process input) >> repl
+
+mainLoop :: IO ()
+mainLoop = runInputT defaultSettings repl

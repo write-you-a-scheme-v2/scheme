@@ -30,9 +30,11 @@ data LispError
 
 -- TODO
 -- Add pop/push environments to Reader's EnvCtx
-
+-- http://dev.stephendiehl.com/hask/#readert
 newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ExceptT LispError IO ) a }
+  -- http://dev.stephendiehl.com/hask/#newtype-deriving
   deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadError LispError, MonadIO)
+
 
 type EnvCtx = Map.Map T.Text LispVal
 
@@ -61,6 +63,8 @@ runParse_ input = case (Parser.readExpr input) of
                 (Right val) -> Right val
                 (Left  err) -> Left $ Parser err
 
+-- is this suffiecient for lexically scoped variables?
+-- (let '(z
 setLocal :: Text -> LispVal -> Map Text LispVal -> Eval LispVal
 setLocal atom exp env = local (const $ Map.insert atom exp env) (eval exp)
 
@@ -90,6 +94,7 @@ defineVar n@(Atom atom) exp =
 defineVar _ exp = throwError $ LispErr $ T.pack "can only bind to Atom type valaues"
 
 -- confirm this evals left to right
+-- http://dev.stephendiehl.com/hask/#whats-the-point
 bindVars :: [(LispVal, LispVal)] -> Eval ()
 bindVars  = sequence_ . fmap (uncurry defineVar)
 
@@ -109,15 +114,38 @@ eval (List [Atom "if", pred,ant,cons]) =
 -- global definition
 eval (List [Atom "define", (Atom val), exp]) =
    defineVar (Atom val) exp
+eval (List [Atom fn,args,body]) = 
+  do
+    env <- ask
+    eval body
+--
+--
 
 
 -- TODO: make internal form for primative
--- prims :: [(T.Text, [LispVal] -> Eval LispVal)]
---          [("+", binop $ numOp (+))
+-- add two numbers
+type Prim = [(T.Text, [LispVal] -> Eval LispVal)]
+
+primBasic :: Prim
+primBasic = [ ("+", binop $ numOp (+))
+          , ("*", binop $ numOp (-))
+          , ("*", binop $ numOp (*))]
+
 
 type Unary = LispVal -> Eval LispVal
 type Binary = LispVal -> LispVal -> Eval LispVal
 
+{-
+boolBinop :: (LispVal -> ThrowsError a) 
+  -> (a -> a -> Bool) 
+  -> [LispVal] 
+  -> Eval LispVal
+boolBinop unpacker op args = if T.length args /= 2 
+                             then throwError $ NumArgs 2 args
+                             else do left <- unpacker $ args !! 0
+                                     right <- unpacker $ args !! 1
+                                     return $ Bool $ left `op` right
+-}
 binop :: Binary -> [LispVal] -> Eval LispVal
 binop op args@[x,y] = case args of
                             [a,b] -> op a b

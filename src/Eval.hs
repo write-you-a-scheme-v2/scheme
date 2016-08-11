@@ -17,6 +17,7 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.Except
 
+-- TODO make a pretty printer 
 data LispError
   = NumArgs Integer [LispVal]
   | TypeMismatch String LispVal
@@ -32,6 +33,7 @@ data LispError
 -- Add pop/push environments to Reader's EnvCtx
 -- http://dev.stephendiehl.com/hask/#readert
 newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ExceptT LispError IO ) a }
+  -- Narrative: talk about newtype deriving, monad trans, and IO/ExceptT complex
   -- http://dev.stephendiehl.com/hask/#newtype-deriving
   deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadError LispError, MonadIO)
 
@@ -112,6 +114,8 @@ eval (List [Atom "if", pred,ant,cons]) =
          (Bool False) ->  (eval cons)
          _           -> throwError (LispErr $ T.pack "ifelse must by T/F")
 -- global definition
+eval (List [Atom "def", (Atom val), exp]) =
+   defineVar (Atom val) exp
 eval (List [Atom "define", (Atom val), exp]) =
    defineVar (Atom val) exp
 eval (List [Atom fn,args,body]) = 
@@ -135,23 +139,12 @@ primBasic = [ ("+", binop $ numOp (+))
 type Unary = LispVal -> Eval LispVal
 type Binary = LispVal -> LispVal -> Eval LispVal
 
-{-
-boolBinop :: (LispVal -> ThrowsError a) 
-  -> (a -> a -> Bool) 
-  -> [LispVal] 
-  -> Eval LispVal
-boolBinop unpacker op args = if T.length args /= 2 
-                             then throwError $ NumArgs 2 args
-                             else do left <- unpacker $ args !! 0
-                                     right <- unpacker $ args !! 1
-                                     return $ Bool $ left `op` right
--}
 binop :: Binary -> [LispVal] -> Eval LispVal
 binop op args@[x,y] = case args of
                             [a,b] -> op a b
                             _ -> throwError $  NumArgs 2 args
 
-numOp :: (Integer -> Integer -> Integer ) -> LispVal -> LispVal -> Eval LispVal
+numOp :: (Integer -> Integer -> Integer) -> LispVal -> LispVal -> Eval LispVal
 numOp op (Number x) (Number y) = return $ Number $ op x  y
 numOp op _          _          = throwError $ TypeMismatch "+" (String "Number")
 
@@ -161,3 +154,4 @@ binopFixPoint f2 = binop $ (\x y -> return $ f2 x y)
 
 numOpVal :: (Integer -> Integer -> Integer ) -> LispVal -> LispVal -> LispVal
 numOpVal op (Number x) (Number y) = Number $ op x  y
+

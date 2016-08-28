@@ -17,7 +17,7 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.Except
 
--- TODO make a pretty printer 
+-- TODO make a pretty printer
 data LispError
   = NumArgs Integer [LispVal]
   | TypeMismatch String LispVal
@@ -118,7 +118,7 @@ eval (List [Atom "def", (Atom val), exp]) =
    defineVar (Atom val) exp
 eval (List [Atom "define", (Atom val), exp]) =
    defineVar (Atom val) exp
-eval (List [Atom fn,args,body]) = 
+eval (List [Atom fn,args,body]) =
   do
     env <- ask
     eval body
@@ -132,7 +132,7 @@ type Prim = [(T.Text, [LispVal] -> Eval LispVal)]
 
 primBasic :: Prim
 primBasic = [ ("+", binop $ numOp (+))
-          , ("*", binop $ numOp (-))
+          , ("-", binop $ numOp (-))
           , ("*", binop $ numOp (*))]
 
 

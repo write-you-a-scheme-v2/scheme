@@ -15,30 +15,7 @@ import Data.Map as Map
 
 import Control.Monad.Except
 import Control.Monad.Reader
-import Control.Monad.Except
 
--- TODO make a pretty printer
-data LispError
-  = NumArgs Integer [LispVal]
-  | TypeMismatch String LispVal
-  | Parser ParseError
-  | BadSpecialForm String LispVal
-  | NotFunction String String
-  | UnboundVar String String
-  | Default String
-  | LispErr T.Text
-  deriving (Show)
-
--- TODO
--- Add pop/push environments to Reader's EnvCtx
--- http://dev.stephendiehl.com/hask/#readert
-newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ExceptT LispError IO ) a }
-  -- Narrative: talk about newtype deriving, monad trans, and IO/ExceptT complex
-  -- http://dev.stephendiehl.com/hask/#newtype-deriving
-  deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadError LispError, MonadIO)
-
-
-type EnvCtx = Map.Map T.Text LispVal
 
 testEnv :: Map.Map T.Text LispVal
 testEnv = Map.fromList [("x", Number 42)]
@@ -60,13 +37,11 @@ evalText textExpr =
 textToEval :: T.Text -> Eval LispVal
 textToEval input = either throwError eval (runParse_ input)
 
-runParse_ :: Text -> Either LispError LispVal
-runParse_ input = case (Parser.readExpr input) of
+runParse_ :: T.Text -> Either LispError LispVal
+runParse_ input = case (readExpr input) of
                 (Right val) -> Right val
-                (Left  err) -> Left $ Parser err
+                (Left  err) -> Left $ Default "parser error"
 
--- is this suffiecient for lexically scoped variables?
--- (let '(z
 setLocal :: Text -> LispVal -> Map Text LispVal -> Eval LispVal
 setLocal atom exp env = local (const $ Map.insert atom exp env) (eval exp)
 
@@ -118,22 +93,23 @@ eval (List [Atom "def", (Atom val), exp]) =
    defineVar (Atom val) exp
 eval (List [Atom "define", (Atom val), exp]) =
    defineVar (Atom val) exp
-eval (List [Atom fn,args,body]) =
+eval (List [fn, a, b]) =
   do
-    env <- ask
-    eval body
---
+    fnVariable <- getVar fn
+    case fnVariable of
+      (Fun ( IFunc internalFn)) -> internalFn [a,b]
+      _                -> throwError $ NotFunction "function" "not found???"
 --
 
 
 -- TODO: make internal form for primative
 -- add two numbers
-type Prim = [(T.Text, [LispVal] -> Eval LispVal)]
+type Prim = [(T.Text, LispVal)]
 
 primBasic :: Prim
-primBasic = [ ("+", binop $ numOp (+))
-          , ("-", binop $ numOp (-))
-          , ("*", binop $ numOp (*))]
+primBasic = [ ("+", Fun $ IFunc $ binop $ numOp (+))
+            , ("-", Fun $ IFunc $ binop $ numOp (-))
+            , ("*", Fun $ IFunc $ binop $ numOp (*))]
 
 
 type Unary = LispVal -> Eval LispVal
@@ -142,7 +118,7 @@ type Binary = LispVal -> LispVal -> Eval LispVal
 binop :: Binary -> [LispVal] -> Eval LispVal
 binop op args@[x,y] = case args of
                             [a,b] -> op a b
-                            _ -> throwError $  NumArgs 2 args
+                            _ -> throwError $ NumArgs 2 args
 
 numOp :: (Integer -> Integer -> Integer) -> LispVal -> LispVal -> Eval LispVal
 numOp op (Number x) (Number y) = return $ Number $ op x  y

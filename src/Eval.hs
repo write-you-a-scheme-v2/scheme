@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Eval (
    evalText
+  , runParseTest
 ) where
 
 import Parser
@@ -12,13 +13,15 @@ import LispVal
 import Data.Text as T
 -- key/val store for environment
 import Data.Map as Map
+import Data.Monoid
+
 
 import Control.Monad.Except
 import Control.Monad.Reader
 
 
 testEnv :: Map.Map T.Text LispVal
-testEnv = Map.fromList [("x", Number 42)]
+testEnv = Map.fromList $ [("x", Number 42)] <> primEnv
 
 runAppT :: EnvCtx -> Eval b -> ExceptT LispError IO b
 runAppT code action = do
@@ -41,6 +44,15 @@ runParse_ :: T.Text -> Either LispError LispVal
 runParse_ input = case (readExpr input) of
                 (Right val) -> Right val
                 (Left  err) -> Left $ Default "parser error"
+
+runParseTest :: T.Text -> T.Text
+runParseTest input = case (readExpr input) of
+                (Right val) -> T.pack $ show val
+                (Left  err) -> T.pack "<<ERROR>>"
+
+evalParse :: T.Text -> IO ()
+evalParse textExpr =
+    print $ runParseTest textExpr
 
 setLocal :: Text -> LispVal -> Map Text LispVal -> Eval LispVal
 setLocal atom exp env = local (const $ Map.insert atom exp env) (eval exp)
@@ -106,8 +118,8 @@ eval (List [fn, a, b]) =
 -- add two numbers
 type Prim = [(T.Text, LispVal)]
 
-primBasic :: Prim
-primBasic = [ ("+", Fun $ IFunc $ binop $ numOp (+))
+primEnv :: Prim
+primEnv = [ ("+", Fun $ IFunc $ binop $ numOp (+))
             , ("-", Fun $ IFunc $ binop $ numOp (-))
             , ("*", Fun $ IFunc $ binop $ numOp (*))]
 

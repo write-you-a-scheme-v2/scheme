@@ -5,7 +5,7 @@ Parsing
 https://github.com/bobatkey/parser-combinators-intro    
 http://unbui.lt/#!/post/haskell-parsec-basics    
 http://dev.stephendiehl.com/hask/#parsing    
-
+http://stackoverflow.com/questions/19208231/attoparsec-or-parsec-in-haskell/19213247#19213247
 
 ## Definitions & Key Concepts
 lexer,parser,lexeme,token,`LispVal`,Parsec,(Applicative,Monad -- move these to
@@ -27,7 +27,9 @@ lexemes are individually defined via Parsec, and wholy define the valid lexical
 structure of our lisp. 
 
 ## Why Parsec?
-Parsec is simple compared to the alternatives: Alex & Happy or Attoparsec.
+Parsec is preferable compared to the alternatives: Alex & Happy or Attoparsec.
 Alex & Happy are more complex, and require a seperate complition step. Parsec 
-works well for most grammers, but is computationally expensive for left recursive grammers.   
+works well for most grammers, but is computationally expensive for left recursive grammers.
+Attoparsec is faster, and preferable for parsing network messages or other binary 
+formats. Parsec has better error messages, a helpful feature for programming languages
 

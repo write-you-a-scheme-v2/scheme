@@ -48,7 +48,7 @@ runParse_ input = case (readExpr input) of
 runParseTest :: T.Text -> T.Text
 runParseTest input = case (readExpr input) of
                 (Right val) -> T.pack $ show val
-                (Left  err) -> T.pack "<<ERROR>>"
+                (Left  err) -> T.pack $ show err
 
 evalParse :: T.Text -> IO ()
 evalParse textExpr =

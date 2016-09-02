@@ -30,9 +30,10 @@ many sophisticated features. With over two decades of development, Haskell has
 been the focus of numerous computer science white papers and is equiped with a
 production worthy compiler and environment. Thus, Haskell is very advanced, and
 offers many features that give the programmer expressive power above and beyond
-any other language. With great power, comes great responsiblity. 
+any other language, like powerful abstractions, and a type system that nearly eliminates
+runtime errors in compiled programs. With great power, comes great responsiblity. 
 When using Haskell in production, it may be attractive to include advanced type 
-theory extensions, although its my opinion that these are not needed and add 
-significant complexity. My tutorial will reflect this approach, and only 
-include the minimal set of language extensions for maximum effect. 
+theory extensions and sophisticated abstractions. These can add 
+significant complexity for marginal engineering gain. My tutorial will reflect this approach, and focus on 
+the minimal set of language extensions for maximum effect. 
 

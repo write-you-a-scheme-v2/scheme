@@ -72,7 +72,7 @@ setVar n@(Atom atom) exp = do
   env <- ask
   case Map.lookup atom env of
       Just x -> setLocal  atom exp env
-      Nothing -> throwError $ LispErr $ T.pack "setting an unbound var"
+      Nothing -> throwError $ UnboundVar $ T.pack "setting an unbound var" ++ atom
 setVar _ exp =
   throwError $ LispErr $ T.pack $ "variables can only be assigned to atoms"
 
@@ -101,13 +101,15 @@ eval :: LispVal -> Eval LispVal
 eval (Number i) = return $ Number i
 eval (String s) = return $ String s
 eval (Bool b)   = return $ Bool b
+eval (List [])  = return Null
+eval (Null)     = Null
 eval n@(Atom atom) = getVar n
+
 eval (List [Atom "quote", val]) = return $ List [val]
 eval (List [Atom "if", pred,ant,cons]) =
-    do env <- ask
-       ifRes <- eval pred
+    do ifRes <- eval pred
        case ifRes of
-         (Bool True) -> (eval ant)
+         (Bool True) ->   (eval ant)
          (Bool False) ->  (eval cons)
          _           -> throwError (LispErr $ T.pack "ifelse must by T/F")
 -- global definition
@@ -119,19 +121,17 @@ eval (List [Atom "define", (Atom val), exp]) =
 {-
  - List Comprehension
  -}
-evalToList :: LispVal -> Eval [LispVal]
-evalToList expr = 
-  do 
-    val <- eval expr
-    case val of
-      List x -> return x
-      _      -> throwError (LispErr $ T.pack "expect list")
-eval (List [Atom "cons", x, xs]) = 
-    do xval  <- eval x
-       xsval <- evalToList xs
-       case xsval of 
-         [items] -> return $ List xval:xsval
-         _       -> throwError (LispErr $ T.pack "cons second arg must be list"
+
+eval (List (Atom "cons"):rest) = 
+  case rest of
+    (x:xs) ->  
+      do xval  <- eval x
+         xsval <- evalToList xs
+         case xsval of 
+           []       -> return $ List [xval]
+           [items]  -> return $ List xval:xsval
+     x  -> throwError $ NumArgs 2 $ List []
+     [] -> throwError $ NumArgs 2 $ List []
 
 eval (List [Atom "car", arg]) = 
     do xval <- evalToList arg
@@ -146,13 +146,6 @@ eval (List [Atom "cdr", arg]) =
          x:xs   -> return $ List xs
          [x,y]  -> return $ List [y]
          _      -> throwError (LispErr $ T.pack "cdr takes a list with two  or more items"
-letPairs :: [LispVal] -> Eval ()
-letPairs x = 
-  case x of
-    []        -> throwError (LispErr $ T.pack "let")
-    [one]     -> throwError (LispErr $ T.pack "let")
-    [a:as]    -> bindVars $ zipWith (\a b -> (x !! a, x !! b))  (filter even [0..(length x - 1)]) $ filter odd [0..(length x -1)]
-
 eval (List [Atom "let", pairs, expr]) = 
     do x <- evalToList pairs
        letPairs x
@@ -164,7 +157,7 @@ eval (List [Atom "lambda", params, expr]) =
     return $ Lambda ([args] -> (bindVars $ zipWith (,) paramsEvald args) >> eval expr) envLocal 
                          
 
-eval (List fn:args) =
+eval (List (Atom fn):args) =
   do
     fnVariable <- getVar fn
     argsEval <- evalToList args
@@ -173,6 +166,21 @@ eval (List fn:args) =
       (Lambda (IFunc internalFn) boundEnv) -> local (const boundEnv) (internalFn argsEval) 
       _                -> throwError $ NotFunction "function" "not found???"
 --
+
+evalToList :: LispVal -> Eval [LispVal]
+evalToList expr = 
+  do 
+    val <- eval expr
+    case val of
+      List x -> return x
+      _      -> throwError (ExpectedList$ T.pack "error evaluating into list" ++ showVal expr)
+
+letPairs :: [LispVal] -> Eval ()
+letPairs x = 
+  case x of
+    []        -> throwError (LispErr $ T.pack "let")
+    [one]     -> throwError (LispErr $ T.pack "let")
+    [a:as]    -> bindVars $ zipWith (\a b -> (x !! a, x !! b))  (filter even [0..(length x - 1)]) $ filter odd [0..(length x -1)]
 
 -- TODO: make internal form for primative
 -- add two numbers
@@ -207,6 +215,21 @@ numOp op _          _          = throwError $ TypeMismatch "+" (String "Number")
 strOp :: (T.Text -> T.Text -> T.Text) -> LispVal -> LispVal -> Eval LispVal
 strOp op (String x) (String y) = return $ String $ op x y
 strOp op _          _          =  throwError $ TypeMismatch "+" (String "String")
+
+-- better wa to check args?
+cons :: [LispVal] -> Eval LispVal
+cons arg = case arg of
+              [c,cs@[xxx]] ->  List <$> evalToList (c:cs)
+              [c]  ->  return $ List [c] 
+              [x,_]  ->  throwError $ LispError $ T.pack "cons second arg"
+car :: [LispVal] -> Eval LispVal
+car [List []    ] = return $ Null
+car [List x] = return $ head x
+
+cdr :: [LispVal] -> Eval LispVal
+cdr [List x:xs] = return $ List xs
+cdr [List [x]]  = return $ List x
+cdr [List [] ]  = return $ Null
 
 -- default return to Eval monad (no error handling)
 binopFixPoint :: (LispVal -> LispVal -> LispVal) -> [LispVal] -> Eval LispVal

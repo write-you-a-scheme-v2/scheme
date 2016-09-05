@@ -34,6 +34,7 @@ style = Lang.emptyDef
   }
 
 
+-- used for '(', ')', '.'
 reservedOp :: T.Text -> Parser ()
 reservedOp op = Tok.reservedOp lexer (T.unpack op)
 

@@ -18,7 +18,7 @@ import Control.Monad.Reader
 type EnvCtx = Map.Map T.Text LispVal
 newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ExceptT LispError IO ) a }
   deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadError LispError, MonadIO)
-
+-- do lists as car cadr, [a] -> foldl1 (cons) [a]
 data LispVal
   = Atom T.Text
   | List [LispVal]
@@ -27,7 +27,7 @@ data LispVal
   | String T.Text
   | Fun IFunc
   | Lambda IFunc Env 
-  -}
+  | Nil
   | Bool Bool deriving (Eq,Ord)
 
 instance Show LispVal where
@@ -61,7 +61,7 @@ unwordsList = T.unwords . Prelude.map showVal
 data LispError
   = NumArgs Integer [LispVal]
   | LengthOfList String Int
-  | ExpectedList String
+  | ExpectedList T.Text
   | TypeMismatch String LispVal
   | BadSpecialForm String LispVal
   | NotFunction String String

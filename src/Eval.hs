@@ -101,11 +101,11 @@ eval :: LispVal -> Eval LispVal
 eval (Number i) = return $ Number i
 eval (String s) = return $ String s
 eval (Bool b)   = return $ Bool b
-eval (List [])  = return Null
-eval (Null)     = Null
+eval (List [])  = return Nil
+eval (Nil)     = Nil
 eval n@(Atom atom) = getVar n
 
-eval (List [Atom "quote", val]) = return $ List [val]
+eval (List (Atom "quote"):[val]) = return $ List [val]
 eval (List [Atom "if", pred,ant,cons]) =
     do ifRes <- eval pred
        case ifRes of
@@ -113,9 +113,9 @@ eval (List [Atom "if", pred,ant,cons]) =
          (Bool False) ->  (eval cons)
          _           -> throwError (LispErr $ T.pack "ifelse must by T/F")
 -- global definition
-eval (List [Atom "def", (Atom val), exp]) =
+eval (List [Atom "def", Atom val, exp]) =
    defineVar (Atom val) exp
-eval (List [Atom "define", (Atom val), exp]) =
+eval (List [Atom "define", Atom val, exp]) =
    defineVar (Atom val) exp
 
 {-
@@ -130,28 +130,28 @@ eval (List (Atom "cons"):rest) =
          case xsval of 
            []       -> return $ List [xval]
            [items]  -> return $ List xval:xsval
-     x  -> throwError $ NumArgs 2 $ List []
+     [x]  -> throwError $ NumArgs 2 $ List []
      [] -> throwError $ NumArgs 2 $ List []
 
-eval (List [Atom "car", arg]) = 
+eval (List (Atom "car"):[arg]) = 
     do xval <- evalToList arg
        case xval of 
-         x:xs -> return $ x
-         [x]  -> return $ x
+         x:_ -> return $ x
+         [_]  -> return $ xval
          []         -> throwError (LispErr $ T.pack "car takes a list with one  or more items"
 
-eval (List [Atom "cdr", arg]) = 
+eval (List (Atom "cdr"):[arg]) = 
     do xval <- evalToList arg
        case xval of 
-         x:xs   -> return $ List xs
-         [x,y]  -> return $ List [y]
+         _:xs   -> return $ List xs
+         [_,y]  -> return $ List [y]
          _      -> throwError (LispErr $ T.pack "cdr takes a list with two  or more items"
 eval (List [Atom "let", pairs, expr]) = 
     do x <- evalToList pairs
        letPairs x
        eval expr
 
-eval (List [Atom "lambda", params, expr]) = 
+eval (List (Atom "lambda"):[params, expr]) = 
     envLocal <- ask
     paramsEvald <- evalToList params
     return $ Lambda ([args] -> (bindVars $ zipWith (,) paramsEvald args) >> eval expr) envLocal 
@@ -191,6 +191,10 @@ primEnv = [   ("+", Fun $ IFunc $ binop $ numOp (+))
             , ("-", Fun $ IFunc $ binop $ numOp (-))
             , ("*", Fun $ IFunc $ binop $ numOp (*))
             , ("++", Fun $ IFunc $ binopFold $ strOp (++))
+            , ("cons", Fun $ IFunc $ cons)
+            , ("cdr" , Fun $ IFunc $ cdr)
+            , ("car" , Fun $ IFunc $ car)
+            , ("quote", Fun $ IFunc $ quote)
             ]
 
 
@@ -220,16 +224,22 @@ strOp op _          _          =  throwError $ TypeMismatch "+" (String "String"
 cons :: [LispVal] -> Eval LispVal
 cons arg = case arg of
               [c,cs@[xxx]] ->  List <$> evalToList (c:cs)
-              [c]  ->  return $ List [c] 
-              [x,_]  ->  throwError $ LispError $ T.pack "cons second arg"
+              [c,_]  ->  return $ List [c] 
+              [x]  ->  throwError $ LispError $ T.pack "cons second arg"
 car :: [LispVal] -> Eval LispVal
-car [List []    ] = return $ Null
-car [List x] = return $ head x
+car [List []    ] = return $ Nil
+car [List (x:_)] = return $ x
 
 cdr :: [LispVal] -> Eval LispVal
-cdr [List x:xs] = return $ List xs
-cdr [List [x]]  = return $ List x
-cdr [List [] ]  = return $ Null
+cdr [(List x:xs)] = return $ List xs
+cdr [(List [x])]  = return $ List x
+cdr [(List [])]  = return $ Nil
+cdr []           = return $ Nil
+--
+--
+quote :: [LispVal] -> Eval LispVal 
+quote (List xs) = List (Atom "quote"):xs
+quote exp       = List [Atom "quote",exp]
 
 -- default return to Eval monad (no error handling)
 binopFixPoint :: (LispVal -> LispVal -> LispVal) -> [LispVal] -> Eval LispVal

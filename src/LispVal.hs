@@ -26,33 +26,37 @@ data LispVal
   | Number Integer
   | String T.Text
   | Fun IFunc
-  | Lambda IFunc Env 
+  | Lambda IFunc EnvCtx 
   | Nil
-  | Bool Bool deriving (Eq,Ord)
+  | Bool Bool deriving (Show)
 
-instance Show LispVal where
-  show = T.unpack . showVal   
+--instance Show LispVal where
+  --show = T.unpack . showVal   
 
 data IFunc = IFunc { fn :: [LispVal] -> Eval LispVal } 
 instance Show IFunc where
   show (IFunc f) = "internal function"
+instance Eq IFunc where
+  (==) (IFunc f) (IFunc g) = False 
+
 
 showVal :: LispVal -> T.Text
 showVal val =
   case val of
     (Atom atom) -> atom
-    (String str) ->  "\"" ++ str ++ "\""
-    (Number num) -> show num
+    (String str) ->  str
+    --(String str) ->  T.pack "\"") ++  str ++ $ T.pack "\""
+    (Number num) -> T.pack $ show num
     (Bool True) -> "#t"
     (Bool False) -> "#f"
-    (List contents) ->  "(" ++ unwordsList contents ++ ")"
-    (DottedList head tail) ->  "(" ++ unwordsList head ++ " . " ++ showVal tail ++ ")"
+    --(List contents) ->  "(" ++ (unwordsList contents) ++ ")"
+    (List contents) ->  unwordsList contents
+    (DottedList head tail) ->  T.unwords ["(" ,unwordsList head, " . " , showVal tail , ")"]
     (Fun _ ) -> "internal function"
-    (Lambda _ ) -> "lambda function"
-    (contents@[x:xs]) ->  "(" ++ unwordsList contents ++ ")"
+    (Lambda _ _) -> "lambda function"
 
-showPairs :: [(LispVal,LispVal)] -> T.Text
-showPairs val = concat $ (\x -> showVal (fst x) ++ " -> " ++ showVal (snd x) ++ "\n") <$> val
+--showPairs :: [(LispVal,LispVal)] -> T.Text
+--showPairs val = concat  (\x -> showVal (fst x) ++ " -> " ++ showVal (snd x) ++ "\n") <$> val
 
 unwordsList :: [LispVal] -> T.Text
 unwordsList = T.unwords . Prelude.map showVal
@@ -67,5 +71,4 @@ data LispError
   | NotFunction String String
   | UnboundVar String String
   | Default String
-  | LispErr T.Text
   deriving (Show)

@@ -36,25 +36,16 @@ and is a great source of information and ideas.
 ## Why Haskell ?
 First off, why not? Haskell is a purely functional, typed, compiled, and lazy language with
 many sophisticated features. With over two decades of development, Haskell has
-<<<<<<< HEAD
 been the focus of numerous computer science white papers and implements these ideas w/ a
 production worthy compiler . Haskell offers many features that give the programmer expressive power above and beyond
 todays status quo. With great power, comes great responsiblity, and there many complex and under-adopted features of
 Haskell that professional software engineers will struggle before understanding. 
-||||||| merged common ancestors
 been the focus of numerous computer science white papers and is equiped with a
 production worthy compiler and environment. Thus, Haskell is very advanced, and
 offers many features that give the programmer expressive power above and beyond
 any other language. With great power, comes great responsiblity. 
-=======
-been the focus of numerous computer science white papers and is equiped with a
-production worthy compiler and environment. Thus, Haskell is very advanced, and
-offers many features that give the programmer expressive power above and beyond
-any other language, like powerful abstractions, and a type system that nearly eliminates
-runtime errors in compiled programs. With great power, comes great responsiblity. 
->>>>>>> 7ad846f22ba820c96dc7a75a72c08ab669ec1236
+
 When using Haskell in production, it may be attractive to include advanced type 
-<<<<<<< HEAD
 theory extensions and over engineer your project with all the latest advances in type theory. If your background is in
 academic haskell research, there is no problem understanding, or learning how. If you are tring to hire developers to
 work on your project with you, finding people who can be trained with less cost than the performance gains will be a
@@ -62,13 +53,8 @@ challenge. For this reason, I take a conservative approach on what features and 
 Scheme. If you use Haskell for work, your colleagues job will go a lot easier and less technical debt will emerge.  
 
 
-||||||| merged common ancestors
-theory extensions, although its my opinion that these are not needed and add 
-significant complexity. My tutorial will reflect this approach, and only 
-include the minimal set of language extensions for maximum effect. 
-=======
+
 theory extensions and sophisticated abstractions. These can add 
 significant complexity for marginal engineering gain. My tutorial will reflect this approach, and focus on 
 the minimal set of language extensions for maximum effect. 
->>>>>>> 7ad846f22ba820c96dc7a75a72c08ab669ec1236
 

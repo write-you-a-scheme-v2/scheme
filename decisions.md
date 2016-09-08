@@ -1,5 +1,4 @@
 ## TODO
-expand LispVal for (primitives, io, lambdas)
 create repl code foreach feature
 craft pedantic narrative
 

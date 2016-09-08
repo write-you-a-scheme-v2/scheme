@@ -1,27 +1,13 @@
 First Steps: Compiling and running
 ------------
 
-```bash
-# Example Bash code
-$ stack build
-```
-
-```haskell
--- Example Haskell code
-main :: IO ()
-main = return ()
-```
-
 ## Version 2 changes
 We are the version 2.0 of https://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours/
 https://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf
 -- Monad Transformers for language evaluation, lexical scoping, IO, error handling    
-`
--- Removal of 'IORef' and 'read' function    
--- Pretty Print for viewing parsed language structure    
 
 
-## Organization
+## Organization of the project
 ####Main.hs    
 currently runs the Repl, should convert into file evaluator
 ####Repl.hs
@@ -36,6 +22,15 @@ defines LispVal
 defines the std lib, depends Eval
 ####Pretty.hs    
 pretty printer, pdoc?
+
+## 1.0 What are we going to do?
+To make a programming language, we must take user inputted text, turn that text into
+a format understandable by the interpreter, then evaluate that format into a result. 
+Before we go further, you should familairize yourself with Scheme, basically it uses
+parens to deliniate function calls. `(fn 1 2)` would call the function `fn` with args
+1 and 2. There are a few keywords, like `let`, `lambda`, and `define` that must be 
+parsed into special forms. 
+
 
 ## 1.1 Lisp and its lists
 Lisp is a list processing language. That means every expression is essentially a list. 

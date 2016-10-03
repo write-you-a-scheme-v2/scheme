@@ -14,7 +14,9 @@ Haskell for Great Good or Stephen Diehls "What I Wish I Knew When Learning Haske
 for a more comprehensive guide. I want this to be a community project, so if you have improvements, please contact me over
 github or on twitter (@wespiser). Ive had to balance language features, tutorial breadth, and level of complexity to
 provide beginners with a robust implementation they will not take long to understand, if you have any ideas on how I can
-better meet these goals, please let me know!
+better meet these goals, please let me know! I am an advocate of open source languages, although it is possible to use
+our Scheme to build a vendor-specific language, [this](https://www.stickyminds.com/article/hey-vendors-give-us-real-scripting-languages?page=0%2C0) article spells out why that is a bad idea. However, If your company needs a DSL, feel
+free to use and improve the final product, we're building together, the rest is up to you.
 
 ## Why Lisp ?
 Although the majority of modern programming follows C/Algo style semantics, Lisp

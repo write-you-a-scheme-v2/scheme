@@ -25,7 +25,7 @@ style = Lang.emptyDef
   , Tok.commentLine     = "--"
   , Tok.nestedComments  = True
   , Tok.identStart      = letter
-  , Tok.identLetter     = alphaNum <|> oneOf "_'"
+  , Tok.identLetter     = Tok.opLetter style <|> oneOf "_'"
   , Tok.opStart         = Tok.opLetter style
   , Tok.opLetter        = oneOf ":!#$%&*+./<=>?@\\^|-~"
   , Tok.reservedOpNames = []

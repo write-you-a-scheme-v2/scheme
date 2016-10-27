@@ -164,15 +164,14 @@ eval (List [Atom "lambda",params, expr]) =
 
 
 
-eval (List [(Atom fn), x, y]  ) =
+eval (List ((Atom fn):args)  ) =
   do
     fnVariable <- getVar $ Atom fn
     -- change this
-    xVal <- eval x
-    yVal <- eval y
+    xVal <- evalToList $ List args 
     case fnVariable of
-      (Fun ( IFunc internalFn)) -> internalFn [x,y]
-      (Lambda (IFunc internalFn) boundEnv) -> local (const boundEnv) (internalFn [x,y]) 
+      (Fun ( IFunc internalFn)) -> internalFn xVal
+      (Lambda (IFunc internalFn) boundEnv) -> local (const boundEnv) (internalFn xVal) 
       _                -> throwError $ NotFunction "function" "not found???"
 --
 
@@ -190,6 +189,7 @@ letPairs x =
     []        -> throwError (Default "let")
     [one]     -> throwError (Default "let")
     (z:zs)    -> bindVars $ Prelude.zipWith (\a b -> (x !! a, x !! b))  (Prelude.filter Prelude.even [0..(Prelude.length x - 1)]) $ Prelude.filter Prelude.odd [0..(Prelude.length x -1)]
+
 
 -- TODO: make internal form for primative
 -- add two numbers

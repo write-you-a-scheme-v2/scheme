@@ -77,7 +77,7 @@ setVar n@(Atom atom) exp = do
   env <- ask
   case Map.lookup atom env of
       Just x -> setLocal  atom exp env
-      Nothing -> throwError $ Default "setting an unbound var"
+      Nothing -> throwError $ Default $ "setting an unbound var: " ++ show n
 setVar _ exp =
   throwError $ Default "variables can only be assigned to atoms"
 
@@ -86,9 +86,9 @@ getVar n@(Atom atom) = do
   env <- ask
   case Map.lookup atom env of
       Just x -> return x
-      Nothing -> throwError $ Default  "error on getVar"
-getVar _  =
-  throwError $ Default "variables can only be assigned to atoms"
+      Nothing -> throwError $ Default  $ "error on getVar: " ++ show n
+getVar n =
+  throwError $ Default $ "failure to get variable: " ++ show  n
 
 defineVar :: LispVal -> LispVal -> Eval LispVal
 defineVar n@(Atom atom) exp =
@@ -107,8 +107,8 @@ eval (Number i) = return $ Number i
 eval (String s) = return $ String s
 eval (Bool b)   = return $ Bool b
 eval (List [])  = return Nil
-eval (Nil)      = return Nil
-eval n@(Atom atom) = getVar n
+eval Nil      = return Nil
+eval n@(Atom _) = getVar n
 
 eval (List [Atom "quote",val]) = return $ val
 eval (List [Atom "if", pred,ant,cons]) =
@@ -173,12 +173,15 @@ eval (List [Atom fn, arg1, arg2]) =
       (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) (internalfn [v1,v2]) 
       _                -> throwError $ NotFunction "function" "not found???"
 --
-
-eval (List ((Atom fn):args))   =
+--List [Atom "+",Number 1,Number 2,Number 3]
+--eval (List list@((Atom fn):args)   )   =
+eval (List list@(x:xs)) = 
   do
-    fnVariable <- getVar $ Atom fn
+    -- AW note: there should probably be a way to make sure
+    -- this is actually a data constructor for Atom
+    fnVariable <- getVar x
     -- change this
-    xVal <- evalToList $ List args 
+    xVal <- evalToList $ List xs
     case fnVariable of
       (Fun ( IFunc internalFn)) -> internalFn xVal
       (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) (internalfn xVal) 
@@ -209,9 +212,9 @@ letPairs x =
 type Prim = [(T.Text, LispVal)]
 
 primEnv :: Prim
-primEnv = [   ("+", Fun $ IFunc $ binop $ numOp (+))
+primEnv = [   ("+", Fun $ IFunc $ binopFold (numOp (+)) (Number 0))
             , ("-", Fun $ IFunc $ binop $ numOp (-))
-            , ("*", Fun $ IFunc $ binop $ numOp (*))
+            , ("*", Fun $ IFunc $ binopFold (numOp (*)) (Number 1))
             , ("++", Fun $ IFunc $ binop $ strOp (T.append))
             , ("cons", Fun $ IFunc $ Eval.cons)
             , ("cdr" , Fun $ IFunc $ Eval.cdr)
@@ -228,14 +231,14 @@ binop op args@[x,y] = case args of
                             [a,b] -> op a b
                             _ -> throwError $ NumArgs 2 args
 
-   -- (LispVal -> LispVal -> Eval LispVal)
-{-
-binopFold :: Binary -> [LispVal] -> Eval LispVal
-binopFold op args = case args of
+binopFold :: Binary -> LispVal -> [LispVal] -> Eval LispVal
+binopFold op farg args = case args of
                             [a,b] ->  op a b
-                            (a:as) ->  Prelude.foldl1 op args
+                            (a:as) -> do
+                                        xVal <- evalToList $ List args 
+                                        foldM op farg xVal
                             []-> throwError $ NumArgs 2 args
--}
+
 numOp :: (Integer -> Integer -> Integer) -> LispVal -> LispVal -> Eval LispVal
 numOp op (Number x) (Number y) = return $ Number $ op x  y
 numOp op _          _          = throwError $ TypeMismatch "+" (String "Number")
@@ -261,7 +264,7 @@ car [List (x:_)] = return $ x
 
 cdr :: [LispVal] -> Eval LispVal
 cdr [List (x:xs)] = return $ List xs
-cdr [List [x]]     = return $ List [x]
+--cdr [List [x]]     = return $ List [x]
 cdr [(List [])]  = return $ Nil
 cdr []           = return $ Nil
 --

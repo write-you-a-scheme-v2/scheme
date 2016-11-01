@@ -110,7 +110,7 @@ eval (List [])  = return Nil
 eval (Nil)      = return Nil
 eval n@(Atom atom) = getVar n
 
-eval (List [Atom "quote",val]) = return $ List [val]
+eval (List [Atom "quote",val]) = return $ val
 eval (List [Atom "if", pred,ant,cons]) =
     do ifRes <- eval pred
        case ifRes of
@@ -163,17 +163,30 @@ eval (List [Atom "lambda",params, expr]) =
                          
 
 
+eval (List [Atom fn, arg1, arg2]) = 
+  do 
+    fnVariable <- getVar $ Atom fn 
+    v1 <- eval arg1
+    v2 <- eval arg2
+    case fnVariable of
+      (Fun (IFunc internalFn)) -> internalFn [v1,v2]
+      (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) (internalfn [v1,v2]) 
+      _                -> throwError $ NotFunction "function" "not found???"
+--
 
-eval (List ((Atom fn):args)  ) =
+eval (List ((Atom fn):args))   =
   do
     fnVariable <- getVar $ Atom fn
     -- change this
     xVal <- evalToList $ List args 
     case fnVariable of
       (Fun ( IFunc internalFn)) -> internalFn xVal
-      (Lambda (IFunc internalFn) boundEnv) -> local (const boundEnv) (internalFn xVal) 
+      (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) (internalfn xVal) 
       _                -> throwError $ NotFunction "function" "not found???"
 --
+
+
+
 
 evalToList :: LispVal -> Eval [LispVal]
 evalToList expr = 

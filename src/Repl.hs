@@ -23,7 +23,7 @@ repl = do
   minput <- getInputLine "Repl> "
   case minput of
     Nothing -> outputStrLn "Goodbye."
-    Just input -> (liftIO $ processToAST {-process-} input) >> repl
+    Just input -> (liftIO $ process {-processToAST-} input) >> repl
 
 mainLoop :: IO ()
 mainLoop = runInputT defaultSettings repl

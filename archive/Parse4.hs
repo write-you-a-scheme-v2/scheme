@@ -1,5 +1,12 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+
+module Parser (
+  readExpr,
+) where
+
+import LispVal
+
 import Text.Parsec
 import Text.Parsec.Text
 import Text.Parsec.Expr
@@ -93,7 +100,7 @@ contents p = do
 readExpr :: T.Text -> Either ParseError LispVal
 readExpr = parse (contents parseExpr) "<stdin>" 
 
-
+{-
 -------------------------
 --  STAND ALONE TEST
 --  --------------------
@@ -109,45 +116,46 @@ data LispVal = Nil | Bin Bool | Atom T.Text | Num Int | Str T.Text | List [LispV
 main :: IO ()
 main = 
   do 
-    print "hello" 
-    print $ p parseReserved "Nil"
-    print $ p parseExpr  "#t"
-    print $ p parseExpr  "#f"
-    --print $ p parseExpr  "'Nil"
-    print " "
-    print $ p parseQuote  "'(1 2 3 4)"
-    print $ p parseQuote  "'x"
-    print $ p parseQuote  "'()"
-    print " "
-    print " "
-    print $ p parseExpr "(1)"
-    print $ p parseList  "a \"a\" \"a\""
-    print $ p parseList  "x 1 2"
-    print $ p parseSExp  "(a \"a\" \"a\")"
-    print $ p parseSExp  "(1 2 3 4)"
-    print " "
-    print " "
-    --print $ p (m_parens (many parseExpr `sepBy` char ' ')) "(lambda (fnName a b c) (body) )"
-    print $ p parseSExp  "(lambda (fnName a b c) (body) )"
-    print $ p parseSExp  "(a 1 b 2)"
-    print $ p parseSExp  "(let (a 1 b 2) (fn a b) )"
-    print $ p parseSExp  "(let (a (x 1 2) b (y 3 4)) (fn a b) )"
-    print " "
-    print " "
-    print $ p parseExpr "x"
-    print $ p parseExpr "1"
-    print $ p parseExpr "\"a b c d\""
-    print $ p parseExpr "(3 1)"
-    print " "
-    print $ p parseReserved  "#t"
-    print $ p parseReserved  "#f"
-    print $ p parseExpr "#t"
-    print $ p parseExpr "#f"
-    print $ p parseExpr "(eq? 1 2)"
-    print $ p parseExpr "1"
-    print " "
-    print $ p parseExpr "(+ 1 2)"
-    print $ p parseExpr "(- 1 2)"
-    print $ p parseExpr "(* 1 2)"
-    print $ p parseExpr "(/ 1 2)"
-    print " "
+    putStrLn "hello" 
+    putStrLn $ p parseReserved "Nil"
+    putStrLn $ p parseExpr  "#t"
+    putStrLn $ p parseExpr  "#f"
+    --putStrLn $ p parseExpr  "'Nil"
+    putStrLn " "
+    putStrLn $ p parseQuote  "'(1 2 3 4)"
+    putStrLn $ p parseQuote  "'x"
+    putStrLn $ p parseQuote  "'()"
+    putStrLn " "
+    putStrLn " "
+    putStrLn $ p parseExpr "(1)"
+    putStrLn $ p parseList  "a \"a\" \"a\""
+    putStrLn $ p parseList  "x 1 2"
+    putStrLn $ p parseSExp  "(a \"a\" \"a\")"
+    putStrLn $ p parseSExp  "(1 2 3 4)"
+    putStrLn " "
+    putStrLn " "
+    --putStrLn $ p (m_parens (many parseExpr `sepBy` char ' ')) "(lambda (fnName a b c) (body) )"
+    putStrLn $ p parseSExp  "(lambda (fnName a b c) (body) )"
+    putStrLn $ p parseSExp  "(a 1 b 2)"
+    putStrLn $ p parseSExp  "(let (a 1 b 2) (fn a b) )"
+    putStrLn $ p parseSExp  "(let (a (x 1 2) b (y 3 4)) (fn a b) )"
+    putStrLn " "
+    putStrLn " "
+    putStrLn $ p parseExpr "x"
+    putStrLn $ p parseExpr "1"
+    putStrLn $ p parseExpr "\"a b c d\""
+    putStrLn $ p parseExpr "(3 1)"
+    putStrLn " "
+    putStrLn $ p parseReserved  "#t"
+    putStrLn $ p parseReserved  "#f"
+    putStrLn $ p parseExpr "#t"
+    putStrLn $ p parseExpr "#f"
+    putStrLn $ p parseExpr "(eq? 1 2)"
+    putStrLn $ p parseExpr "1"
+    putStrLn " "
+    putStrLn $ p parseExpr "(+ 1 2)"
+    putStrLn $ p parseExpr "(- 1 2)"
+    putStrLn $ p parseExpr "(* 1 2)"
+    putStrLn $ p parseExpr "(/ 1 2)"
+    putStrLn " "
+-}

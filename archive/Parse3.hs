@@ -1,29 +1,36 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
---import Control.Applicative((<*))
 import Text.Parsec
 import Text.Parsec.Text
-import Text.Parsec.Expr
+--import Text.Parsec.Expr
 import qualified Text.Parsec.Token as Tok
 import qualified Text.Parsec.Language as Lang
---import Control.Applicative ((<$>))
 import qualified Data.Text as T
+
 import Data.Functor.Identity (Identity)
+
+
+lett :: T.Text
+lett = "abcdefghijklmnopqrstuvwxyz"
+
+num :: T.Text
+num = "1234567890"
 
 lexer :: Tok.GenTokenParser T.Text () Identity
 lexer = Tok.makeTokenParser style 
 
 style :: Tok.GenLanguageDef T.Text () Identity
-style = Lang.emptyDef { Tok.commentStart = "{-"
-              , Tok.commentEnd = "-}"
-              , Tok.identStart = letter <|> oneOf "+-/*"
-              , Tok.identLetter = alphaNum <|> oneOf "_'"
-              , Tok.reservedOpNames = [ "'", "\""]
-              , Tok.reservedNames = ["true", "false", 
-                                 "let", "quote", "lambda", 
-                                 "Nil"]
-              }
+style = Lang.emptyDef { 
+  Tok.commentStart = "{-"
+  , Tok.commentEnd = "-}"
+  , Tok.identStart = lett <|> oneOf "+-/*"
+  , Tok.identLetter = lett <|> num <|> oneOf "_'"
+  , Tok.reservedOpNames = [ "'", "\""]
+  , Tok.reservedNames = [ "true", "false"
+    , "let", "quote", "lambda"
+    , "Nil" ]
+  }
 
 
 {-

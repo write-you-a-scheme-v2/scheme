@@ -10,12 +10,6 @@ import qualified Data.Text as T
 import Data.Functor.Identity (Identity)
 
 
-lett :: T.Text
-lett = "abcdefghijklmnopqrstuvwxyz"
-
-num :: T.Text
-num = "1234567890"
-
 lexer :: Tok.GenTokenParser T.Text () Identity
 lexer = Tok.makeTokenParser style 
 
@@ -32,8 +26,6 @@ style = Lang.emptyDef {
   --, Tok.reservedNames = [ "true", "false", "let", "quote", "lambda", "Nil" ]
   }
 
-
-
 Tok.TokenParser { Tok.parens = m_parens
            , Tok.identifier = m_identifier -- Tok.Identifer lexer
            , Tok.reservedOp = m_reservedOp
@@ -44,41 +36,26 @@ Tok.TokenParser { Tok.parens = m_parens
 
 reservedOp :: T.Text -> Parser ()
 reservedOp op = Tok.reservedOp lexer (T.unpack op) 
----reservedOp op = Tok.reservedOp lexer op 
 
 parseAtom :: Parser LispVal
 parseAtom = do p <- m_identifier 
                return $ Atom $ T.pack p
---parseAtom = (Atom . T.pack) <$> Tok.identifier lexer
 
 parseText :: Parser LispVal 
 parseText = 
   do reservedOp "\""
-     --p <- Tok.identifier lexer
-     --p <- many (alphaNum <|> char ' ')
-     p <- m_identifier
+     --p <- (m_identifier <|> many1 (noneOf "\""))
+     p <- many1 (noneOf "\"")
      reservedOp "\"" 
      return $ (Str . T.pack)  p 
 
 parseNumber :: Parser LispVal 
 parseNumber = fmap (Num . read) $ many1 digit
         
-{-
-parseList :: Parser LispVal
-parseList = List . concat <$>  (many parseExpr `sepBy` char ' ')
-
-parseSExp1 :: Parser LispVal
-parseSExp1 = List . concat <$>  Tok.parens (many parseExpr `sepBy` char ' ')
-
-parseSExp :: Parser LispVal
-parseSExp = 
-  do reservedOp "("
-     p <- (many parseExpr `sepBy` char ' ')
-     reservedOp ")"
-     return $ List . concat $ p 
-
--}
+parseList :: Parser LispVal 
 parseList = List . concat <$> (many parseExpr `sepBy` char ' ')
+
+parseSExp :: Parser LispVal 
 parseSExp = List . concat <$> m_parens (many parseExpr `sepBy` char ' ')
 
 parseQuote :: Parser LispVal
@@ -93,18 +70,10 @@ parseExpr = parseReserved
       <|> parseAtom
       <|> parseText
       <|> parseNumber
-      -- <|> parseReserved
       <|> parseQuote
       <|> parseSExp
 
-
-{-
-parseReserved = 
-  do 
-    (string "Nil" >> return Nil)
-    <|> (string "#t" >> return (Bin True))
-    <|> (string "#f" >> return (Bin False))
--}
+parseReserved :: Parser LispVal 
 parseReserved = 
   do 
     reservedOp "Nil" >> return Nil

@@ -109,7 +109,7 @@ eval (Bool b)   = return $ Bool b
 eval (List [])  = return Nil
 eval Nil      = return Nil
 eval n@(Atom _) = getVar n
-
+--eval n@(Atom _) = return n
 eval (List [Atom "quote",val]) = return $ val
 eval (List [Atom "if", pred,ant,cons]) =
     do ifRes <- eval pred
@@ -123,34 +123,6 @@ eval (List [Atom "def", Atom val, exp]) =
 eval (List [Atom "define", Atom val, exp]) =
    defineVar (Atom val) exp
 
-{-
- - List Comprehension
-
-eval (List (Atom "cons"):rest) = 
-    case rest of
-        (x:xs) ->   do xval  <- eval x
-                       xsval <- evalToList xs
-                      case xsval of 
-                           []       -> return $ List [xval]
-                           [items]  -> return $ List xval:xsval
-        [x]  -> throwError $ NumArgs 2 $ List []
-        [] -> throwError $ NumArgs 2 $ List []
-
-eval (List (Atom "car"):[arg]) = 
-    do xval <- evalToList arg
-       case xval of 
-         x:_ -> return $ x
-         [_]  -> return $ xval
-         []         -> throwError (LispErr $ T.pack "car takes a list with one  or more items"
-
-eval (List (Atom "cdr"):[arg]) = 
-    do xval <- evalToList arg
-       case xval of 
-         _:xs   -> return $ List xs
-         [_,y]  -> return $ List [y]
-         _      -> throwError (LispErr $ T.pack "cdr takes a list with two  or more items"
-
- -}
 eval (List [Atom "let", pairs, expr]) = 
     do x <- evalToList pairs
        letPairs x
@@ -160,8 +132,6 @@ eval (List [Atom "lambda",params, expr]) =
     do envLocal <- ask
        paramsEvald <- evalToList params
        return $ Lambda ( IFunc (\args -> (evalArgsExpEnv args paramsEvald expr))) envLocal 
-                         
-
 
 eval (List [Atom fn, arg1, arg2]) = 
   do 
@@ -179,25 +149,19 @@ eval (List list@(x:xs)) =
   do
     -- AW note: there should probably be a way to make sure
     -- this is actually a data constructor for Atom
-    fnVariable <- getVar x
+    fnVariable <- eval x
     -- change this
     xVal <- evalToList $ List xs
     case fnVariable of
       (Fun ( IFunc internalFn)) -> internalFn xVal
       (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) (internalfn xVal) 
-      _                -> throwError $ NotFunction "function" "not found???"
+      _                -> throwError $ NotFunction "tried to evaluate non-function: " (show fnVariable)
 --
 
-
-
-
 evalToList :: LispVal -> Eval [LispVal]
-evalToList expr = 
-  do 
-    val <- eval expr
-    case val of
-      List x -> return x
-      _      -> throwError (Default "error evaluating into list" )
+evalToList (List expr) = do 
+  mapM eval expr
+evalToList _ = throwError $ Default "internal error, check evalToList"
 
 letPairs :: [LispVal] -> Eval ()
 letPairs x = 
@@ -212,10 +176,10 @@ letPairs x =
 type Prim = [(T.Text, LispVal)]
 
 primEnv :: Prim
-primEnv = [   ("+", Fun $ IFunc $ binopFold (numOp (+)) (Number 0))
-            , ("-", Fun $ IFunc $ binop $ numOp (-))
-            , ("*", Fun $ IFunc $ binopFold (numOp (*)) (Number 1))
-            , ("++", Fun $ IFunc $ binop $ strOp (T.append))
+primEnv = [   ("+" , Fun $ IFunc $ binopFold (numOp (+))        (Number 0) )
+            , ("*" , Fun $ IFunc $ binopFold (numOp (*))        (Number 1) )
+            , ("++", Fun $ IFunc $ binopFold (strOp (<>)) (String ""))
+            , ("-" , Fun $ IFunc $ binop $ numOp (-))
             , ("cons", Fun $ IFunc $ Eval.cons)
             , ("cdr" , Fun $ IFunc $ Eval.cdr)
             , ("car" , Fun $ IFunc $ Eval.car)
@@ -280,3 +244,31 @@ binopFixPoint f2 = binop $ (\x y -> return $ f2 x y)
 numOpVal :: (Integer -> Integer -> Integer ) -> LispVal -> LispVal -> LispVal
 numOpVal op (Number x) (Number y) = Number $ op x  y
 
+{-
+ - List Comprehension
+
+eval (List (Atom "cons"):rest) = 
+    case rest of
+        (x:xs) ->   do xval  <- eval x
+                       xsval <- evalToList xs
+                      case xsval of 
+                           []       -> return $ List [xval]
+                           [items]  -> return $ List xval:xsval
+        [x]  -> throwError $ NumArgs 2 $ List []
+        [] -> throwError $ NumArgs 2 $ List []
+
+eval (List (Atom "car"):[arg]) = 
+    do xval <- evalToList arg
+       case xval of 
+         x:_ -> return $ x
+         [_]  -> return $ xval
+         []         -> throwError (LispErr $ T.pack "car takes a list with one  or more items"
+
+eval (List (Atom "cdr"):[arg]) = 
+    do xval <- evalToList arg
+       case xval of 
+         _:xs   -> return $ List xs
+         [_,y]  -> return $ List [y]
+         _      -> throwError (LispErr $ T.pack "cdr takes a list with two  or more items"
+
+ -}

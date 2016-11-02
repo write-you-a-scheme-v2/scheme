@@ -95,7 +95,7 @@ defineVar n@(Atom atom) exp =
   do
     env <- ask
     setLocal atom exp env
-defineVar _ exp = throwError $ Default "can only bind to Atom type valaues"
+defineVar _ exp = throwError $ Default "can only bind to Atom type values"
 
 -- confirm this evals left to right
 -- http://dev.stephendiehl.com/hask/#whats-the-point
@@ -171,18 +171,34 @@ letPairs x =
     (z:zs)    -> bindVars $ Prelude.zipWith (\a b -> (x !! a, x !! b))  (Prelude.filter Prelude.even [0..(Prelude.length x - 1)]) $ Prelude.filter Prelude.odd [0..(Prelude.length x -1)]
 
 
+double = Prelude.zipWith ($) (cycle [return,eval])
+evalInLet :: LispVal -> Eval LispVal 
+evalInLet n@(Atom _) = return n
+evalInLet x = eval x
 -- TODO: make internal form for primative
 -- add two numbers
 type Prim = [(T.Text, LispVal)]
 
 primEnv :: Prim
-primEnv = [   ("+" , Fun $ IFunc $ binopFold (numOp (+))        (Number 0) )
-            , ("*" , Fun $ IFunc $ binopFold (numOp (*))        (Number 1) )
-            , ("++", Fun $ IFunc $ binopFold (strOp (<>)) (String ""))
-            , ("-" , Fun $ IFunc $ binop $ numOp (-))
-            , ("cons", Fun $ IFunc $ Eval.cons)
-            , ("cdr" , Fun $ IFunc $ Eval.cdr)
-            , ("car" , Fun $ IFunc $ Eval.car)
+primEnv = [   ("+"    , Fun $ IFunc $ binopFold (numOp    (+))  (Number 0) )
+            , ("*"    , Fun $ IFunc $ binopFold (numOp    (*))  (Number 1) )
+            , ("++"   , Fun $ IFunc $ binopFold (strOp    (<>)) (String ""))
+            , ("-"    , Fun $ IFunc $ binop $    numOp    (-))
+            , ("<"    , Fun $ IFunc $ binop $    numCmp   (<))
+            , ("<="   , Fun $ IFunc $ binop $    numCmp   (<=))
+            , (">"    , Fun $ IFunc $ binop $    numCmp   (>))
+            , (">="   , Fun $ IFunc $ binop $    numCmp   (>=))
+            , ("=="   , Fun $ IFunc $ binop $    numCmp   (==))
+            , ("even?", Fun $ IFunc $ unop $     numBool   even)
+            , ("odd?" , Fun $ IFunc $ unop $     numBool   odd)
+            , ("pos?" , Fun $ IFunc $ unop $     numBool ((<) 0))
+            , ("neg?" , Fun $ IFunc $ unop $     numBool ((>) 0))
+            , ("eq?"  , Fun $ IFunc $ binop     (eqOp     (==)))
+            , ("and"  , Fun $ IFunc $ binopFold (eqOp     (&&)) (Bool True))
+            , ("or"   , Fun $ IFunc $ binopFold (eqOp     (||)) (Bool False))
+            , ("cons" , Fun $ IFunc $ Eval.cons)
+            , ("cdr"  , Fun $ IFunc $ Eval.cdr)
+            , ("car"  , Fun $ IFunc $ Eval.car)
             , ("quote", Fun $ IFunc $ quote)
             ]
 
@@ -190,26 +206,58 @@ primEnv = [   ("+" , Fun $ IFunc $ binopFold (numOp (+))        (Number 0) )
 type Unary = LispVal -> Eval LispVal
 type Binary = LispVal -> LispVal -> Eval LispVal
 
+unop :: Unary -> [LispVal] -> Eval LispVal 
+unop op args@[x] = op x
+unop op args     = throwError $ NumArgs 1 args
+
 binop :: Binary -> [LispVal] -> Eval LispVal
 binop op args@[x,y] = case args of
                             [a,b] -> op a b
                             _ -> throwError $ NumArgs 2 args
 
+
+-- drop "fargs" and use case statement to pull out first vs. rest of args?
+-- this only dispatches when # args is > 2 or when there is =/= 2 args?
 binopFold :: Binary -> LispVal -> [LispVal] -> Eval LispVal
 binopFold op farg args = case args of
-                            [a,b] ->  op a b
+                            -- never happens?
+                            [a,b] -> do
+                                        x <- eval a
+                                        y <- eval b
+                                        op a b
+                            -- only case
                             (a:as) -> do
                                         xVal <- evalToList $ List args 
                                         foldM op farg xVal
+                            -- raw case?
                             []-> throwError $ NumArgs 2 args
+
+numBool :: (Integer -> Bool) -> LispVal -> Eval LispVal 
+numBool op (Number x) = return $ Bool $ op x
+numBool op  x         = throwError $ TypeMismatch "numeric op " x
 
 numOp :: (Integer -> Integer -> Integer) -> LispVal -> LispVal -> Eval LispVal
 numOp op (Number x) (Number y) = return $ Number $ op x  y
-numOp op _          _          = throwError $ TypeMismatch "+" (String "Number")
-
+numOp op x          (Number y) = throwError $ TypeMismatch "numeric op " x
+numOp op (Number x)  y         = throwError $ TypeMismatch "numeric op " y
+numOp op x           y         = throwError $ TypeMismatch "numeric op " (String $ T.pack $ show x ++ show y)
 strOp :: (T.Text -> T.Text -> T.Text) -> LispVal -> LispVal -> Eval LispVal
-strOp op (String x) (String y) =  return $ String $ op x y
-strOp op _          _          =  throwError $ TypeMismatch "+" (String "String")
+strOp op (String x) (String y) = return $ String $ op x y
+strOp op x          (String y) = throwError $ TypeMismatch "string op " x 
+strOp op (String x)  y         = throwError $ TypeMismatch "string op " y
+strOp op x           y         = throwError $ TypeMismatch "string op " (String $ T.pack $ show x ++ show y)
+-- (==) (||) (&&)
+eqOp :: (Bool -> Bool -> Bool) -> LispVal -> LispVal -> Eval LispVal
+eqOp op (Bool x) (Bool y) = return $ Bool $ op x y 
+eqOp op  x       (Bool y) = throwError $ TypeMismatch "bool op " x
+eqOp op (Bool x)  y       = throwError $ TypeMismatch "bool op " y
+eqOp op x         y       = throwError $ TypeMismatch "bool op " (String $ T.pack $ show x ++ show y)
+-- (<) (>) (>=) (<=)
+numCmp :: (Integer -> Integer -> Bool) -> LispVal -> LispVal -> Eval LispVal
+numCmp op (Number x) (Number y) = return $ Bool $ op x  y
+numCmp op x          (Number y) = throwError $ TypeMismatch "numeric op " x
+numCmp op (Number x)  y         = throwError $ TypeMismatch "numeric op " y
+numCmp op x         y           = throwError $ TypeMismatch "numeric op " (String $ T.pack $ show x ++ show y)
 
 -- better wa to check args?
 cons :: [LispVal] -> Eval LispVal

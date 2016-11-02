@@ -68,39 +68,51 @@ printEnv env =
  in return $ Atom $ showPairs pairs
 -}
 
-
+-- 
 setLocal :: Text -> LispVal -> Map Text LispVal -> Eval LispVal
 setLocal atom exp env = local (const $ Map.insert atom exp env) (eval exp)
 
+--
 setVar :: LispVal -> LispVal -> Eval LispVal
 setVar n@(Atom atom) exp = do
   env <- ask
   case Map.lookup atom env of
       Just x -> setLocal  atom exp env
       Nothing -> throwError $ Default $ "setting an unbound var: " ++ show n
-setVar _ exp =
-  throwError $ Default "variables can only be assigned to atoms"
+setVar _ exp = throwError $ Default "variables can only be assigned to atoms"
 
+--
 getVar :: LispVal ->  Eval LispVal
 getVar n@(Atom atom) = do
   env <- ask
   case Map.lookup atom env of
       Just x -> return x
       Nothing -> throwError $ Default  $ "error on getVar: " ++ show n
-getVar n =
-  throwError $ Default $ "failure to get variable: " ++ show  n
+getVar n = throwError $ Default $ "failure to get variable: " ++ show  n
 
+--
 defineVar :: LispVal -> LispVal -> Eval LispVal
-defineVar n@(Atom atom) exp =
-  do
+defineVar n@(Atom atom) exp = do
     env <- ask
     setLocal atom exp env
-defineVar _ exp = throwError $ Default "can only bind to Atom type values"
+defineVar n exp = throwError $ TypeMismatch "numeric op " n
 
 -- confirm this evals left to right
 -- http://dev.stephendiehl.com/hask/#whats-the-point
 bindVars :: [(LispVal, LispVal)] -> Eval ()
 bindVars  = sequence_ . fmap (uncurry defineVar)
+
+ensureAtom :: LispVal -> Eval LispVal 
+ensureAtom (Atom n) = return $ Atom n
+
+extractVar :: LispVal -> T.Text
+extractVar (Atom n) = n
+
+getEven :: [t] -> [t]
+getEven x = (\a -> (x !! a)) <$> (Prelude.filter Prelude.even [0..(Prelude.length x - 1)]) 
+getOdd :: [t] -> [t]
+getOdd x = (\a -> (x !! a))  <$> (Prelude.filter Prelude.odd  [1..(Prelude.length x - 1)])
+
 
 eval :: LispVal -> Eval LispVal
 eval (Number i) = return $ Number i
@@ -123,10 +135,17 @@ eval (List [Atom "def", Atom val, exp]) =
 eval (List [Atom "define", Atom val, exp]) =
    defineVar (Atom val) exp
 
-eval (List [Atom "let", pairs, expr]) = 
-    do x <- evalToList pairs
-       letPairs x
-       eval expr
+eval (List [Atom "let", List pairs, expr]) = 
+    do env <- ask
+       atoms <- mapM ensureAtom $ getEven pairs
+       vals <- evalToList $ List $ getOdd pairs
+       local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a,b)) atoms vals) <> env)) (eval expr)
+
+eval (List [Atom "let1", List [Atom atom,val], expr]) = 
+  do evalVal <- eval val
+     env <- ask
+     local (const $ Map.insert atom val env) (eval expr)
+
 
 eval (List [Atom "lambda",params, expr]) = 
     do envLocal <- ask
@@ -171,14 +190,7 @@ letPairs x =
     (z:zs)    -> bindVars $ Prelude.zipWith (\a b -> (x !! a, x !! b))  (Prelude.filter Prelude.even [0..(Prelude.length x - 1)]) $ Prelude.filter Prelude.odd [0..(Prelude.length x -1)]
 
 
-double = Prelude.zipWith ($) (cycle [return,eval])
-evalInLet :: LispVal -> Eval LispVal 
-evalInLet n@(Atom _) = return n
-evalInLet x = eval x
--- TODO: make internal form for primative
--- add two numbers
 type Prim = [(T.Text, LispVal)]
-
 primEnv :: Prim
 primEnv = [   ("+"    , Fun $ IFunc $ binopFold (numOp    (+))  (Number 0) )
             , ("*"    , Fun $ IFunc $ binopFold (numOp    (*))  (Number 1) )

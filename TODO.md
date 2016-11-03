@@ -7,5 +7,9 @@ get the following to work:
   --boolean,#t,#f,equals,not equals, if statement    
   --nested statements    
   --let statement    
-  define statements
-  lambda expressions    
+  --lambda expressions    
+  io on files(read/write), read file to String, write string to file    
+  write :: LispVal -> T.Text     
+  read  ::            T.Text -> LispVal     
+  begin function    
+  eval body to work when 1) reading files 2) let/lambda, support define statements    

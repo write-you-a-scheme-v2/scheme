@@ -114,14 +114,9 @@ getEven x = (\a -> (x !! a)) <$> (Prelude.filter Prelude.even [0..(Prelude.lengt
 getOdd :: [t] -> [t]
 getOdd x = (\a -> (x !! a))  <$> (Prelude.filter Prelude.odd  [1..(Prelude.length x - 1)])
 
-merge :: [a] -> [a] -> [a]
-merge xs     []     = xs
-merge []     ys     = ys
-merge (x:xs) (y:ys) = x : y : merge xs ys
-
   --return  $ Lambda ( IFunc ( applyLambda params expr)) envLocal
-applyLambda :: [LispVal] -> LispVal -> [LispVal] -> Eval LispVal 
-applyLambda params expr args = 
+applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal 
+applyLambda expr params args = 
     do env <- ask
        argEval <- evalToList $ List args
        local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a,b)) params argEval) <> env)) (eval expr)
@@ -161,17 +156,8 @@ eval (List [Atom "let1", List [Atom atom,val], expr]) =
 
 eval (List [Atom "lambda",List params, expr]) = 
     do envLocal <- ask
-       --paramsEvald <- evalToList params
-       -- arguments are being pulled from the environment
-       -- Repl> (let (y 3) ((lambda ('y 'z) (* y y)) 2 3))
-       -- arguments are not being passed in 
-       -- Repl> ((lambda ('y 'z) (* y y)) 2 3)
-       -- args are being eval'd
-       -- Repl> ((lambda (x) (* x x)) 2)
-       --
-       --return $ Lambda ( IFunc (\args -> (evalArgsExpEnv args paramsEvald expr))) envLocal 
-       --return $ Lambda ( IFunc (\args -> (eval (List [Atom "let", List (merge params args), expr] )))) envLocal
-       return  $ Lambda ( IFunc ( applyLambda params expr)) envLocal
+       return  $ Lambda ( IFunc ( applyLambda expr params )) envLocal
+
 eval (List [Atom fn, arg1, arg2]) = 
   do 
     fnVariable <- getVar $ Atom fn 
@@ -181,15 +167,10 @@ eval (List [Atom fn, arg1, arg2]) =
       (Fun (IFunc internalFn)) -> internalFn [v1,v2]
       (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) (internalfn [v1,v2]) 
       _                -> throwError $ NotFunction "function" "not found???"
---
---List [Atom "+",Number 1,Number 2,Number 3]
---eval (List list@((Atom fn):args)   )   =
-eval (List list@(x:xs)) = 
+
+eval (List list@((:) x xs)) = 
   do
-    -- AW note: there should probably be a way to make sure
-    -- this is actually a data constructor for Atom
     fnVariable <- eval x
-    -- change this
     xVal <- evalToList $ List xs
     case fnVariable of
       (Fun ( IFunc internalFn)) -> internalFn xVal

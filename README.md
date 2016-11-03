@@ -1,8 +1,12 @@
 Write You a Scheme
 ==================
-Shortcut REPL
+Shortcut build
 ```bash
 $ ./build 
+```
+Shortcut repl 
+```bash 
+$ ./run
 ```
 Building the reference implementation.
 

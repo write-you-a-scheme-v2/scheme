@@ -1,2 +1,2 @@
 #!/bin/bash
-stack build --fast --file-watch --exec "./run"
+stack build --fast --file-watch 

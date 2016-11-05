@@ -122,7 +122,9 @@ applyLambda expr params args =
        local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a,b)) params argEval) <> env)) (eval expr)
 
 eval :: LispVal -> Eval LispVal
-eval (Number i) = return $ Number i
+eval (Number i) = do 
+  return $ Number i
+
 eval (String s) = return $ String s
 eval (Bool b)   = return $ Bool b
 eval (List [])  = return Nil
@@ -137,10 +139,7 @@ eval (List [Atom "if", pred,ant,cons]) =
          (Bool False) ->  (eval cons)
          _           -> throwError (Default "ifelse must by T/F")
 -- global definition
-eval (List [Atom "def", Atom val, exp]) =
-   defineVar (Atom val) exp
-eval (List [Atom "define", Atom val, exp]) =
-   defineVar (Atom val) exp
+eval (List ((:)(Atom "begin") rest)) = evalBody $ List rest 
 
 eval (List [Atom "let", List pairs, expr]) = 
     do env <- ask
@@ -153,6 +152,11 @@ eval (List [Atom "let1", List [Atom atom,val], expr]) =
      env <- ask
      local (const $ Map.insert atom val env) (eval expr)
 
+eval (List [Atom "letb", List pairs, expr]) = 
+    do env <- ask
+       atoms <- mapM ensureAtom $ getEven pairs
+       vals <- evalToList $ List $ getOdd pairs
+       local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a,b)) atoms vals) <> env)) (evalBody expr)
 
 eval (List [Atom "lambda",List params, expr]) = 
     do envLocal <- ask
@@ -177,6 +181,25 @@ eval (List list@((:) x xs)) =
       (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) (internalfn xVal) 
       _                -> throwError $ NotFunction "tried to evaluate non-function: " (show fnVariable)
 --
+
+eval x = throwError $ Default $ "expression could not be evaluated: " ++ (show x)
+
+
+-- when no defines are left
+evalBody :: LispVal -> Eval LispVal 
+evalBody (List list@[List ((:) (Atom "define") [Atom var,defExpr] ),rest]) = 
+  do evalVal <- eval defExpr
+     env <- ask
+     local (const $ Map.insert var evalVal env) (eval rest)
+evalBody (List list@((:) (List ((:) (Atom "define") [Atom var,defExpr] )) rest)) = 
+-- when more than one sub expr is left
+  do evalVal <- eval defExpr
+     env <- ask
+     local (const $ Map.insert var evalVal env) (evalBody $ List rest)
+evalBody x = eval x
+
+
+
 
 evalToList :: LispVal -> Eval [LispVal]
 evalToList (List expr) = do 

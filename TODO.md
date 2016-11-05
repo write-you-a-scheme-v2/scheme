@@ -8,8 +8,9 @@ get the following to work:
   --nested statements    
   --let statement    
   --lambda expressions    
+  --begin function    
+  --eval body to work when 2) let/lambda, support define statements    
   io on files(read/write), read file to String, write string to file    
   write :: LispVal -> T.Text     
   read  ::            T.Text -> LispVal     
-  begin function    
-  eval body to work when 1) reading files 2) let/lambda, support define statements    
+  eval body to work when 1) reading files 

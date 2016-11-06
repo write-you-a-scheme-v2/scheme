@@ -53,6 +53,17 @@ work on your project with you, finding people who can be trained with less cost 
 challenge. For this reason, I take a conservative approach on what features and abstract concepts are used in this
 Scheme. If you use Haskell for work, your colleagues job will go a lot easier and less technical debt will emerge.  
 
-
+## Project Tool Chain
+To build the project, I recommend using Ubuntu, version 14.04 or 16.04, and the
+haskell build tool Stack. More info on stack, here:
+https://www.fpcomplete.com/blog/2015/06/why-is-stack-not-cabal. The `Readme.md`
+contains full instructions on how to build the project source code and
+documentation, which I encourage you to do. The best way to learn is to modify,
+break, fix, and finally improve the source code. Two included scripts, `build`
+which will moniter for file changes then build upon updates, and `run`, which
+will drop you into an interactive REPL, were invaluable in the development of
+this project. Please feel free to contact with me with any great ideas,
+modifications, improvements, or vaguely related but interesting concepts. I made
+this project for you, use it however you please.
 
 

@@ -30,7 +30,7 @@ apply :: Eval (lambda [LispVal Atoms] [SExpr body]) ->  [LispVals] -> Eval
 LispVal
 
 ### Things to avoid
-IORef
-Read typeclass
-call/cc and continuations?
-complexity of implementation/language
+IORef --done
+Read typeclass -- used in number
+call/cc and continuations? -- none
+complexity of implementation/language -- ask about this in review

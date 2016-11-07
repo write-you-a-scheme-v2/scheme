@@ -5,3 +5,5 @@ cabal.sandbox.config
 .stack-work
 .shake
 output/*
+*.hi
+*.o

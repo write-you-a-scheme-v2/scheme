@@ -10,7 +10,8 @@ get the following to work:
   --lambda expressions    
   --begin function    
   --eval body to work when 2) let/lambda, support define statements    
-  io on files(read/write), read file to String, write string to file    
+  --io on files(read/write), read file to String, write string to file    
+  --eval body to work when 1) reading files 
+  Test read/parse/eval files as script, evalBody like define
   write :: LispVal -> T.Text     
   read  ::            T.Text -> LispVal     
-  eval body to work when 1) reading files 

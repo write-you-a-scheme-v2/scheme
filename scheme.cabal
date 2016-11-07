@@ -11,6 +11,7 @@ library
     LispVal
     Pretty
     Eval
+    Cli
 
   build-depends:       
     base           >= 4.8 && <5.0,

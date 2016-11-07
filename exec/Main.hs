@@ -1,6 +1,7 @@
 module Main where
 
-import qualified Repl
+import qualified Cli
 
 main :: IO ()
-main = Repl.mainLoop
+main = Cli.cliIface
+

@@ -3,6 +3,7 @@
 
 module Parser (
   readExpr,
+  readExprFile,
 ) where
 
 import LispVal
@@ -56,14 +57,23 @@ parseText =
      reservedOp "\"" 
      return $ (String . T.pack)  p 
 
+-- is there a way to do this w/o the 'read'???
 parseNumber :: Parser LispVal 
 parseNumber = fmap (Number . read) $ many1 digit
-        
+
+{-
+ - exercise 
+parseNegNumber :: Parser LispVal
+parseNegNumber = ...
+-}
+
+
+-- used for parsing files, otherwise see parseSExpr
 parseList :: Parser LispVal 
-parseList = List . concat <$> (many parseExpr `sepBy` char ' ')
+parseList = List . concat <$> (many parseExpr `sepBy` (char ' ' <|> char '\n'))
 
 parseSExp :: Parser LispVal 
-parseSExp = List . concat <$> m_parens (many parseExpr `sepBy` char ' ')
+parseSExp = List . concat <$> m_parens (many parseExpr `sepBy` (char ' ' <|> char '\n'))
 
 parseQuote :: Parser LispVal
 parseQuote = 
@@ -72,6 +82,7 @@ parseQuote =
     x <- parseExpr
     return $ List [Atom "quote", x] 
 
+-- ordering of parse preference
 parseExpr :: Parser LispVal 
 parseExpr = parseReserved
       <|> parseAtom
@@ -80,6 +91,7 @@ parseExpr = parseReserved
       <|> parseQuote
       <|> parseSExp
 
+-- handles reserved words
 parseReserved :: Parser LispVal 
 parseReserved = 
   do 
@@ -87,7 +99,7 @@ parseReserved =
     <|> (reservedOp "#t" >> return (Bool True))
     <|> (reservedOp "#f" >> return (Bool False))
 
-
+-- grab the contents, run till eof
 contents :: Parser a -> Parser a
 contents p = do
   Tok.whiteSpace lexer
@@ -96,9 +108,24 @@ contents p = do
   return r
 
 
-
+-- for parsing SExprs, used in REPL
 readExpr :: T.Text -> Either ParseError LispVal
 readExpr = parse (contents parseExpr) "<stdin>" 
+
+
+-- for parsing files, move into "begin" form to allow for define statements
+-- and evaluation w/ evalBody
+readExprFile :: T.Text -> Either ParseError LispVal 
+readExprFile = parse (contents parseList) "<file>"
+
+-- move this to the 'begin' form -- then we can run 'eval'
+-- we could also do evalBody instead of eval after readExprFile"
+fileToEvalForm :: Either ParseError LispVal -> Either ParseError LispVal 
+fileToEvalForm (Right (List list)) = Right (List ((Atom "begin") : list ) )
+fileToEvalForm x = x
+
+parseFile :: T.Text -> Either ParseError LispVal
+parseFile = fileToEvalForm . readExprFile
 
 {-
 -------------------------

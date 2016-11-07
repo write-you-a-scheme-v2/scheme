@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Eval (
    evalText
+  , evalFile
   , runParseTest
 ) where
 
@@ -34,55 +35,27 @@ runAppT code action = do
 evalText :: T.Text -> IO ()
 evalText textExpr =
   do
-    out <- runExceptT $ runAppT testEnv (textToEval textExpr)
+    out <- runExceptT $ runAppT testEnv (textToEvalForm textExpr)
     either print print out
 
-textToEval :: T.Text -> Eval LispVal
-textToEval input = either throwError eval (runParse_ input)
 
-runParse_ :: T.Text -> Either LispError LispVal
-runParse_ input = case (readExpr input) of
-                (Right val) -> Right val
-                (Left  err) -> Left $ Default "parser error"
+textToEvalForm :: T.Text -> Eval LispVal
+textToEvalForm input = either (const $ throwError $ Default "parser error")  eval (readExpr input)
 
+-- Run file as script
+evalFile :: T.Text -> IO ()
+evalFile fileExpr = 
+  do 
+    out <- runExceptT $ runAppT testEnv (fileToEvalForm fileExpr)
+    either print print out
+
+fileToEvalForm :: T.Text -> Eval LispVal
+fileToEvalForm input = either (const $ throwError $ Default "parser error")  evalBody (readExprFile input)
+
+-- for viewing AST
 runParseTest :: T.Text -> T.Text
-runParseTest input = case (readExpr input) of
-                (Right val) -> T.pack $ show val
-                (Left  err) -> T.pack $ show err
+runParseTest input = either (T.pack . show) (T.pack . show) $ readExpr input
 
---dead
-evalParse :: T.Text -> IO ()
-evalParse textExpr =
-    print $ runParseTest textExpr
-
-evalInEnv ::LispVal -> Map Text LispVal -> Eval LispVal
-evalInEnv exp env = local (const env) (eval exp)
-
-evalArgsExpEnv :: [LispVal] -> [LispVal] -> LispVal -> Eval LispVal
-evalArgsExpEnv args params expr = 
-    do bindVars $ Prelude.zipWith (,) params args
-       eval expr
-{-
-printEnv :: EnvCtx -> Eval LispVal
-printEnv env = 
- let pairs = toList $ showVal <$> Map.mapKeys showVal  env
- in return $ Atom $ showPairs pairs
--}
-
--- 
-setLocal :: Text -> LispVal -> Map Text LispVal -> Eval LispVal
-setLocal atom exp env = local (const $ Map.insert atom exp env) (eval exp)
-
---
-setVar :: LispVal -> LispVal -> Eval LispVal
-setVar n@(Atom atom) exp = do
-  env <- ask
-  case Map.lookup atom env of
-      Just x -> setLocal  atom exp env
-      Nothing -> throwError $ Default $ "setting an unbound var: " ++ show n
-setVar _ exp = throwError $ Default "variables can only be assigned to atoms"
-
---
 getVar :: LispVal ->  Eval LispVal
 getVar n@(Atom atom) = do
   env <- ask
@@ -90,18 +63,6 @@ getVar n@(Atom atom) = do
       Just x -> return x
       Nothing -> throwError $ Default  $ "error on getVar: " ++ show n
 getVar n = throwError $ Default $ "failure to get variable: " ++ show  n
-
---
-defineVar :: LispVal -> LispVal -> Eval LispVal
-defineVar n@(Atom atom) exp = do
-    env <- ask
-    setLocal atom exp env
-defineVar n exp = throwError $ TypeMismatch "numeric op " n
-
--- confirm this evals left to right
--- http://dev.stephendiehl.com/hask/#whats-the-point
-bindVars :: [(LispVal, LispVal)] -> Eval ()
-bindVars  = sequence_ . fmap (uncurry defineVar)
 
 ensureAtom :: LispVal -> Eval LispVal 
 ensureAtom (Atom n) = return $ Atom n
@@ -122,8 +83,7 @@ applyLambda expr params args =
        local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a,b)) params argEval) <> env)) (eval expr)
 
 eval :: LispVal -> Eval LispVal
-eval (Number i) = do 
-  return $ Number i
+eval (Number i) = return $ Number i
 
 eval (String s) = return $ String s
 eval (Bool b)   = return $ Bool b
@@ -206,13 +166,14 @@ evalToList (List expr) = do
   mapM eval expr
 evalToList _ = throwError $ Default "internal error, check evalToList"
 
+{-
 letPairs :: [LispVal] -> Eval ()
 letPairs x = 
   case x of
     []        -> throwError (Default "let")
     [one]     -> throwError (Default "let")
     (z:zs)    -> bindVars $ Prelude.zipWith (\a b -> (x !! a, x !! b))  (Prelude.filter Prelude.even [0..(Prelude.length x - 1)]) $ Prelude.filter Prelude.odd [0..(Prelude.length x -1)]
-
+-}
 
 type Prim = [(T.Text, LispVal)]
 primEnv :: Prim
@@ -328,9 +289,57 @@ binopFixPoint f2 = binop $ (\x y -> return $ f2 x y)
 numOpVal :: (Integer -> Integer -> Integer ) -> LispVal -> LispVal -> LispVal
 numOpVal op (Number x) (Number y) = Number $ op x  y
 
+--dead
+{-
+evalParse :: T.Text -> IO ()
+evalParse textExpr = print $ runParseTest textExpr
+evalInEnv ::LispVal -> Map Text LispVal -> Eval LispVal
+evalInEnv exp env = local (const env) (eval exp)
+
+evalArgsExpEnv :: [LispVal] -> [LispVal] -> LispVal -> Eval LispVal
+evalArgsExpEnv args params expr = 
+    do bindVars $ Prelude.zipWith (,) params args
+       eval expr
+printEnv :: EnvCtx -> Eval LispVal
+printEnv env = 
+ let pairs = toList $ showVal <$> Map.mapKeys showVal  env
+ in return $ Atom $ showPairs pairs
+
+-- used in setVar, defineVar
+setLocal :: Text -> LispVal -> Map Text LispVal -> Eval LispVal
+setLocal atom exp env = local (const $ Map.insert atom exp env) (eval exp)
+
+-- 0 refs
+setVar :: LispVal -> LispVal -> Eval LispVal
+setVar n@(Atom atom) exp = do
+  env <- ask
+  case Map.lookup atom env of
+      Just x -> setLocal  atom exp env
+      Nothing -> throwError $ Default $ "setting an unbound var: " ++ show n
+setVar _ exp = throwError $ Default "variables can only be assigned to atoms"
+-}
+--USED
+
+-- used in bindVars
+{-
+defineVar :: LispVal -> LispVal -> Eval LispVal
+defineVar n@(Atom atom) exp = do
+    env <- ask
+    setLocal atom exp env
+defineVar n exp = throwError $ TypeMismatch "numeric op " n
+-}
+
+-- confirm this evals left to right
+-- http://dev.stephendiehl.com/hask/#whats-the-point
+-- dead
+{-
+bindVars :: [(LispVal, LispVal)] -> Eval ()
+bindVars  = sequence_ . fmap (uncurry defineVar)
+-}
+
 {-
  - List Comprehension
-
+ - moved to environmental variables
 eval (List (Atom "cons"):rest) = 
     case rest of
         (x:xs) ->   do xval  <- eval x

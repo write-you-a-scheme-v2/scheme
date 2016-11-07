@@ -47,6 +47,7 @@ parseLineOpts = LineOpts
     <$> strOption
         ( long "script"
        <> short 's'
+       <> value ""
        <> metavar "SCRIPT"
        <> help "File containing the script you want to run")
     <*> switch

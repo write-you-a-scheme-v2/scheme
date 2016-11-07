@@ -6,6 +6,10 @@ $ ./build
 ```
 Shortcut repl 
 ```bash 
+$ ./repl
+```
+Shortcut run binary executable
+```bash 
 $ ./run
 ```
 Building the reference implementation.

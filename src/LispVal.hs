@@ -22,16 +22,16 @@ newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ExceptT LispError IO ) a }
 data LispVal
   = Atom T.Text
   | List [LispVal]
-  | DottedList [LispVal] LispVal
+  -- | DottedList [LispVal] LispVal
   | Number Integer
   | String T.Text
   | Fun IFunc
   | Lambda IFunc EnvCtx 
   | Nil
-  | Bool Bool deriving (Show)
+  | Bool Bool -- deriving (Show)
 
---instance Show LispVal where
-  --show = T.unpack . showVal   
+instance Show LispVal where
+  show = T.unpack . showVal   
 
 data IFunc = IFunc { fn :: [LispVal] -> Eval LispVal } 
 instance Show IFunc where
@@ -44,22 +44,23 @@ showVal :: LispVal -> T.Text
 showVal val =
   case val of
     (Atom atom) -> atom
-    (String str) ->  str
+    (String str) -> T.concat [ "\"" ,str,"\""]
     --(String str) ->  T.pack "\"") ++  str ++ $ T.pack "\""
     (Number num) -> T.pack $ show num
     (Bool True) -> "#t"
     (Bool False) -> "#f"
+    Nil        -> "Nil"
     --(List contents) ->  "(" ++ (unwordsList contents) ++ ")"
-    (List contents) ->  unwordsList contents
-    (DottedList head tail) ->  T.unwords ["(" ,unwordsList head, " . " , showVal tail , ")"]
-    (Fun _ ) -> "internal function"
-    (Lambda _ _) -> "lambda function"
+    (List contents) -> T.concat ["(", unwordsList contents, ")"]
+    --(DottedList head tail) ->  T.unwords ["(" ,unwordsList head, " . " , showVal tail , ")"]
+    (Fun _ ) -> "(internal function)"
+    (Lambda _ _) -> "(lambda function)"
 
 --showPairs :: [(LispVal,LispVal)] -> T.Text
 --showPairs val = concat  (\x -> showVal (fst x) ++ " -> " ++ showVal (snd x) ++ "\n") <$> val
 
 unwordsList :: [LispVal] -> T.Text
-unwordsList = T.unwords . Prelude.map showVal
+unwordsList list = T.unwords $  showVal <$> list
 
 -- TODO make a pretty printer
 data LispError
@@ -71,4 +72,23 @@ data LispError
   | NotFunction String String
   | UnboundVar String String
   | Default String
-  deriving (Show)
+  | PError String
+  --deriving (Show)
+
+instance Show LispError where
+  show = T.unpack . showError
+
+showError :: LispError -> T.Text
+showError err = 
+  case err of
+    (NumArgs int args)     -> "Error Number Arguments"
+    (LengthOfList sts int) -> "Error Length of List"
+    (ExpectedList txt)     -> "Error Expected List"
+    (TypeMismatch str val) -> "Error Type Mismatch"
+    (BadSpecialForm str val)-> "Error Bad Special Form"
+    (NotFunction str str1)  -> "Error Not a Function"
+    (UnboundVar str str1)   -> "Error Unbound Variable"
+    (PError str)            -> T.concat ["Parser Error, expression cannot evaluate: ",T.pack str]
+    (Default str)          -> T.concat ["Error, Danger Will Robinson! ", T.pack str]
+    _                      -> "I got 99 problems, most of which is the parser"
+

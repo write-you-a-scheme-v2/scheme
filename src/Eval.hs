@@ -36,18 +36,18 @@ evalText :: T.Text -> IO ()
 evalText textExpr =
   do
     out <- runExceptT $ runAppT testEnv (textToEvalForm textExpr)
-    either print print out
+    either (putStrLn . show) (putStrLn . show) out
 
 
 textToEvalForm :: T.Text -> Eval LispVal
-textToEvalForm input = either (const $ throwError $ Default "parser error")  eval (readExpr input)
+textToEvalForm input = either (\x -> throwError $ PError $ show $ x )  eval (readExpr input)
 
 -- Run file as script
 evalFile :: T.Text -> IO ()
 evalFile fileExpr = 
   do 
     out <- runExceptT $ runAppT testEnv (fileToEvalForm fileExpr)
-    either print print out
+    either (putStrLn . show) (putStrLn . show) out
 
 fileToEvalForm :: T.Text -> Eval LispVal
 fileToEvalForm input = either (const $ throwError $ Default "parser error")  evalBody (readExprFile input)

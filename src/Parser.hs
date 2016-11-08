@@ -14,6 +14,7 @@ import Text.Parsec.Expr
 import qualified Text.Parsec.Token as Tok
 import qualified Text.Parsec.Language as Lang
 import qualified Data.Text as T
+import Control.Applicative hiding ((<|>))
 
 import Data.Functor.Identity (Identity)
 
@@ -25,11 +26,11 @@ style :: Tok.GenLanguageDef T.Text () Identity
 style = Lang.emptyDef { 
   Tok.commentStart = "{-"
   , Tok.commentEnd = "-}"
-  , Tok.commentLine = "--"
+  , Tok.commentLine = "@@"
   , Tok.opStart = Tok.opLetter style
   , Tok.opLetter = oneOf ":!#$%%&*+./<=>?@\\^|-~"
-  , Tok.identStart = letter <|>  oneOf "+-/*=|&><"
-  , Tok.identLetter = letter <|> oneOf "?+=|&"
+  , Tok.identStart = letter <|>  oneOf "-+/*=|&><"
+  , Tok.identLetter = letter <|> oneOf "?+=|&-"
   , Tok.reservedOpNames = [ "'", "\""]
   --, Tok.reservedNames = [ "true", "false", "let", "quote", "lambda", "Nil" ]
   }
@@ -57,23 +58,23 @@ parseText =
      reservedOp "\"" 
      return $ (String . T.pack)  p 
 
--- is there a way to do this w/o the 'read'???
-parseNumber :: Parser LispVal 
-parseNumber = fmap (Number . read) $ many1 digit
 
-{-
- - exercise 
-parseNegNumber :: Parser LispVal
-parseNegNumber = ...
--}
 
+parseNumber :: Parser LispVal
+parseNumber = ((Number . read) <$> many1 digit) <|> parseNegNum
+
+parseNegNum :: Parser LispVal 
+parseNegNum = 
+  do char '-'
+     d <- many1 digit
+     return $ (Number . negate . read) d
 
 -- used for parsing files, otherwise see parseSExpr
 parseList :: Parser LispVal 
-parseList = List . concat <$> (many parseExpr `sepBy` (char ' ' <|> char '\n'))
+parseList = List . concat <$> (Text.Parsec.many parseExpr `sepBy` (char ' ' <|> char '\n'))
 
 parseSExp :: Parser LispVal 
-parseSExp = List . concat <$> m_parens (many parseExpr `sepBy` (char ' ' <|> char '\n'))
+parseSExp = List . concat <$> m_parens (Text.Parsec.many parseExpr `sepBy` (char ' ' <|> char '\n'))
 
 parseQuote :: Parser LispVal
 parseQuote = 
@@ -87,7 +88,8 @@ parseExpr :: Parser LispVal
 parseExpr = parseReserved
       <|> parseAtom
       <|> parseText
-      <|> parseNumber
+      -- <|> parseNumber
+      <|> ( fmap (Number . read) $ many1 digit    )
       <|> parseQuote
       <|> parseSExp
 

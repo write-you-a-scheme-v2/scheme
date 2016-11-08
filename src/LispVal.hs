@@ -84,7 +84,7 @@ showError err =
     (NumArgs int args)     -> "Error Number Arguments"
     (LengthOfList sts int) -> "Error Length of List"
     (ExpectedList txt)     -> "Error Expected List"
-    (TypeMismatch str val) -> "Error Type Mismatch"
+    (TypeMismatch str val) -> T.concat ["Error Type Mismatch: ", T.pack str, showVal val]
     (BadSpecialForm str val)-> "Error Bad Special Form"
     (NotFunction str str1)  -> "Error Not a Function"
     (UnboundVar str str1)   -> "Error Unbound Variable"

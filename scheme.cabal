@@ -23,6 +23,7 @@ library
     transformers   >= 0.4 && <0.6,
     haskeline      >= 0.7 && <0.8,
     mtl            >= 2.2.1, 
+    directory -any,
     optparse-applicative -any
 
   hs-source-dirs: src

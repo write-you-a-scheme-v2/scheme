@@ -15,8 +15,9 @@ import Data.Text as T
 -- key/val store for environment
 import Data.Map as Map
 import Data.Monoid
-
-
+import System.Directory
+import System.IO
+import System.Environment
 import Control.Monad.Except
 import Control.Monad.Reader
 
@@ -84,13 +85,21 @@ applyLambda expr params args =
 
 eval :: LispVal -> Eval LispVal
 eval (Number i) = return $ Number i
-
 eval (String s) = return $ String s
 eval (Bool b)   = return $ Bool b
 eval (List [])  = return Nil
 eval Nil      = return Nil
 eval n@(Atom _) = getVar n
---eval n@(Atom _) = return n
+
+-- we are making write a special form
+-- the arguments to write will not be evaluated
+-- instead they will be converted to a string.
+eval arg@(List [(Atom "write"), rest]) = do 
+  return $ String $ T.pack $ show $ rest
+eval arg@(List ((:) (Atom "write") rest)) = do 
+  return $ String $ T.pack $ show $ List rest
+
+-- textToEvalForm 
 eval (List [Atom "quote",val]) = return $ val
 eval (List [Atom "if", pred,ant,cons]) =
     do ifRes <- eval pred
@@ -99,7 +108,12 @@ eval (List [Atom "if", pred,ant,cons]) =
          (Bool False) ->  (eval cons)
          _           -> throwError (Default "ifelse must by T/F")
 -- global definition
-eval (List ((:)(Atom "begin") rest)) = evalBody $ List rest 
+eval (List [(Atom "begin"),rest]) = do 
+  liftIO $ putStrLn " begin 1 rest"
+  evalBody $ rest 
+eval (List ((:)(Atom "begin") rest)) = do 
+  liftIO $ putStrLn " begin many rest"
+  evalBody $ List rest 
 
 eval (List [Atom "let", List pairs, expr]) = 
     do env <- ask
@@ -156,7 +170,9 @@ evalBody (List list@((:) (List ((:) (Atom "define") [Atom var,defExpr] )) rest))
   do evalVal <- eval defExpr
      env <- ask
      local (const $ Map.insert var evalVal env) (evalBody $ List rest)
-evalBody x = eval x
+evalBody x = do 
+  liftIO $ putStrLn "evalBody fallthrough"
+  eval x
 
 
 
@@ -197,6 +213,9 @@ primEnv = [   ("+"    , Fun $ IFunc $ binopFold (numOp    (+))  (Number 0) )
             , ("cdr"  , Fun $ IFunc $ Eval.cdr)
             , ("car"  , Fun $ IFunc $ Eval.car)
             , ("quote", Fun $ IFunc $ quote)
+            , ("read" , Fun $ IFunc $ unop $ readFn)
+            , ("file?" , Fun $ IFunc $ unop $ fileExists)
+            , ("slurp" , Fun $ IFunc $ unop $ slurp)
             ]
 
 
@@ -211,6 +230,47 @@ binop :: Binary -> [LispVal] -> Eval LispVal
 binop op args@[x,y] = case args of
                             [a,b] -> op a b
                             _ -> throwError $ NumArgs 2 args
+
+
+readFn :: LispVal -> Eval LispVal 
+readFn x = do
+  val <- eval  x
+  case val of
+    (String txt) -> textToEvalForm txt
+    _            -> throwError $ TypeMismatch "read expects string, instead got: " val
+
+
+
+fileExists :: LispVal -> Eval LispVal 
+fileExists x@(Atom lbl) = do
+  val <- eval x
+  fileExists val
+fileExists (String txt) = do
+  exists <- liftIO $ doesFileExist $ T.unpack txt
+  case (exists) of
+    True -> return $ Bool True
+    _    -> return $ Bool False
+fileExists val = throwError $ TypeMismatch "read expects string, instead got: " val
+
+slurp :: LispVal -> Eval LispVal 
+slurp x = do
+  val <- eval x
+  case val of
+    (String txt ) -> readTextFile txt
+    _             -> throwError $ TypeMismatch "read expects string, instead got: " val
+-- (slurp "test/let.scheme")
+-- get this to work with "fileToEvalForm"
+readTextFile ::  T.Text -> Eval LispVal
+readTextFile script =  do  
+  inh <- liftIO $ openFile (T.unpack script) ReadMode
+  ineof <- liftIO $ hIsEOF inh 
+  if ineof
+    then  (liftIO $ putStr "empty file\n") >> (throwError $ Default "empty file")
+      else do fileText <- liftIO $ hGetContents $ inh 
+              --liftIO $ hClose inh 
+              liftIO $ putStr "FileContents:\n"
+              liftIO $ putStr fileText
+              liftIO $ evalFile $ T.pack fileText
 
 
 -- drop "fargs" and use case statement to pull out first vs. rest of args?
@@ -288,80 +348,3 @@ binopFixPoint f2 = binop $ (\x y -> return $ f2 x y)
 
 numOpVal :: (Integer -> Integer -> Integer ) -> LispVal -> LispVal -> LispVal
 numOpVal op (Number x) (Number y) = Number $ op x  y
-
---dead
-{-
-evalParse :: T.Text -> IO ()
-evalParse textExpr = print $ runParseTest textExpr
-evalInEnv ::LispVal -> Map Text LispVal -> Eval LispVal
-evalInEnv exp env = local (const env) (eval exp)
-
-evalArgsExpEnv :: [LispVal] -> [LispVal] -> LispVal -> Eval LispVal
-evalArgsExpEnv args params expr = 
-    do bindVars $ Prelude.zipWith (,) params args
-       eval expr
-printEnv :: EnvCtx -> Eval LispVal
-printEnv env = 
- let pairs = toList $ showVal <$> Map.mapKeys showVal  env
- in return $ Atom $ showPairs pairs
-
--- used in setVar, defineVar
-setLocal :: Text -> LispVal -> Map Text LispVal -> Eval LispVal
-setLocal atom exp env = local (const $ Map.insert atom exp env) (eval exp)
-
--- 0 refs
-setVar :: LispVal -> LispVal -> Eval LispVal
-setVar n@(Atom atom) exp = do
-  env <- ask
-  case Map.lookup atom env of
-      Just x -> setLocal  atom exp env
-      Nothing -> throwError $ Default $ "setting an unbound var: " ++ show n
-setVar _ exp = throwError $ Default "variables can only be assigned to atoms"
--}
---USED
-
--- used in bindVars
-{-
-defineVar :: LispVal -> LispVal -> Eval LispVal
-defineVar n@(Atom atom) exp = do
-    env <- ask
-    setLocal atom exp env
-defineVar n exp = throwError $ TypeMismatch "numeric op " n
--}
-
--- confirm this evals left to right
--- http://dev.stephendiehl.com/hask/#whats-the-point
--- dead
-{-
-bindVars :: [(LispVal, LispVal)] -> Eval ()
-bindVars  = sequence_ . fmap (uncurry defineVar)
--}
-
-{-
- - List Comprehension
- - moved to environmental variables
-eval (List (Atom "cons"):rest) = 
-    case rest of
-        (x:xs) ->   do xval  <- eval x
-                       xsval <- evalToList xs
-                      case xsval of 
-                           []       -> return $ List [xval]
-                           [items]  -> return $ List xval:xsval
-        [x]  -> throwError $ NumArgs 2 $ List []
-        [] -> throwError $ NumArgs 2 $ List []
-
-eval (List (Atom "car"):[arg]) = 
-    do xval <- evalToList arg
-       case xval of 
-         x:_ -> return $ x
-         [_]  -> return $ xval
-         []         -> throwError (LispErr $ T.pack "car takes a list with one  or more items"
-
-eval (List (Atom "cdr"):[arg]) = 
-    do xval <- evalToList arg
-       case xval of 
-         _:xs   -> return $ List xs
-         [_,y]  -> return $ List [y]
-         _      -> throwError (LispErr $ T.pack "cdr takes a list with two  or more items"
-
- -}

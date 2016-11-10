@@ -270,23 +270,15 @@ readTextFile script =  do
               --liftIO $ hClose inh 
               liftIO $ putStr "FileContents:\n"
               liftIO $ putStr fileText
-              liftIO $ evalFile $ T.pack fileText
+              textToEvalForm $ T.pack fileText
 
 
 -- drop "fargs" and use case statement to pull out first vs. rest of args?
 -- this only dispatches when # args is > 2 or when there is =/= 2 args?
 binopFold :: Binary -> LispVal -> [LispVal] -> Eval LispVal
 binopFold op farg args = case args of
-                            -- never happens?
-                            [a,b] -> do
-                                        x <- eval a
-                                        y <- eval b
-                                        op a b
-                            -- only case
-                            (a:as) -> do
-                                        xVal <- evalToList $ List args 
-                                        foldM op farg xVal
-                            -- raw case?
+                            [a,b] -> op a b
+                            (a:as) -> foldM op farg args
                             []-> throwError $ NumArgs 2 args
 
 numBool :: (Integer -> Bool) -> LispVal -> Eval LispVal 

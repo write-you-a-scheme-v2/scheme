@@ -8,6 +8,8 @@
 - [ ] Make LispError diversity and usage consistent throughout project
 - [ ] Outline Eval chapters
 - [ ] Write Eval Chapter
+- [ ] Outline Prim chapters
+- [ ] Write Prim Chapter
 
 
 

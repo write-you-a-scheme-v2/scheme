@@ -42,4 +42,7 @@ showError err =
     (Default str)            -> T.concat ["Error, Danger Will Robinson! ", T.pack str]
     _                        -> "I got 99 problems, most of which is the parser"
 ```
- Similar to our `showVal`, from [Chapter 1][01_introduction], we override the `show` typeclass to give a custom message for the type. 
+ Similar to our `showVal`, from [Chapter 1][01_introduction], we override the `show` typeclass to give a custom message for the type.
+
+ #### Next, Let's make some functions!
+ [back](03_evaluation.md)[next](05_primitives.md)

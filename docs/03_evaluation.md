@@ -12,15 +12,18 @@ Using our aptly named `Eval` structure, we will define the `eval` function withi
 ```
 eval :: LispVal -> Eval LispVal
 ```
-Outline: 
+Outline:
 environment/scoping issues, variable set/get
-Primitive Environment 
+Primitive Environment
 eval function
 special cases for eval function:
-  let, lambda, define, def, quote, List 
+  let, lambda, define, def, quote, List
 eval function handlers
 
 
 ####Sauces:
 http://catamorph.de/documents/Transformers.pdf    
-https://github.com/justinethier/husk-scheme/tree/master/hs-src/Language/Scheme     
+https://github.com/justinethier/husk-scheme/tree/master/hs-src/Language/Scheme  
+
+#### Danger Will Robinson, on to Errors!
+[back](03_evaluation.md)[next](04_errors.md)

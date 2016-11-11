@@ -1,11 +1,11 @@
 Introduction: The Bolts and Nuts of Scheme Interpreters in Haskell
 ------------
 ## 1.0 What are we going to do?
-We are going to make a very basic, but robust, programming language that is both simple to use and highly extendible. I encourage you to take the language we build and add functionality is useful to purposes important to you. For instance, you could use this language useful for running jobs on a High Performance Computing Cluster, or analyzing financial data. I want to see more Haskell in industry, and language development is where we can really make a difference, today, not tomorrow.
+We are going to make a very basic, but robust, programming language both simple to use and highly extendible. I encourage you to take the language we build and add functionality useful to you. For instance, you could use this language for running jobs on a High Performance Computing Cluster, or analyzing financial data. I want to see more Haskell in industry, and language development is where we can really make a difference, today, not tomorrow.
 ## 1.1 Scheme Syntax
-Lisp is a list processing language, and is old enough to join the AARP and has a very storied history.  Scheme is an official Lisp implementation, although we will be taking many liberties for the sake of simplicity.  For Lisp, means every expression is essentially a list. This parenthesized list has a prefix operator and is known as an S-Expression. Whenever a S-Expression is encounter, it is evaluated in the same way, minus a handful of special forms. That's it, Scheme is known for its minimalism, and the S-Expression to represent both code and data is the pinnacle of minimal form.
+Lisp is a list processing language, and is old enough to join the AARP with a very storied history.  Scheme is an fully specified Lisp implementation, although we will be taking many liberties for the sake of simplicity.  For Scheme, this means every expression is a list. This parenthesized list has a prefix operator and is known as an S-Expression. Whenever a S-Expression is encountered, it is evaluated in the same way, minus a handful of special forms. Data is also represented as an S-Expression, and there is no syntactical difference between code and data. Scheme is well known for this minimalism.
 ## Scheme semantics
-Similar to Haskell, Scheme is a functional programming language. Everything in our Scheme in an object, for instance numbers, strings, functions, variables, and booleans. Scheme  This is our Haskell type, `LispVal`. These objects are stored in a single environment, which is queried to resolve the value of an evaluated variable. In Scheme, no object is ever destroyed, however, the scope of a variable is limited to its lexical context. Further, arguments in scheme are passed by value, so when a function is called, all of its arguments are evaluated before being passed into the function. Contrast Haskell, which is a lazy language, our Scheme is strict in its evaluation.
+Similar to Haskell, Scheme is a functional programming language. Everything in our Scheme in an object, for instance numbers, strings, functions, variables, and booleans. This is our Haskell type, `LispVal`. These objects are stored in a single environment, `EnvCtx` which is queried to resolve the value of an evaluated variable. In Scheme, no object is ever destroyed, however, the scope of a variable is limited to its lexical context. Further, arguments in scheme are passed by value, so when a function is called, all of its arguments are evaluated before being passed into the function. The same environment is used to find primitive functions, so when `(file? "tmp")` is evaluated, `file?` is a variable with a corresponding value (a function) in the environment. Moving on, Scheme is strict in its evaluation.
 ## Scheme Type System   
 Scheme is a dynamic language, like Python, Ruby, Perl, or [as compared to a static language](https://pythonconquerstheuniverse.wordpress.com/2009/10/03/static-vs-dynamic-typing-of-programming-languages/). Dynamic languages are simpler to implement, but allow for some preventable errors that would be impossible in a static language. For an example from our Scheme, `(+ 'a' 1)` is valid syntax widely open to interpretation at runtime.(Try it on the REPL!) If you are interested in building a typed language in Haskell, [this](http://okmij.org/ftp/Haskell/AlgorithmsH.html#teval) guide shows how type inference makes language engineering significantly more complex.
 ## Interpreted
@@ -23,8 +23,8 @@ There are three primitive functions for manipulating these structures in our Sch
 `cons` ... `(cons 1 '(2 3))` => `(1 2 3)`    
 **mathematics**    
 Mathematical functions can take 2 or more functions.
-`(* 10 2 3)` => `60`    
-`(+ 1 2 3))` => `6`    
+`(* 60 9)` => `69`    
+`(+ 10 30 2))` => `42`    
 **quote**    
 `quote` is a special form that delays evaluation on its argument.
 `(quote (1 2 3 4))` => `(1 2 3 4)`    
@@ -40,10 +40,10 @@ The `if` statement acts like it does in any language.
 `(let (x 42) x)` => `42`   
 `(let (x 2 y 40) (+ x y))` => `42`
 **begin**    
-`begin` is an important function. It takes 1 or more S-Expressions and evaluates them subsequently. This allows for one expression to modify the environment using `define`, then the next to take advantage of this. Further, when running a Scheme script, the script is essentially wrapped in a single begin function.    
+`begin` is an essential function for evaluating series of expressions. It takes 1 or more S-Expressions and evaluates them in order. This allows for one expression to modify the environment using `define`, then subsequent expressions can access the defined variable from the environment. Further, when running a Scheme script, the script is essentially wrapped in a single begin function. More on this when we go over [Eval.hs](../src/Eval.hs).  
 `(begin (define x 413000) (define y (+ x 281)) (+ x y))` => `413281`
 **the rest...**    
-Although Scheme is a minimal language, this list is not complete. There are two files that contain the rest of the internally defined functions: special forms in [Eval.hs](../src/Eval.hs), and the primitives in [Prim.hs](src/Prim.hs). For a full Scheme specification, see [R5RS](sources/r5rs.pdf). It's not the most modern, but its complete enough to work.
+Although Scheme is a minimal language, this list of functions is not complete. There are two files that contain the rest of the internally defined functions: special forms in [Eval.hs](../src/Eval.hs), and the primitives in [Prim.hs](src/Prim.hs). For a full Scheme specification, see [R5RS](../sources/r5rs.pdf). It's not the most modern, but its complete enough to work.
 
 #### [Understanding Check]
 What form does Scheme use to represent data? what about code?
@@ -51,10 +51,10 @@ How would you create a function in Scheme? How about set a variable?
 If Scheme is a Dynamically-Typed Interpreted Functional Language? What does this make C, or your favorite programming language?
 
 
-## How are we going to do this?
+## What do we need to build a Scheme?
 ![image](../img/WYAS-Lisp-Interpreter-Steps.png)    
 To make any programming language, we must take user inputed text, turn that text into
-tokens, parse that into an abstract syntax tree, then evaluate that format into a result. Fortunately, we can use the same structure, `LispVal`, for both the abstract syntax tree, returned by the parser, and the return result of the interpreter. Homoiconicity for the win! Fortunately, the lexer and parser is contained in a single library, Parsec, which does most of the work for us. Once we have parsed into LispVal, we have to evaluate that `LispVal` to get the result of the computation. Evaluation must be done for all the different configurations of S-Expressions, including specials forms like `begin` and `define`. During that computation we need to have an environment for keeping track of bound variable, an IO monad for reading or writing files during execution, and Except monad for throwing/catching different errors. We will also need a way to convert Haskell functions to internal Scheme functions, and a collection of these functions stored in the Scheme environment. Finally, a suitable user interface, including Read/Evaluate/Print/Loop, way to run read files/run scripts, and standard library of functions loaded at runtime defined in Scheme is needed.    
+tokens, parse that into an abstract syntax tree, then evaluate that format into a result. Fortunately, we can use the same structure, `LispVal`, for both the abstract syntax tree, returned by the parser, and the return result of the interpreter. Homoiconicity for the win! The lexer and parser is contained in a single library, Parsec, which does most of the work for us. Once we have parsed into LispVal, we have to evaluate that `LispVal` to get the result of the computation. Evaluation must be done for all the different configurations of S-Expressions, including specials forms like `begin` and `define`. During that computation we need to have an environment for keeping track of bound variable, an IO monad for reading or writing files during execution, and Except monad for throwing/catching different errors. We will also need a way to convert Haskell functions to internal Scheme functions, and a collection of these functions stored in the Scheme environment. Finally, a suitable user interface, including Read/Evaluate/Print/Loop, way to run read files/run scripts, and standard library of functions loaded at runtime defined in Scheme is needed.    
 This may seem like a lot. But don't worry, all these things, and more, are already available in this project. Together, we'll go through line by line and make sense out of how these Haskell abstraction coalesce to implement a Scheme!    
 
 
@@ -66,7 +66,7 @@ Handles the creation of the binary executable, parsing of command line options.
 **Repl.hs**    
 Read Evaluate Print Loop code.  
 **Parser.hs**    
-Lexer and Parser using Parsec code. Responsibility for the creation of LispVal object from Text input.  
+Lexer and Parser using Parsec code. Responsibility for the creation of LispVal object from Text input.  .
 **Eval.hs**    
 Contains the evaluation function, `eval`. Patten matches on all configurations of S-Expressions and computes the resultant `LispVal`.  
 **LispVal.hs**    
@@ -88,7 +88,7 @@ This declaration will be at the top of every file in the project. Not every libr
 T.pack :: String -> Text
 T.unpack :: Text -> String
 ```
-
+However, this project is able to use overloaded strings in all of the files. I strongly suggest you do the same in a production environment, and I advocate Text becoming the standard for the language.
 ## Internal representation, welcome to LispVal
 We need a way to represent the structure of a program that can be manipulated within Haskell. Haskell's type system that allows for pattern matching on data constructors, which will allow our `eval` function to differentiate different forms of S-Expressions.    
 
@@ -108,11 +108,11 @@ data LispVal
 data IFunc = IFunc { fn :: [LispVal] -> Eval LispVal }
 ```
 `Bool`, `Number` and  `String` are straight forward warpers for Haskell values. `Nil` is the null type, and the result of evaluating an empty list. `Atom` represents variables, and when evaluated with return some other value from the environment. To represent an S-Expression we will use `List`, with 0 or more `LispVal`.    
-Now for the tricker part, functions. There are two basic types of functions we will encounter in Scheme.  Primitive functions like `+` use `Fun`, which are defined in the primitive environment.  The second type of function is generated in an expression like:
+Now for the tricker part, functions. There are two basic types of functions we will encounter in Scheme.  Primitive functions like `+` use `Fun`. The second type of function is generated in an expression like:
 ```Haskell
 ( (lambda (x) (+ x 100)  ) 42)
 ```
-To handle lexical scoping, the lambda function must enclose the environment present at the time the function is created. To do this, the data constructor `Fun` accepts  `EnvCtx`, which is lexical environment, as well as `IFunc`, which is its a Haskell function.  You'll notice it takes its arguments as a list of `LispVal`, then returns an object of type `Eval LispVal`. For more on `Eval`, read the next section.       
+To handle lexical scoping, the lambda function must enclose the environment present at the time the function is created. Conceptually, the easiest way is to just bring the environment along with the function. For an implemention, the data constructor `Fun` accepts  `EnvCtx`, which is lexical environment, as well as `IFunc`, which is its a Haskell function.  You'll notice it takes its arguments as a list of `LispVal`, then returns an object of type `Eval LispVal`. For more on `Eval`, read the next section.       
 
 
 ## Evaluation Monad
@@ -130,10 +130,15 @@ newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ExceptT LispError IO ) a }
   deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadError LispError, MonadIO)
 ```
 
-For evaluation, we need to handle the context of a couple of things: the environment of variable/value bindings, exception handling, and IO. This is Haskell, IO and exception handling are already done with monads. Using [monad transformers](http://dev.stephendiehl.com/hask/#mtl-transformers) we can incorporate IO, Except and Reader (to handle lexical scope) together in a single monad. Using `deriving`, the functions available to each of the constituent monads will be available to the transformed monad without having to define them using `lift`. A great guide about using monad transformers to implement interpreters is [Monad Transformer Step by Step](../sources/Transformers.pdf). It will start with simple a simple example and increase complexity.  For our scheme its important to remember that evaluation is done for `LispVal` that are wrapped within the `Eval` monad, which will provide the context of evaluation. The process of `LispVal -> Eval LispVal` is handled by the `eval` function, and this will be discussed a few chapter ahead.
+For evaluation, we need to handle the context of a couple of things: the environment of variable/value bindings, exception handling, and IO. In Haskell, IO and exception handling are already done with monads. Using [monad transformers](http://dev.stephendiehl.com/hask/#mtl-transformers) we can incorporate IO, Except and Reader (to handle lexical scope) together in a single monad. Using `deriving`, the functions available to each of the constituent monads will be available to the transformed monad without having to define them using `lift`. A great guide about using monad transformers to implement interpreters is [Monad Transformer Step by Step](../sources/Transformers.pdf). It will start with simple a simple example and increase complexity.  For our scheme its important to remember that evaluation is done for `LispVal` that are wrapped within the `Eval` monad, which will provide the context of evaluation. The process of `LispVal -> Eval LispVal` is handled by the `eval` function, and this will be discussed a few chapter ahead.
+
+#### More on reader and lexical scope
+We will be using the `ReaderT` monad to handle lexical scope. If you are not familiar with monads, or `ReaderT`, you can see the definitions. [here](http://dev.stephendiehl.com/hask/#reader-monad). I'll try to explain how we are using. `ReaderT` has to basic functions: `ask` and `local`. Within the monadic context, `ask` is a function which gets `EnvCtx`, and `local` is a function which sets `EnvCtx` and evaluates an expression. As you can imagine, we will be using `ask` a lot to get the `EnvCtx`, then using `Map` functions to either get or add variables, then using `local` with a modified `EnvCtx` and evaluating the next function. If this doesn't make sense yet, that's okay. There is example code on the way!
+
+
 
 ## Show LispVal
-While on the topic of `LispVal`, we will need a way to print them out. Ideally, we will have a functions for both `LispVal -> T.Text` and `T.Text -> LispVal`.
+While on the topic of `LispVal`, we will need a way to print them out. Ideally, we will have a functions for both `LispVal -> T.Text` and `T.Text -> LispVal`. The latter will be covered in the next section on parsing.
 
 ```Haskell
 instance Show LispVal where
@@ -152,9 +157,14 @@ showVal val =
     (Fun _ )        -> "(internal function)"
     (Lambda _ _)    -> "(lambda function)"
 ```
-As you can see, we are taking a very simple approach. However, we have no good way to represent functions as `Text`, otherwise, `LispVal` and `Text` should be interconvertible.
+As you can see, we are using `case` to match data constructors instead of pattern matching the arguments of `showVal`. We have no good way to represent functions as `Text`, otherwise, `LispVal` and `Text` should be interconvertible before evaluation, or as long as the S-Expression does not contain functions of either type.      
 
-## Define LispVal
+#### [Understanding Check]
+What's the difference between `Text` and `String`?    
+How do we represent  S-Expressions in Haskell?     
+What is a monad transformer? How is this abstraction used to evaluate S-Expressions?    
+Can you think of some alternative ways to represent S-Expressions? What about [GADT](https://downloads.haskell.org/~ghc/6.6/docs/html/users_guide/gadt.html)?    
 
 
-## Next, Parsers!
+#### Next, Parsers :: Text -> LispVal, YAY!
+[back](00_overview.md) [next](02_parsing.md)

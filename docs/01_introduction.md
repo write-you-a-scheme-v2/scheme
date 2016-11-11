@@ -157,7 +157,7 @@ showVal val =
     (Fun _ )        -> "(internal function)"
     (Lambda _ _)    -> "(lambda function)"
 ```
-As you can see, we are using `case` to match data constructors instead of pattern matching the arguments of `showVal`. We have no good way to represent functions as `Text`, otherwise, `LispVal` and `Text` should be interconvertible before evaluation, or as long as the S-Expression does not contain functions of either type.      
+As you can see, we are using `case` to match data constructors instead of pattern matching the arguments of `showVal`. We have no good way to represent functions as `Text`, otherwise, `LispVal` and `Text` should be interconvertible. This is the case before evaluation, or as long as the S-Expression does not contain functions from either data constructor.       
 
 #### [Understanding Check]
 What's the difference between `Text` and `String`?    

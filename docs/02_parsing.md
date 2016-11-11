@@ -49,7 +49,7 @@ Tok.TokenParser
 ## ParseExpr
 
 ## Putting it all together
-
+pattern binding using record destructing !
 
 
 

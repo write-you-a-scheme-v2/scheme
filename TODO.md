@@ -11,7 +11,7 @@ get the following to work:
   --begin function    
   --eval body to work when 2) let/lambda, support define statements    
   --io on files(read/write), read file to String, write string to file    
-  --eval body to work when 1) reading files 
+  --eval body to work when 1) reading files
   Test read/parse/eval files as script, evalBody like define
-  write :: LispVal -> T.Text     
-  read  ::            T.Text -> LispVal     
+  --write :: LispVal -> T.Text     
+  --read  ::            T.Text -> LispVal     

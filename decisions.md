@@ -21,7 +21,7 @@ apply fn for (primatives, IO functions, LispVal Lambdas)
 
 ### Prim Env
 1) basic operators (add/sub/div/mul etc)
-2) IO operators 
+2) IO operators
 3) Lisp-specific things like cons/cadr
 
 ### Evaluation
@@ -34,3 +34,33 @@ IORef --done
 Read typeclass -- used in number
 call/cc and continuations? -- none
 complexity of implementation/language -- ask about this in review
+
+##Chapters, v1.0
+01_introduction.md    
+02_parsing.md    
+03_evaluation.md    
+04_errors.md    
+05_primitives.md    
+06_repl.md    
+07_mutation.md    
+08_closures.md    
+09_io.md    
+10_stdlib.md    
+11_conclusion.md    
+
+
+##Chapters, v2.0
+#### in progress
+01_introduction.md    
+02_parsing.md    
+03_evaluation.md    
+04_primitives.md    
+05_repl.md    
+06_errors.md    
+
+#### future
+07_mutation.md    
+08_closures-and-scopes.md    
+09_io.md    
+10_stdlib.md    
+11_conclusion.md    

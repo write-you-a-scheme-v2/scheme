@@ -1,7 +1,13 @@
 Evaluation, Part 1
 ------------
 #### Evaluation Context
-LispVal.hs defines our key data structre for evaluation:    
+LispVal.hs defines our key data structre for evaluation:   
+
+ski, notes:
+in the first `begin' case, you could call `evalBody [rest]', and in the second case, you could call `evalBody rest' (and then perhaps rename one or both of those `rest's, to avoid confusion)
+(oh, and `lambda' also ought to allow multiple forms in the body)
+
+
 ```
 newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ExceptT LispError IO ) a }
   deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadError LispError, MonadI

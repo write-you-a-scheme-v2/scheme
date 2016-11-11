@@ -41,33 +41,35 @@ primEnv = [   ("+"    , Fun $ IFunc $ binopFold (numOp    (+))  (Number 0) )
             , ("slurp" , Fun $ IFunc $ unop $ slurp)
             ]
 
-unop :: Unary -> [LispVal] -> Eval LispVal 
+unop :: Unary -> [LispVal] -> Eval LispVal
 unop op args@[x] = op x
 unop op args     = throwError $ NumArgs 1 args
 
+
+-- will error
 binop :: Binary -> [LispVal] -> Eval LispVal
 binop op args@[x,y] = op x y
 binop op args          = throwError $ NumArgs 2 args
 
-fileExists :: LispVal -> Eval LispVal 
+fileExists :: LispVal -> Eval LispVal
 fileExists x@(Atom lbl) = fileExists (String lbl)
 fileExists (String txt) = Bool <$> (liftIO $ doesFileExist $ T.unpack txt)
 fileExists val = throwError $ TypeMismatch "read expects string, instead got: " val
 
-slurp :: LispVal -> Eval LispVal 
+slurp :: LispVal -> Eval LispVal
 slurp (String txt) = readTextFile txt
 slurp val =  throwError $ TypeMismatch "read expects string, instead got: " val
 -- (slurp "test/let.scheme")
 -- get this to work with "fileToEvalForm"
 readTextFile ::  T.Text -> Eval LispVal
-readTextFile script =  do  
+readTextFile script =  do
   inh <- liftIO $ openFile (T.unpack script) ReadMode
-  ineof <- liftIO $ hIsEOF inh 
+  ineof <- liftIO $ hIsEOF inh
   if ineof
     -- should throw an IOError (3 error types: parse, eval, io)
     then  (liftIO $ putStr "empty file\n") >> (throwError $ Default "empty file")
-      else do fileText <- liftIO $ hGetContents $ inh 
-              --liftIO $ hClose inh 
+      else do fileText <- liftIO $ hGetContents $ inh
+              --liftIO $ hClose inh
               liftIO $ putStr "FileContents:\n"
               return $ String $ T.pack fileText
 
@@ -78,7 +80,7 @@ binopFold op farg args = case args of
                             (a:as) -> foldM op farg args
                             []-> throwError $ NumArgs 2 args
 
-numBool :: (Integer -> Bool) -> LispVal -> Eval LispVal 
+numBool :: (Integer -> Bool) -> LispVal -> Eval LispVal
 numBool op (Number x) = return $ Bool $ op x
 numBool op  x         = throwError $ TypeMismatch "numeric op " x
 
@@ -89,12 +91,12 @@ numOp op (Number x)  y         = throwError $ TypeMismatch "numeric op " y
 numOp op x           y         = throwError $ TypeMismatch "numeric op " (String $ T.pack $ show x ++ show y)
 strOp :: (T.Text -> T.Text -> T.Text) -> LispVal -> LispVal -> Eval LispVal
 strOp op (String x) (String y) = return $ String $ op x y
-strOp op x          (String y) = throwError $ TypeMismatch "string op " x 
+strOp op x          (String y) = throwError $ TypeMismatch "string op " x
 strOp op (String x)  y         = throwError $ TypeMismatch "string op " y
 strOp op x           y         = throwError $ TypeMismatch "string op " (String $ T.pack $ show x ++ show y)
 -- (==) (||) (&&)
 eqOp :: (Bool -> Bool -> Bool) -> LispVal -> LispVal -> Eval LispVal
-eqOp op (Bool x) (Bool y) = return $ Bool $ op x y 
+eqOp op (Bool x) (Bool y) = return $ Bool $ op x y
 eqOp op  x       (Bool y) = throwError $ TypeMismatch "bool op " x
 eqOp op (Bool x)  y       = throwError $ TypeMismatch "bool op " y
 eqOp op x         y       = throwError $ TypeMismatch "bool op " (String $ T.pack $ show x ++ show y)
@@ -108,7 +110,7 @@ numCmp op x         y           = throwError $ TypeMismatch "numeric op " (Strin
 -- better wa to check args?
 cons :: [LispVal] -> Eval LispVal
 cons [x,y@(List yList)] = return $ List $ x:yList
-cons [c]                = return $ List [c] 
+cons [c]                = return $ List [c]
 cons []                 = return $ List []
 cons _  = throwError $ Default "cons takes two arguments: an S-Expression and a list"
 
@@ -122,10 +124,10 @@ cdr :: [LispVal] -> Eval LispVal
 cdr [List (x:xs)] = return $ List xs
 cdr [(List [])]  = return $ Nil
 cdr []           = return $ Nil
-cdr x             = throwError $ Default "cdr expects a list" 
+cdr x             = throwError $ Default "cdr expects a list"
 --
 --
-quote :: [LispVal] -> Eval LispVal 
+quote :: [LispVal] -> Eval LispVal
 quote [List xs]  = return $ List ((Atom "quote"):xs)
 quote [exp]      = return $ List [Atom "quote",exp]
 

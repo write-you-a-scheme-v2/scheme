@@ -20,10 +20,10 @@ import Data.Functor.Identity (Identity)
 
 
 lexer :: Tok.GenTokenParser T.Text () Identity
-lexer = Tok.makeTokenParser style 
+lexer = Tok.makeTokenParser style
 
 style :: Tok.GenLanguageDef T.Text () Identity
-style = Lang.emptyDef { 
+style = Lang.emptyDef {
   Tok.commentStart = "{-"
   , Tok.commentEnd = "-}"
   , Tok.commentLine = "@@"
@@ -35,6 +35,8 @@ style = Lang.emptyDef {
   --, Tok.reservedNames = [ "true", "false", "let", "quote", "lambda", "Nil" ]
   }
 
+
+-- pattern binding using record destructing !
 Tok.TokenParser { Tok.parens = m_parens
            , Tok.identifier = m_identifier -- Tok.Identifer lexer
            , Tok.reservedOp = m_reservedOp
@@ -44,47 +46,47 @@ Tok.TokenParser { Tok.parens = m_parens
 
 
 reservedOp :: T.Text -> Parser ()
-reservedOp op = Tok.reservedOp lexer (T.unpack op) 
+reservedOp op = Tok.reservedOp lexer (T.unpack op)
 
 parseAtom :: Parser LispVal
-parseAtom = do p <- m_identifier 
+parseAtom = do p <- m_identifier
                return $ Atom $ T.pack p
 
-parseText :: Parser LispVal 
-parseText = 
+parseText :: Parser LispVal
+parseText =
   do reservedOp "\""
      --p <- (m_identifier <|> many1 (noneOf "\""))
      p <- many1 (noneOf "\"")
-     reservedOp "\"" 
-     return $ (String . T.pack)  p 
+     reservedOp "\""
+     return $ (String . T.pack)  p
 
 
 
 parseNumber :: Parser LispVal
 parseNumber = ((Number . read) <$> many1 digit) <|> parseNegNum
 
-parseNegNum :: Parser LispVal 
-parseNegNum = 
+parseNegNum :: Parser LispVal
+parseNegNum =
   do char '-'
      d <- many1 digit
      return $ (Number . negate . read) d
 
 -- used for parsing files, otherwise see parseSExpr
-parseList :: Parser LispVal 
+parseList :: Parser LispVal
 parseList = List . concat <$> (Text.Parsec.many parseExpr `sepBy` (char ' ' <|> char '\n'))
 
-parseSExp :: Parser LispVal 
+parseSExp :: Parser LispVal
 parseSExp = List . concat <$> m_parens (Text.Parsec.many parseExpr `sepBy` (char ' ' <|> char '\n'))
 
 parseQuote :: Parser LispVal
-parseQuote = 
-  do 
-    reservedOp "\'" 
+parseQuote =
+  do
+    reservedOp "\'"
     x <- parseExpr
-    return $ List [Atom "quote", x] 
+    return $ List [Atom "quote", x]
 
 -- ordering of parse preference
-parseExpr :: Parser LispVal 
+parseExpr :: Parser LispVal
 parseExpr = parseReserved
       <|> parseAtom
       <|> parseText
@@ -94,9 +96,9 @@ parseExpr = parseReserved
       <|> parseSExp
 
 -- handles reserved words
-parseReserved :: Parser LispVal 
-parseReserved = 
-  do 
+parseReserved :: Parser LispVal
+parseReserved =
+  do
     reservedOp "Nil" >> return Nil
     <|> (reservedOp "#t" >> return (Bool True))
     <|> (reservedOp "#f" >> return (Bool False))
@@ -106,23 +108,23 @@ contents :: Parser a -> Parser a
 contents p = do
   Tok.whiteSpace lexer
   r <- p
-  eof 
+  eof
   return r
 
 
 -- for parsing SExprs, used in REPL
 readExpr :: T.Text -> Either ParseError LispVal
-readExpr = parse (contents parseExpr) "<stdin>" 
+readExpr = parse (contents parseExpr) "<stdin>"
 
 
 -- for parsing files, move into "begin" form to allow for define statements
 -- and evaluation w/ evalBody
-readExprFile :: T.Text -> Either ParseError LispVal 
+readExprFile :: T.Text -> Either ParseError LispVal
 readExprFile = parse (contents parseList) "<file>"
 
 -- move this to the 'begin' form -- then we can run 'eval'
 -- we could also do evalBody instead of eval after readExprFile"
-fileToEvalForm :: Either ParseError LispVal -> Either ParseError LispVal 
+fileToEvalForm :: Either ParseError LispVal -> Either ParseError LispVal
 fileToEvalForm (Right (List list)) = Right (List ((Atom "begin") : list ) )
 fileToEvalForm x = x
 
@@ -143,9 +145,9 @@ p pa inp = case parse pa "" inp of
 -- need a copy of LispVal for stand alone
 data LispVal = Nil | Bin Bool | Atom T.Text | Num Int | Str T.Text | List [LispVal] deriving (Show)
 main :: IO ()
-main = 
-  do 
-    putStrLn "hello" 
+main =
+  do
+    putStrLn "hello"
     putStrLn $ p parseReserved "Nil"
     putStrLn $ p parseExpr  "#t"
     putStrLn $ p parseExpr  "#f"

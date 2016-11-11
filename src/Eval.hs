@@ -45,8 +45,8 @@ textToEvalForm input = either (\x -> throwError $ PError $ show $ x )  eval (rea
 
 -- Run file as script
 evalFile :: T.Text -> IO ()
-evalFile fileExpr = 
-  do 
+evalFile fileExpr =
+  do
     out <- runExceptT $ runAppT testEnv (fileToEvalForm fileExpr)
     either (putStrLn . show) (putStrLn . show) out
 
@@ -65,20 +65,21 @@ getVar n@(Atom atom) = do
       Nothing -> throwError $ Default  $ "error on getVar: " ++ show n
 getVar n = throwError $ Default $ "failure to get variable: " ++ show  n
 
-ensureAtom :: LispVal -> Eval LispVal 
+ensureAtom :: LispVal -> Eval LispVal
 ensureAtom (Atom n) = return $ Atom n
 
 extractVar :: LispVal -> T.Text
 extractVar (Atom n) = n
-
+-- `getEven [] = []; getEven (x:xs) = x : getOdd xs; getOdd [] = []; getOdd (x:xs) = getEven xs'
+-- halve [] = ([],[]); halve (x:xs) = (x:zs,ys) where (ys,zs) = halve xs
 getEven :: [t] -> [t]
-getEven x = (\a -> (x !! a)) <$> (Prelude.filter Prelude.even [0..(Prelude.length x - 1)]) 
+getEven x = (\a -> (x !! a)) <$> (Prelude.filter Prelude.even [0..(Prelude.length x - 1)])
 getOdd :: [t] -> [t]
 getOdd x = (\a -> (x !! a))  <$> (Prelude.filter Prelude.odd  [1..(Prelude.length x - 1)])
 
   --return  $ Lambda ( IFunc ( applyLambda params expr)) envLocal
-applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal 
-applyLambda expr params args = 
+applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal
+applyLambda expr params args =
     do env <- ask
        argEval <- evalToList $ List args
        local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a,b)) params argEval) <> env)) (eval expr)
@@ -94,12 +95,12 @@ eval n@(Atom _) = getVar n
 -- we are making write a special form
 -- the arguments to write will not be evaluated
 -- instead they will be converted to a string.
-eval arg@(List [(Atom "write"), rest]) = do 
+eval arg@(List [(Atom "write"), rest]) = do
   return $ String $ T.pack $ show $ rest
-eval arg@(List ((:) (Atom "write") rest)) = do 
+eval arg@(List ((:) (Atom "write") rest)) = do
   return $ String $ T.pack $ show $ List rest
 
--- textToEvalForm 
+-- textToEvalForm
 eval (List [Atom "quote",val]) = return $ val
 eval (List [Atom "if", pred,ant,cons]) =
     do ifRes <- eval pred
@@ -108,51 +109,51 @@ eval (List [Atom "if", pred,ant,cons]) =
          (Bool False) ->  (eval cons)
          _           -> throwError (Default "ifelse must by T/F")
 -- global definition
-eval (List [(Atom "begin"),rest]) = do 
+eval (List [(Atom "begin"),rest]) = do
   liftIO $ putStrLn " begin 1 rest"
-  evalBody $ rest 
-eval (List ((:)(Atom "begin") rest)) = do 
+  evalBody $ rest
+eval (List (Atom "begin" : rest)) = do
   liftIO $ putStrLn " begin many rest"
-  evalBody $ List rest 
+  evalBody $ List rest
 
-eval (List [Atom "let", List pairs, expr]) = 
+eval (List [Atom "let", List pairs, expr]) =
     do env <- ask
        atoms <- mapM ensureAtom $ getEven pairs
        vals <- evalToList $ List $ getOdd pairs
        local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a,b)) atoms vals) <> env)) (eval expr)
 
-eval (List [Atom "let1", List [Atom atom,val], expr]) = 
+eval (List [Atom "let1", List [Atom atom,val], expr]) =
   do evalVal <- eval val
      env <- ask
      local (const $ Map.insert atom val env) (eval expr)
 
-eval (List [Atom "letb", List pairs, expr]) = 
+eval (List [Atom "letb", List pairs, expr]) =
     do env <- ask
        atoms <- mapM ensureAtom $ getEven pairs
        vals <- evalToList $ List $ getOdd pairs
        local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a,b)) atoms vals) <> env)) (evalBody expr)
 
-eval (List [Atom "lambda",List params, expr]) = 
+eval (List [Atom "lambda",List params, expr]) =
     do envLocal <- ask
        return  $ Lambda ( IFunc ( applyLambda expr params )) envLocal
 
-eval (List [Atom fn, arg1, arg2]) = 
-  do 
-    fnVariable <- getVar $ Atom fn 
+eval (List [Atom fn, arg1, arg2]) =
+  do
+    fnVariable <- getVar $ Atom fn
     v1 <- eval arg1
     v2 <- eval arg2
     case fnVariable of
       (Fun (IFunc internalFn)) -> internalFn [v1,v2]
-      (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) (internalfn [v1,v2]) 
+      (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) (internalfn [v1,v2])
       _                -> throwError $ NotFunction "function" "not found???"
 
-eval (List list@((:) x xs)) = 
+eval (List list@((:) x xs)) =
   do
     fnVariable <- eval x
     xVal <- evalToList $ List xs
     case fnVariable of
       (Fun ( IFunc internalFn)) -> internalFn xVal
-      (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) (internalfn xVal) 
+      (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) (internalfn xVal)
       _                -> throwError $ NotFunction "tried to evaluate non-function: " (show fnVariable)
 --
 
@@ -160,17 +161,17 @@ eval x = throwError $ Default $ "expression could not be evaluated: " ++ (show x
 
 
 -- when no defines are left
-evalBody :: LispVal -> Eval LispVal 
-evalBody (List list@[List ((:) (Atom "define") [Atom var,defExpr] ),rest]) = 
+evalBody :: LispVal -> Eval LispVal
+evalBody (List list@[List ((:) (Atom "define") [Atom var,defExpr] ),rest]) =
   do evalVal <- eval defExpr
      env <- ask
      local (const $ Map.insert var evalVal env) (eval rest)
-evalBody (List list@((:) (List ((:) (Atom "define") [Atom var,defExpr] )) rest)) = 
+evalBody (List list@((:) (List ((:) (Atom "define") [Atom var,defExpr] )) rest)) =
 -- when more than one sub expr is left
   do evalVal <- eval defExpr
      env <- ask
      local (const $ Map.insert var evalVal env) (evalBody $ List rest)
-evalBody x = do 
+evalBody x = do
   liftIO $ putStrLn "evalBody fallthrough"
   eval x
 
@@ -178,13 +179,13 @@ evalBody x = do
 
 
 evalToList :: LispVal -> Eval [LispVal]
-evalToList (List expr) = do 
+evalToList (List expr) = do
   mapM eval expr
 evalToList _ = throwError $ Default "internal error, check evalToList"
 
 {-
 letPairs :: [LispVal] -> Eval ()
-letPairs x = 
+letPairs x =
   case x of
     []        -> throwError (Default "let")
     [one]     -> throwError (Default "let")
@@ -222,7 +223,7 @@ primEnv = [   ("+"    , Fun $ IFunc $ binopFold (numOp    (+))  (Number 0) )
 type Unary = LispVal -> Eval LispVal
 type Binary = LispVal -> LispVal -> Eval LispVal
 
-unop :: Unary -> [LispVal] -> Eval LispVal 
+unop :: Unary -> [LispVal] -> Eval LispVal
 unop op args@[x] = op x
 unop op args     = throwError $ NumArgs 1 args
 
@@ -232,7 +233,7 @@ binop op args@[x,y] = case args of
                             _ -> throwError $ NumArgs 2 args
 
 
-readFn :: LispVal -> Eval LispVal 
+readFn :: LispVal -> Eval LispVal
 readFn x = do
   val <- eval  x
   case val of
@@ -241,7 +242,7 @@ readFn x = do
 
 
 
-fileExists :: LispVal -> Eval LispVal 
+fileExists :: LispVal -> Eval LispVal
 fileExists x@(Atom lbl) = do
   val <- eval x
   fileExists val
@@ -252,7 +253,7 @@ fileExists (String txt) = do
     _    -> return $ Bool False
 fileExists val = throwError $ TypeMismatch "read expects string, instead got: " val
 
-slurp :: LispVal -> Eval LispVal 
+slurp :: LispVal -> Eval LispVal
 slurp x = do
   val <- eval x
   case val of
@@ -261,13 +262,13 @@ slurp x = do
 -- (slurp "test/let.scheme")
 -- get this to work with "fileToEvalForm"
 readTextFile ::  T.Text -> Eval LispVal
-readTextFile script =  do  
+readTextFile script =  do
   inh <- liftIO $ openFile (T.unpack script) ReadMode
-  ineof <- liftIO $ hIsEOF inh 
+  ineof <- liftIO $ hIsEOF inh
   if ineof
     then  (liftIO $ putStr "empty file\n") >> (throwError $ Default "empty file")
-      else do fileText <- liftIO $ hGetContents $ inh 
-              --liftIO $ hClose inh 
+      else do fileText <- liftIO $ hGetContents $ inh
+              --liftIO $ hClose inh
               liftIO $ putStr "FileContents:\n"
               liftIO $ putStr fileText
               textToEvalForm $ T.pack fileText
@@ -281,7 +282,7 @@ binopFold op farg args = case args of
                             (a:as) -> foldM op farg args
                             []-> throwError $ NumArgs 2 args
 
-numBool :: (Integer -> Bool) -> LispVal -> Eval LispVal 
+numBool :: (Integer -> Bool) -> LispVal -> Eval LispVal
 numBool op (Number x) = return $ Bool $ op x
 numBool op  x         = throwError $ TypeMismatch "numeric op " x
 
@@ -292,12 +293,12 @@ numOp op (Number x)  y         = throwError $ TypeMismatch "numeric op " y
 numOp op x           y         = throwError $ TypeMismatch "numeric op " (String $ T.pack $ show x ++ show y)
 strOp :: (T.Text -> T.Text -> T.Text) -> LispVal -> LispVal -> Eval LispVal
 strOp op (String x) (String y) = return $ String $ op x y
-strOp op x          (String y) = throwError $ TypeMismatch "string op " x 
+strOp op x          (String y) = throwError $ TypeMismatch "string op " x
 strOp op (String x)  y         = throwError $ TypeMismatch "string op " y
 strOp op x           y         = throwError $ TypeMismatch "string op " (String $ T.pack $ show x ++ show y)
 -- (==) (||) (&&)
 eqOp :: (Bool -> Bool -> Bool) -> LispVal -> LispVal -> Eval LispVal
-eqOp op (Bool x) (Bool y) = return $ Bool $ op x y 
+eqOp op (Bool x) (Bool y) = return $ Bool $ op x y
 eqOp op  x       (Bool y) = throwError $ TypeMismatch "bool op " x
 eqOp op (Bool x)  y       = throwError $ TypeMismatch "bool op " y
 eqOp op x         y       = throwError $ TypeMismatch "bool op " (String $ T.pack $ show x ++ show y)
@@ -310,13 +311,13 @@ numCmp op x         y           = throwError $ TypeMismatch "numeric op " (Strin
 
 -- better wa to check args?
 cons :: [LispVal] -> Eval LispVal
-cons [x,y@(List _)] = do 
+cons [x,y@(List _)] = do
   xval  <- eval x
   lvals <- evalToList y
   return $ List $ x:lvals
 cons [c] = do
   val <- eval c
-  return $ List [c] 
+  return $ List [c]
 cons [] = return $ List []
 
 car :: [LispVal] -> Eval LispVal
@@ -330,7 +331,7 @@ cdr [(List [])]  = return $ Nil
 cdr []           = return $ Nil
 --
 --
-quote :: [LispVal] -> Eval LispVal 
+quote :: [LispVal] -> Eval LispVal
 quote [List xs]  = return $ List ((Atom "quote"):xs)
 quote [exp]      = return $ List [Atom "quote",exp]
 

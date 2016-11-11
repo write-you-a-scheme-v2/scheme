@@ -52,7 +52,7 @@ If Scheme is a Dynamically-Typed Interpreted Functional Language? What does this
 
 
 ## How are we going to do this?
-[image](../img/WYAS-Lisp-Interpreter-Steps.png)
+![image](../img/WYAS-Lisp-Interpreter-Steps.png)    
 To make any programming language, we must take user inputed text, turn that text into
 tokens, parse that into an abstract syntax tree, then evaluate that format into a result. Fortunately, we can use the same structure, `LispVal`, for both the abstract syntax tree, returned by the parser, and the return result of the interpreter. Homoiconicity for the win! Fortunately, the lexer and parser is contained in a single library, Parsec, which does most of the work for us. Once we have parsed into LispVal, we have to evaluate that `LispVal` to get the result of the computation. Evaluation must be done for all the different configurations of S-Expressions, including specials forms like `begin` and `define`. During that computation we need to have an environment for keeping track of bound variable, an IO monad for reading or writing files during execution, and Except monad for throwing/catching different errors. We will also need a way to convert Haskell functions to internal Scheme functions, and a collection of these functions stored in the Scheme environment. Finally, a suitable user interface, including Read/Evaluate/Print/Loop, way to run read files/run scripts, and standard library of functions loaded at runtime defined in Scheme is needed.    
 This may seem like a lot. But don't worry, all these things, and more, are already available in this project. Together, we'll go through line by line and make sense out of how these Haskell abstraction coalesce to implement a Scheme!    
@@ -60,7 +60,7 @@ This may seem like a lot. But don't worry, all these things, and more, are alrea
 
 
 ## Project Road Map: What do we have?
-[image](../img/WYAS-Dependency-Tree.png)
+![image](../img/WYAS-Dependency-Tree.png)    
 **Main.hs**  Handles the creation of the binary executable, parsing of command line options.  
 **Repl.hs**  Read Evaluate Print Loop code.  
 **Parser.hs**  Lexer and Parser using Parsec code. Responsibility for the creation of LispVal object from Text input.  

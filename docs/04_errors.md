@@ -45,4 +45,4 @@ showError err =
  Similar to our `showVal`, from [Chapter 1][01_introduction], we override the `show` typeclass to give a custom message for the type.
 
  #### Next, Let's make some functions!
- [back](03_evaluation.md)[next](05_primitives.md)
+ [home](00_overview.md)...[back](03_evaluation.md)...[next](05_primitives.md)

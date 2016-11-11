@@ -26,4 +26,4 @@ http://catamorph.de/documents/Transformers.pdf
 https://github.com/justinethier/husk-scheme/tree/master/hs-src/Language/Scheme  
 
 #### Danger Will Robinson, on to Errors!
-[back](03_evaluation.md)[next](04_errors.md)
+[home](00_overview.md)...[back](03_evaluation.md)...[next](04_errors.md)

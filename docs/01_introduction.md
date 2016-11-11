@@ -17,38 +17,38 @@ Type systems are extremely complex to build, and balancing programming productiv
 ## Scheme Examples
 To get a feel for our Scheme, here is the evaluation of some functions and their arguments. Keep in mind that we must build the abstracts that are capable of evaluating these forms. Both the right and left hand side of the form are represented with `LispVal`.    
 **list processing**    
-There are three primitive functions for manipulating these structures in our Scheme. We will be implementing them later as part of the standard library and discussing the tradeoffs of other implementations.
-`car`  ... `(car '(1 2 3))`  => `(1)`   
-`cadr` ... `(cadr '(1 2 3))` => `(2 3)`    
+There are three primitive functions for manipulating these structures in our Scheme. We will be implementing them later as part of the standard library and discussing the tradeoffs of other implementations.    
+`car`  ... `(car '(1 2 3))`  => `(1)`    
+`cadr` ... `(cadr '(1 2 3))` => `(2 3)`     
 `cons` ... `(cons 1 '(2 3))` => `(1 2 3)`    
-**mathematics**    
-Mathematical functions can take 2 or more functions.
+**mathematics**     
+Mathematical functions can take 2 or more functions.    
 `(* 60 9)` => `69`    
 `(+ 10 30 2))` => `42`    
 **quote**    
-`quote` is a special form that delays evaluation on its argument.
+`quote` is a special form that delays evaluation on its argument.    
 `(quote (1 2 3 4))` => `(1 2 3 4)`    
 `'(1 2 3 4)` => `(1 2 3 4)`    
 **if/then**    
-The `if` statement acts like it does in any language.
+The `if` statement acts like it does in any language.    
 `(if (< 4 5) #f 42)` => `#f`    
 **lambda/anonymous functions**    
-`lambda` is used to create an anonymous function.
+`lambda` is used to create an anonymous function.    
 `((lambda (y) (+ y 2)) 40)` => `42`    
 **let**    
-`let` takes two arguments. Its first is a paired list of variables and values. These variables are set the to corresponding values, which are then in scope for the evaluation of the second argument.
-`(let (x 42) x)` => `42`   
-`(let (x 2 y 40) (+ x y))` => `42`
+`let` takes two arguments. Its first is a paired list of variables and values. These variables are set the to corresponding values, which are then in scope for the evaluation of the second argument.    
+`(let (x 42) x)` => `42`    
+`(let (x 2 y 40) (+ x y))` => `42`    
 **begin**    
-`begin` is an essential function for evaluating series of expressions. It takes 1 or more S-Expressions and evaluates them in order. This allows for one expression to modify the environment using `define`, then subsequent expressions can access the defined variable from the environment. Further, when running a Scheme script, the script is essentially wrapped in a single begin function. More on this when we go over [Eval.hs](../src/Eval.hs).  
-`(begin (define x 413000) (define y (+ x 281)) (+ x y))` => `413281`
+`begin` is an essential function for evaluating series of expressions. It takes 1 or more S-Expressions and evaluates them in order. This allows for one expression to modify the environment using `define`, then subsequent expressions can access the defined variable from the environment. Further, when running a Scheme script, the script is essentially wrapped in a single begin function. More on this when we go over [Eval.hs](../src/Eval.hs).     
+`(begin (define x 413000) (define y (+ x 281)) (+ x y))` => `413281`    
 **the rest...**    
-Although Scheme is a minimal language, this list of functions is not complete. There are two files that contain the rest of the internally defined functions: special forms in [Eval.hs](../src/Eval.hs), and the primitives in [Prim.hs](src/Prim.hs). For a full Scheme specification, see [R5RS](../sources/r5rs.pdf). It's not the most modern, but its complete enough to work.
+Although Scheme is a minimal language, this list of functions is not complete. There are two files that contain the rest of the internally defined functions: special forms in [Eval.hs](../src/Eval.hs), and the primitives in [Prim.hs](src/Prim.hs). For a full Scheme specification, see [R5RS](../sources/r5rs.pdf). It's not the most modern, but its complete enough to work.    
 
 #### [Understanding Check]
-What form does Scheme use to represent data? what about code?
-How would you create a function in Scheme? How about set a variable?
-If Scheme is a Dynamically-Typed Interpreted Functional Language? What does this make C, or your favorite programming language?
+What form does Scheme use to represent data? what about code?    
+How would you create a function in Scheme? How about set a variable?    
+If Scheme is a Dynamically-Typed Interpreted Functional Language? What does this make C, or your favorite programming language?    
 
 
 ## What do we need to build a Scheme?
@@ -167,4 +167,4 @@ Can you think of some alternative ways to represent S-Expressions? What about [G
 
 
 #### Next, Parsers :: Text -> LispVal, YAY!
-[back](00_overview.md) [next](02_parsing.md)
+[back](00_overview.md)...[next](02_parsing.md)

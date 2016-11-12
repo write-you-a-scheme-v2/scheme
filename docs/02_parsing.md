@@ -1,6 +1,6 @@
 Parsing
 ------------
-[img](../img/WYAS-Text-To-Eval.png)
+![img](../img/WYAS-Text-To-Eval.png)
 ## What is Parsing?
 **lexeme** the basic lexical unit of meaning.        
 **token** structure representing a lexeme that explicitly indicates its categorization for the purpose of parsing.    

@@ -1,7 +1,8 @@
 Evaluation, Part 1
 ------------
 #### Evaluation Context
-LispVal.hs defines our key data structre for evaluation:   
+![../img/WYAS-Eval-If-Statement.png]
+LispVal.hs defines our key data structure for evaluation:   
 
 ski, notes:
 in the first `begin' case, you could call `evalBody [rest]', and in the second case, you could call `evalBody rest' (and then perhaps rename one or both of those `rest's, to avoid confusion)

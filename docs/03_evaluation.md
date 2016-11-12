@@ -1,7 +1,7 @@
 Evaluation, Part 1
 ------------
 #### Evaluation Context
-![../img/WYAS-Eval-If-Statement.png]
+![img](../img/WYAS-Eval-If-Statement.png)
 LispVal.hs defines our key data structure for evaluation:   
 
 ski, notes:

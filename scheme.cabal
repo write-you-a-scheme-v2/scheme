@@ -12,6 +12,7 @@ library
     Pretty
     Eval
     Cli
+    Prim
 
   build-depends:       
     base           >= 4.8 && <5.0,

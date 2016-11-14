@@ -53,11 +53,12 @@ data LispError
   | LengthOfList String Int
   | ExpectedList T.Text
   | TypeMismatch String LispVal
-  | BadSpecialForm String LispVal
-  | NotFunction String String
-  | UnboundVar String String
+  | BadSpecialForm T.Text 
+  | NotFunction LispVal
+  | UnboundVar T.Text
   | Default String
   | PError String
+  | IOError T.Text
 
 instance Show LispError where
   show = T.unpack . showError
@@ -65,13 +66,14 @@ instance Show LispError where
 showError :: LispError -> T.Text
 showError err =
   case err of
+    (IOError txt)            -> T.concat ["Error reading file: ", txt]
     (NumArgs int args)       -> "Error Number Arguments"
     (LengthOfList sts int)   -> "Error Length of List"
     (ExpectedList txt)       -> "Error Expected List"
     (TypeMismatch str val)   -> T.concat ["Error Type Mismatch: ", T.pack str, showVal val]
-    (BadSpecialForm str val) -> "Error Bad Special Form"
-    (NotFunction str str1)   -> "Error Not a Function"
-    (UnboundVar str str1)    -> "Error Unbound Variable"
+    (BadSpecialForm txt)     -> T.concat ["Error Bad Special Form: ", txt]
+    (NotFunction val)        -> T.concat ["Error Not a Function: ", showVal val]
+    (UnboundVar txt)         -> T.concat ["Error Unbound Variable: ", txt]
     (PError str)             -> T.concat ["Parser Error, expression cannot evaluate: ",T.pack str]
     (Default str)            -> T.concat ["Error, Danger Will Robinson! ", T.pack str]
     _                        -> "I got 99 problems, most of which is the parser"

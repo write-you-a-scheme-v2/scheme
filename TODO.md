@@ -1,6 +1,6 @@
 ##TODO list
 11/11/2016 (Goal: Write tutorial chapters 00 to 04)
-- [ ] Make sure resources from ./sources/* are added to introduction
+- [x] Make sure resources from ./sources/* are added to introduction
 - [ ] Balance intro/overview material between chapters
 - [x] Figure out how Parser is constructing types around m_parens
 - [x] Clean up Parser, remove uneeded variables decide if m_* or Tok.* should be used.

@@ -75,7 +75,7 @@ parseQuote = do
   return $ List [Atom "quote", x]
 
 parseExpr :: Parser LispVal
-parseExpr = parseReserved
+parseExpr = parseReserved <|> parseNumber
   <|> parseAtom
   <|> parseText
   <|> parseQuote

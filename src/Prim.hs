@@ -82,25 +82,25 @@ numOp :: (Integer -> Integer -> Integer) -> LispVal -> LispVal -> Eval LispVal
 numOp op (Number x) (Number y) = return $ Number $ op x  y
 numOp op x          (Number y) = throwError $ TypeMismatch "numeric op " x
 numOp op (Number x)  y         = throwError $ TypeMismatch "numeric op " y
-numOp op x           y         = throwError $ TypeMismatch "numeric op " (String $ T.pack $ show x ++ show y)
+numOp op x           y         = throwError $ TypeMismatch "numeric op " x
 
 strOp :: (T.Text -> T.Text -> T.Text) -> LispVal -> LispVal -> Eval LispVal
 strOp op (String x) (String y) = return $ String $ op x y
 strOp op x          (String y) = throwError $ TypeMismatch "string op " x
 strOp op (String x)  y         = throwError $ TypeMismatch "string op " y
-strOp op x           y         = throwError $ TypeMismatch "string op " (String $ T.pack $ show x ++ show y)
+strOp op x           y         = throwError $ TypeMismatch "string op " x
 
 eqOp :: (Bool -> Bool -> Bool) -> LispVal -> LispVal -> Eval LispVal
 eqOp op (Bool x) (Bool y) = return $ Bool $ op x y
 eqOp op  x       (Bool y) = throwError $ TypeMismatch "bool op " x
 eqOp op (Bool x)  y       = throwError $ TypeMismatch "bool op " y
-eqOp op x         y       = throwError $ TypeMismatch "bool op " (String $ T.pack $ show x ++ show y)
+eqOp op x         y       = throwError $ TypeMismatch "bool op " x
 
 numCmp :: (Integer -> Integer -> Bool) -> LispVal -> LispVal -> Eval LispVal
 numCmp op (Number x) (Number y) = return . Bool $ op x  y
 numCmp op x          (Number y) = throwError $ TypeMismatch "numeric op " x
 numCmp op (Number x)  y         = throwError $ TypeMismatch "numeric op " y
-numCmp op x         y           = throwError $ TypeMismatch "numeric op " (String $ T.pack $ show x ++ show y)
+numCmp op x         y           = throwError $ TypeMismatch "numeric op " x
 
 
 eqCmd :: LispVal -> LispVal -> Eval LispVal 

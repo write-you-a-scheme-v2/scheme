@@ -136,7 +136,7 @@ eval (List ((:) x xs)) = do
       (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) $ internalfn xVal
       _                -> throwError $ NotFunction funVar 
 
-eval x = throwError $ Default $ "expression could not be evaluated: " ++ (show x)
+eval x = throwError $ Default  x
 
 -- global definition
 -- https://github.com/write-you-a-scheme-v2/scheme/issues/7

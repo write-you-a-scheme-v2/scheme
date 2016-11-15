@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Cli (
   cliIface
 ) where
@@ -7,7 +8,9 @@ import Eval -- evalFile :: T.Text -> IO ()
 import Repl -- Repl.mainLoop :: IO ()
 import System.IO
 import System.Environment --getArgs
+import System.Directory
 import Data.Text as T
+import Data.Text.IO as TIO
 import Options.Applicative
 
 -- SOURCES
@@ -15,15 +18,12 @@ import Options.Applicative
 -- https://github.com/pcapriotti/optparse-applicative
 -- https://hackage.haskell.org/package/optparse-applicative
 
-runScript ::  T.Text -> IO ()
-runScript script =  do 
-  inh <- openFile (T.unpack script) ReadMode
-  ineof <- hIsEOF inh
-  if ineof
-    then  putStr "empty file\n" >> return ()
-      else do fileText <- hGetContents inh 
-              evalFile $ T.pack fileText
-  hClose inh
+runScript ::  FilePath -> IO ()
+runScript fname = do
+  exists <- doesFileExist fname
+  if exists
+  then TIO.readFile fname >>= evalFile
+  else TIO.putStrLn "File does not exist."
 
 data LineOpts = LineOpts
   { script :: String
@@ -44,7 +44,7 @@ parseLineOpts = LineOpts
 
 schemeEntryPoint :: LineOpts -> IO ()
 schemeEntryPoint (LineOpts _ True) = Repl.mainLoop --repl
-schemeEntryPoint (LineOpts script False) = runScript $ T.pack script
+schemeEntryPoint (LineOpts script False) = runScript script
 
 cliIface :: IO ()
 cliIface = execParser opts >>= schemeEntryPoint

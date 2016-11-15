@@ -1,31 +1,42 @@
 Parsing
 ------------
-![img](../img/WYAS-Text-To-Eval.png)
+![](../img/WYAS-Text-To-Eval.png)
+
 ## What is Parsing?
-**lexeme** the basic lexical unit of meaning.        
-**token** structure representing a lexeme that explicitly indicates its categorization for the purpose of parsing.    
-**lexer** A algorithm for lexical analysis that separates a stream of text into its component lexemes.  Defines the rules for individual words, or allowed symbols in a programming language.     
-**parser** an algorithm for converting the lexemes into valid language grammar. Operates on the level above the lexer, and defines the grammatical rules.
-![image](../img/WYAS-Lisp-Interpreter-Steps.png)    
+
+First some definitions:
+
+* **lexeme** the basic lexical unit of meaning.        
+* **token** structure representing a lexeme that explicitly indicates its categorization for the purpose of parsing.    
+* **lexer** A algorithm for lexical analysis that separates a stream of text into its component lexemes.  Defines the rules for individual words, or allowed symbols in a programming language.     
+* **parser** an algorithm for converting the lexemes into valid language grammar. Operates on the level above the lexer, and defines the grammatical rules.
+
+![](../img/WYAS-Lisp-Interpreter-Steps.png)    
+
 Most basically, Parsing and Lexing is the process of converting the input text of either the REPL or program and converting that into a format that can be evaluated by the interpreter. That covertted format, in our case, is `LispVal`. The library we will use for parsing is called `Parsec`.
 
 ## About Parsec
+
 Parsec is a monadic parser, and works by matching streaming text to lexeme then parsing that into an abstract syntax via data constructors. Thus, for text input, the lexemes, or units of text that define a language feature, are converted a `LispVal` structure (abstract syntax tree). These lexemes are individually defined via Parsec, and wholly define the valid lexical structure of our Scheme.
 
 ## Why Parsec?
+
 Parsec is preferable for its simplicity compared to the alternatives: Alex & Happy or Attoparsec. Alex & Happy are more complex, and require a separate compilation step. Parsec works well for most grammars, but is computationally expensive for left recursive grammars. Attoparsec is faster, and preferable for parsing network messages or other binary formats. Parsec has better error messages, a helpful feature for programming languages. If our language required a lot of left-recursive parsing, Alex & Happy would probably be a better choice. However, the simplicity and minimalism of Scheme syntax makes parsing relatively simple.
 
 
 ## How parsing will work
 The parser will consume text, and return a `LispVal` representing the abstract syntax tree that can be evaluated into an `Eval LispVal`. Parsec defines parsers using,    
+
 ```Haskell
 newtype Parser LispVal = Parser (Text -> [(LispVal,Text)])
 ```    
+
 Thus, a Parser is a type consisting of a function that 1) takes some `Text` and 2) return a `LispVal` and some `Text`
 
 
 ## Parser.hs imports
-```Haskell
+
+```haskell
 import LispVal
 import Text.Parsec
 import Text.Parsec.Text
@@ -39,7 +50,8 @@ import Data.Functor.Identity (Identity)
 Good for us, Parsec is available with `Text`, not just `String`. If you are looking online for examples of Parsec, make sure you have the correct encoding of strings. Converting can be a little bit of a hassle, but its worth the extra effort. If you are really serious about your language project, I suggest using Alex & Happy. I've used them happily used them in production to parse a javascipt-esque language!
 
 ## Lexer
-```Haskell
+
+```haskell
 lexer :: Tok.GenTokenParser T.Text () Identity
 lexer = Tok.makeTokenParser style
 
@@ -55,15 +67,18 @@ style = Lang.emptyDef {
   , Tok.reservedOpNames = [ "'", "\""]
   }
 ```
+
 Whelp, that's about all we need. Parsec does the heavy lifting for us, all we need to do is supply the specification for the lexeme. Starting with comments, we'll use the same standards as Haskell, and moving on to operators and identifiers. Finally, we established reserved operators, which will be single and double quotes. Almost feels like cheating, but we end up for the tokens needed to parse all the same!
-```Haskell
+
+```haskell
 -- pattern binding using record destructing !
 Tok.TokenParser { Tok.parens = m_parens
            , Tok.identifier = m_identifier } = Tok.makeTokenParser style
 ```
+
 Before we move on, I'm going to use record deconstruction and pattern binding to define some shortcuts. It's a neat trick.
 
-## Parser!
+## Parser
 
 ```Haskell
 reservedOp :: T.Text -> Parser ()
@@ -126,7 +141,6 @@ Move around the ordering in `parseExpr`, what happens?  When do things break?
 Parsec `Parser` is used as both a monad and a functor, give an example of both.     
 
 
-
 ## Putting it all together
 Parsec needs to play nice with the rest of the project, so we need a way to run the parser on either text from the REPL or a program file and return `LispVal` or `ParseError`. There's a monad for that!
 ```Haskell
@@ -146,14 +160,18 @@ readExprFile = parse (contents parseList) "<file>"
 `contents` is a wrapper for a Parser that allow leading whitespace and a terminal end of file (eof). For `readExpr` and `readExprFile` we are using Parsec's `parse` function, which takes a parser, and a `Text` input describing the input source. `readExpr` is used for the REPL, and `readExprFile`, which uses our `parseList` and can handle newline or whitespace delimmited S-Expressions, for program files.
 
 #### Conclusion
+
 From the top, we have gone from text input, to tokens, to `LispVal`. Now that we have `LispVal` representing the abstract syntax tree, we need to get to `Eval LispVal`, the final computed value. I've left a standalone parsing test at the bottom of [Parser.hs](../src/Parser.hs) which you can compile and run with `bash$ ghc ./src/Parser.hs -o ~/a.out && a.out` if you want a quick way to experiment. Now, it's time to start running programs, let's take it to eval and see how `LispVal` gets computed!       
 
 #### Next, Evaluation
+
 [home](00_overview.md)...[back](01_introduction.md)...[next](03_evaluation.md)
 
 #### Additional Reading
+
 Monadic parsing is a little tricky to understand. In terms of the rest of programming languages, it's a somewhat orthogonal subject and we are just scraping the surface.   
-https://github.com/bobatkey/parser-combinators-intro    
-http://unbui.lt/#!/post/haskell-parsec-basics    
-http://dev.stephendiehl.com/hask/#parsing    
-http://stackoverflow.com/questions/19208231/attoparsec-or-parsec-in-haskell/19213247#19213247
+
+* https://github.com/bobatkey/parser-combinators-intro    
+* http://unbui.lt/#!/post/haskell-parsec-basics    
+* http://dev.stephendiehl.com/hask/#parsing    
+* http://stackoverflow.com/questions/19208231/attoparsec-or-parsec-in-haskell/19213247#19213247

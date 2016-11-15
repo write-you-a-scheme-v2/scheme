@@ -12,12 +12,10 @@ someFun (BadMatch x) = return $ throwError $ lispErrorConstructor "message we se
 throwError :: e -> m a
 ```
 
-[Tackling The Awkward Squad](http://research.microsoft.com/en-us/um/people/simonpj/Papers/marktoberdorf/mark.pdf)
-
-
 ## Defining an error
 An error will be defined as an internal misuse of a function, a user error, or the lack of an external resource. Errors are thrown in the IO monad and caught in the ExceptT monad, which is convenient for us, because they are all part of our monadic transformer stack. If you look at the return of evaluation, we will get ` runAppT :: EnvCtx -> Eval b -> ExceptT LispError IO b`, which keeps LispError and integral part of our stack. Let's take a look at some of the error's that we will be generating:
-```Haskell
+
+```haskell
 data LispError
   = NumArgs Integer [LispVal]
   | LengthOfList String Int
@@ -29,10 +27,10 @@ data LispError
   | Default String
   deriving (Show)
 ```
+
 These will have a pretty print message, and if we think about it really hard, a way to describe the environment in which the function failed and defaulted to a LispError instead of an Eval LispVal return. If you look at the errors, they are the result of the user doing something that breaks the language specification.
 
-
-```Haskell
+```haskell
 instance Show LispError where
   show = T.unpack . showError
 
@@ -50,7 +48,9 @@ showError err =
     (Default str)            -> T.concat ["Error, Danger Will Robinson! ", T.pack str]
     _                        -> "I got 99 problems, most of which is the parser"
 ```
- Similar to our `showVal`, from [Chapter 1][01_introduction], we override the `show` typeclass to give a custom message for the type.
 
- #### Next, Let's make some functions!
- [home](00_overview.md)...[back](03_evaluation.md)...[next](05_primitives.md)
+ Similar to our `showVal`, from [Chapter 1](01_introduction.md), we override the `show` typeclass to give a custom message for the type.
+
+#### Next, Let's make some functions!
+
+[home](00_overview.md)...[back](03_evaluation.md)...[next](05_primitives.md)

@@ -6,7 +6,7 @@
 - [x] Clean up Parser, remove uneeded variables decide if m_* or Tok.* should be used.
 - [x] Replace String with Text in all LispError
 - [x] Make LispError diversity and usage consistent throughout project
-- [ ] Outline Eval chapters
+- [x] Outline Eval chapters
 - [ ] Write Eval Chapter
 - [ ] Outline Prim chapters
 - [ ] Write Prim Chapter

@@ -27,7 +27,7 @@ This is our primitive environment, which will be detailed in the next chapter on
 ```Haskell
 type EnvCtx = Map.Map T.Text LispVal
 ```
-Our environment is a collection of bindings between names and entities referenced by the names. For now, we must only concern ourselves with the fact that the names in the environment comes from `LispVal's` `Atom` data constructor.  This is going to be the basis of our lexical scoped variable look up.    
+
 ```Haskell
 evalFile :: T.Text -> IO () --program file
 evalFile fileExpr = do
@@ -61,8 +61,7 @@ Using our aptly named `Eval` structure, we will define the `eval` function withi
 eval :: LispVal -> Eval LispVal
 ```
 Given our type signature, we can think back to our Scheme semantics, and recall we need to handle a few special cases:       
-**LispVal**    autoquote facility
-**quote**    differentiate data from code
+**LispVal**    
 **begin**    
 **define**    
 **write**    

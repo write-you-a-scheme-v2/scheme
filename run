@@ -1,2 +1,2 @@
 #!/bin/bash
-stack exec scheme
+stack exec scheme -- "$@"

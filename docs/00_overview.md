@@ -3,22 +3,31 @@ Write You A Scheme, Version 2.0
 
 ## Welcome
 Welcome to Write You a Scheme, Version 2.0. ([version 1](https://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours/
-https://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf)) You may be familiar with the original Write You a Scheme, and this tutorial is designed as an upgraded version to reflect modern Haskell. It uses as much modern, industry ready Haskell needed to implement a Scheme. This series will teach readers how to create a programming language by walking the reader through the components of a Scheme variant Lisp in Haskell. This should take about a weekend of study/programming for a beginner who might have to look up a few new concepts to really internalize the material. I won't have time to go into a lot of detail on things like monad transformers or interpreter theory. I will try to link to material that does provide further information. If you are looking for a good Haskell intro, may I suggest Learn You a Haskell for Great Good or Stephen Diehls "What I Wish I Knew When Learning Haskell"  for a more comprehensive guide, or "Learn You A Haskell For Great Good". I want this to be a community project, if you have improvements, please contact me over Github or on twitter (@wespiser). I've had to balance language features, tutorial breadth, and level of complexity to provide beginners with a robust implementation they will not take long to understand.  If you have any ideas on how I can better meet these goals, please let me know! I am an advocate of open source languages, although it is possible to use our Scheme to build a vendor-specific language, [this](https://www.stickyminds.com/article/hey-vendors-give-us-real-scripting-languages?page=0%2C0) article spells out why that is a bad idea. However, If you need an interpreter for commercial purposes, [Abstract Definition Interpreters](../sources/AbstractDefinitionalInterpreters.pdf) contains the conceptual basis for much of this project.     
+https://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf)) You may be familiar with the original Write You a Scheme, and this is a much needed upgraded version. We use as much modern, industry ready Haskell needed to implement a Scheme. This series will teach one how to create a programming language by walking the reader through the components of a Scheme variant Lisp in Haskell. This should take about a weekend of study/programming for a beginner who might have to look up a few new concepts to really internalize the material. We won't have time to go into a lot of detail on things like monad transformers or interpreter theory. We will try to link to material that does provide further information. If you are looking for a good Haskell intro, we suggest Learn You a Haskell for Great Good or Stephen Diehls "What I Wish I Knew When Learning Haskell"  for a more comprehensive guide, or "Learn You A Haskell For Great Good" for a novice. Specifically for industry, FP-Complete's [Haskell Syllabus](https://www.fpcomplete.com/haskell-syllabus) is a great guide.     
+This a community project, and if you have improvements, please contact me over Github or on twitter (@wespiser). We've had to balance language features, tutorial breadth, and level of complexity to provide beginners with a robust implementation they will not take long to understand.  If you have any ideas on how I can better meet these goals, please let us know! We advocate open source languages, although it is possible to use our Scheme to build a vendor-specific language, [this](https://www.stickyminds.com/article/hey-vendors-give-us-real-scripting-languages?page=0%2C0) article spells out why that is a bad idea. However, If you need an interpreter for commercial purposes, [Abstract Definition Interpreters](../sources/AbstractDefinitionalInterpreters.pdf) contains the conceptual basis for much of this project.     
 
 ## Roadmap
-If want to get right to business, start with the next chapter, and work your way through. If not, finish this chapter for more context.      
+Here's the overview of what we will be doing.        
 [00_overview.md](../docs/00_overview.md)     
+What you are reading right now.      
 [01_introduction.md](../docs/01_introduction.md)     
+Introduces Scheme syntax and semantics, as well as the Haskell implementation.    
 [02_parsing.md](../docs/02_parsing.md)     
-[03_evaluation.md](../docs/03_evaluation.md)     
+Parsing of text into abstract syntax tree.    
+[03_evaluation.md](../docs/03_evaluation.md)  
+Evaluation of abstract syntax tree using monad transformers.       
 [04_errors.md](../docs/04_errors.md)     
+Error messages used throughout project. Creation of error messages.    
 [05_primitives.md](../docs/05_primitives.md)     
+Primitive functions that are loaded into the environment.    
 [06_repl.md](../docs/06_repl.md)     
-[07_mutation.md](../docs/07_mutation.md)     
-[08_closures.md](../docs/08_closures.md)     
-[09_io.md](../docs/09_io.md)     
-[10_stdlib.md](../docs/10_stdlib.md)     
-[11_conclusion.md](../docs/11_conclusion.md)     
+Read Eval Print Loop.   
+[07_io.md](../docs/09_io.md)     
+Reading and writing to files for both Scheme commands and the reading of program files.    
+[08_stdlib.md](../docs/10_stdlib.md)     
+Creation of Scheme standard library from primitive functions.    
+[09_conclusion.md](../docs/11_conclusion.md)     
+We conclude the project.        
 
 
 ## Why Lisp ?
@@ -27,8 +36,8 @@ Although the majority of modern programming follows C/Algo, Lisp syntax is simpl
 While on the topic of Lisp, Clojure Programming Language is a modern, functional approach to Lisp targeting the JVM. If you are interested in designing your own Lisp, Clojure is a great example of how you can take adopt Lisp to the modern programming environment. It is probably the most supported modern Lisp community,  and is a great source of information and ideas.  
 
 ## Why Haskell ?
-First off, why not? I love Haskell! Haskell is a purely functional, typed, compiled, and lazy language with many sophisticated and advanced features. With over two decades of research level and industrial development, Haskell has been the focus of numerous computer science research projects and implements these ideas w/ a production worthy compiler. Who cares? Well, these features give the programmer expressive power above and beyond todays status quo. From its test bed has emerged a set of very powerful features. With great power, comes great responsibility, and there many complex and under-adopted features that take a while to learn. Fortunately, if you only use a subset of advanced features Haskell can be an effective production language. It may be attractive to include advanced type theory extensions and over engineer your project with all the latest advances in type theory. If your background is in academic Haskell research or you have been hacking around in Haskell of years, there is no problem understanding, or learning how. If you are trying to hire developers to
-work on your project with you, finding people who can be trained with less cost than the performance gains will be a serious hinderance when proposing your project to weary business type folks. For this reason, I take a conservative approach on what features and abstract concepts are used in this Scheme. When in doubt, I pick the simplest possible abstraction that is needed for functionality, and avoid extra language pragma and type theory extensions at all cost. If you use Haskell for work, your colleagues job will go a lot easier and less technical debt will emerge.  
+First off, why not? I love Haskell! Haskell is a purely functional, typed, compiled, and lazy language with many sophisticated and advanced features. With over two decades of research level and industrial development, Haskell has been the focus of numerous computer science research projects and implements these ideas with a production worthy compiler. Who cares? Well, these features give the programmer expressive power above and beyond todays status quo. From its test bed has emerged a set of very powerful features. With great power, comes great responsibility, and there many complex and under-adopted features that take a while to learn. Fortunately, if you only use a subset of advanced features Haskell can be an effective production language. It may be attractive to include advanced type theory extensions and over engineer your project with all the latest advances in type theory. If your background is in academic Haskell research or you have been hacking around in Haskell of years, there is no problem understanding, or learning how. If you are trying to hire developers to
+work on your project with you, finding people who can be trained with less cost than the performance gains will be a serious hinderance when proposing your project to weary business type folks. For this reason, we take a conservative approach on what features and abstract concepts are used in this Scheme. When in doubt, we pick the simplest possible abstraction that is needed for functionality, and avoid extra language pragma and type theory extensions at all cost. If you use Haskell for work, your colleagues job will go a lot easier and less technical debt will emerge.  
 
 ## Project Tool Chain
 What you need to run the project is in `Readme.md`, and if you are excited to start, skip to chapter 1!     

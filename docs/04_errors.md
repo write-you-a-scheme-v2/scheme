@@ -1,11 +1,19 @@
 Error Checking and Exceptions
 ------------
 ## Errors Everywhere!
-Three types of errors exist in our implementations of Scheme: Parsing, IO, and Evaluation. Each of these originate in a distinct type of activity the interpreter is undergoing, but all of them are end up going through the `Eval` monad and are caught and displayed in the same place.
+Errors are a big type of any kind of large system, especially one interacting with the outside world.  For our system, we must accept user input, determine that it is valid Scheme syntax, then compute that syntax into a final value.  During this process we may interact with the file system or network.  It is especially important for programming languages to report and describe the nature of the error.     
+Thus, there are three types of errors exist in our implementations of Scheme: Parsing, Evaluation, and IO. Each of these originate in a distinct type of activity the parser or interpreter is undergoing, but all of them are end up going through the `Eval` monad and are caught and displayed in the same place. (see [Eval.hs](../src/Eval.hs))
 ```Haskell
 someFun :: GoodType -> Eval LispVal
 someFun (BadMatch x) = return $ throwError $ lispErrorConstructor "message we send"
 ```
+
+```Haskell
+throwError :: e -> m a
+```
+
+[Tackling The Awkward Squad](http://research.microsoft.com/en-us/um/people/simonpj/Papers/marktoberdorf/mark.pdf)
+
 
 ## Defining an error
 An error will be defined as an internal misuse of a function, a user error, or the lack of an external resource. Errors are thrown in the IO monad and caught in the ExceptT monad, which is convenient for us, because they are all part of our monadic transformer stack. If you look at the return of evaluation, we will get ` runAppT :: EnvCtx -> Eval b -> ExceptT LispError IO b`, which keeps LispError and integral part of our stack. Let's take a look at some of the error's that we will be generating:

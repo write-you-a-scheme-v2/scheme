@@ -1,7 +1,7 @@
 Introduction: The Bolts and Nuts of Scheme Interpreters in Haskell
 ------------
 ## 1.0 What are we going to do?
-We are going to make a very basic, but robust, programming language both simple to use and highly extendible. I encourage you to take the language we build and add functionality useful to you. For instance, you could use this language for running jobs on a High Performance Computing Cluster, or analyzing financial data. I want to see more Haskell in industry, and language development is where we can really make a difference, today, not tomorrow.
+We are going to make a very basic, but robust, programming language both simple to use and highly extendible. You are encouraged to take the language we build and add more functionality. For instance, you could use this language for running jobs on a High Performance Computing Cluster, or analyzing financial data. Language development is really a "killer app" for Haskell, and the approach we take in this tutorial is the basis you'll need to create a domain specific language for industrial purposes.    
 ## 1.1 Scheme Syntax
 Lisp is a list processing language, and is old enough to join the AARP with a very storied history.  Scheme is an fully specified Lisp implementation, although we will be taking many liberties for the sake of simplicity.  For Scheme, this means every expression is a list. This parenthesized list has a prefix operator and is known as an S-Expression. Whenever a S-Expression is encountered, it is evaluated in the same way, minus a handful of special forms. Data is also represented as an S-Expression, and there is no syntactical difference between code and data. Scheme is well known for this minimalism.
 ## Scheme semantics

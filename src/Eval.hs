@@ -65,6 +65,7 @@ getVar n = throwError $ TypeMismatch  "failure to get variable: " n
 
 ensureAtom :: LispVal -> Eval LispVal
 ensureAtom n@(Atom _) = return  n
+ensureAtom n = throwError $ TypeMismatch "expected an atomic value" n
 
 extractVar :: LispVal -> T.Text
 extractVar (Atom atom) = atom
@@ -103,10 +104,15 @@ eval (List [Atom "if", pred, ant, cons]) = do
       (Bool False) -> eval cons
       _            -> throwError $ BadSpecialForm "if's first arg must eval into a boolean"
 eval args@(List ( (:) (Atom "if") _))  = throwError $ BadSpecialForm "(if <bool> <s-expr> <s-expr>)"
--- global definition
--- https://github.com/write-you-a-scheme-v2/scheme/issues/7
+
 eval (List [Atom "begin", rest]) = evalBody rest
 eval (List ((:) (Atom "begin") rest )) = evalBody $ List rest
+
+eval (List [Atom "define", varExpr, expr]) = do --top-level define
+  varAtom <- ensureAtom varExpr
+  evalVal <- eval expr
+  env     <- ask
+  local (const $ Map.insert (extractVar varAtom) evalVal env) $ return varExpr
 
 eval (List [Atom "let", List pairs, expr]) = do 
   env   <- ask
@@ -120,16 +126,7 @@ eval (List [Atom "lambda", List params, expr]) = do
   return  $ Lambda (IFunc $ applyLambda expr params) envLocal
 eval (List (Atom "lambda":_) ) = throwError $ BadSpecialForm "lambda funciton expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)" 
 
-eval (List [Atom fn, arg1, arg2]) = do -- we can probably bounce this?
-  funVar <- getVar $ Atom fn
-  v1     <- eval arg1
-  v2     <- eval arg2
-  case funVar of
-      (Fun (IFunc internalFn)) -> internalFn [v1, v2]
-      (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) $ internalfn [v1,v2]
-      _                -> throwError $ NotFunction $ Atom fn
-
-eval (List ((:) x xs)) = do
+eval (List ((:) x xs)) = do 
   funVar <- eval x
   xVal   <- mapM eval  xs
   case funVar of
@@ -137,10 +134,8 @@ eval (List ((:) x xs)) = do
       (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) $ internalfn xVal
       _                -> throwError $ NotFunction funVar 
 
-eval x = throwError $ Default  x
+eval x = throwError $ Default  x --fall thru
 
--- global definition
--- https://github.com/write-you-a-scheme-v2/scheme/issues/7
 evalBody :: LispVal -> Eval LispVal
 evalBody (List [List ((:) (Atom "define") [Atom var, defExpr]), rest]) = do 
   evalVal <- eval defExpr

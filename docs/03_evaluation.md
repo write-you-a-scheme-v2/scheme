@@ -85,6 +85,11 @@ eval :: LispVal -> Eval LispVal
 The eval function is the heart of our interpreter, and must be able to pattern match every possible valid syntax, as well as the special forms. This is a pretty tall order, so we are going to approach this by going through the eval function piece by piece along with the helper functions needed to run that code. It's a little disjoint, but the simplest way to explain exactly how we are going to implement the syntax and semantics of Scheme in Haskell.  As always, to see it all together, see [Eval.hs](../src/Eval.hs). As we go through the code you will see some `throwError`, which are covered in the next chapter, for now, recognize that `throwError $ LispErrorConstructor "message-1"` returns `Eval LispVal`.          
 
 
+#### quote     
+```Haskell
+eval (List [Atom "quote", val]) = return val
+```
+Quote return un-evaluated value, pretty basic, but it helps to start out simple, and grow more complex!         
 
 #### autoquote      
 ```Haskell
@@ -94,19 +99,17 @@ eval (Bool b)   = return $ Bool b
 eval (List [])  = return Nil
 eval Nil        = return Nil
 ```
-autoquote returns self for Number, Bool, String, Nil. () => Nil, 
+For Number, String, Bool, and Nil, when we evaluate, we simply return the value. This is known as the autoquote facility, and makes it so we can pass these values into functions an evaluate them without consequence, or logic deferring evaluation of these types.  For `List`, we have made the evaluation of an empty list go to `Nil`. This will be useful for functions that consume the input of a list conditional on the list having items left.    
+
+
+autoquote returns self for Number, Bool, String, Nil. () => Nil,
 #### write     
 ```Haskell
 eval (List [Atom "write", rest])      = return . String . T.pack $ show rest
 eval (List ((:) (Atom "write") rest)) = return . String . T.pack . show $ List rest
 ```
-write does not evaluate argument
+Write does not evaluate argument or arguments, and instead runs `show` on them before return that value in a `String`.  For the second version, we are taking the two or more arguments passed to write and simply converting them into a `List`.
 
-#### quote     
-```Haskell
-eval (List [Atom "quote", val]) = return val
-```
-quote return un-evaluated value
 
 #### Atom
 ```Haskell
@@ -120,8 +123,7 @@ getVar (Atom atom) = do
       Nothing -> throwError $ UnboundVar atom
 getVar n = throwError $ TypeMismatch  "failure to get variable: " n
 ```
-search environment for binding, return associated value
-
+Now we're talking! When we evaluate an Atom, we are essentially doing variable lookup. `getVar` will do this lookup by getting the `EnvCtx` via ask, then running a `Map` lookup, returning the value if found, else throwing an error.  There is a fall through case here, but is it used?    
 
 #### if    
 ```Haskell
@@ -133,8 +135,8 @@ eval (List [Atom "if", pred, ant, cons]) = do
       _            -> throwError $ BadSpecialForm "if"
 eval args@(List ( (:) (Atom "if") _))  = throwError $ BadSpecialForm "if"
 ```
-std. if/else/then function
-
+Here we implement the familiar `if` special form.
+TODO, change the argument names: (if antecedent then consequent else alternative)
 
 #### let
 ```Haskell
@@ -190,9 +192,8 @@ evalBody (List ((:) (List ((:) (Atom "define") [Atom var, defExpr])) rest)) = do
   in local envFn $ evalBody $ List rest
 evalBody x = eval x
 ```
-* create diagram for eval body
-
-
+The begin special form is designed to accept two types of inputs: one for each of the pattern matched `evals`. In the first form, `eval` matches on `List[Atom "begin", rest]`, where rest is then passed to `evalBody`. The second form, or expanded form, accepts `List ((:) (Atom "begin") rest)`, where rest is type `[LispVal]`. `rest` is then moved into a `LispVal` via the `List` data constructor, and then passed onto `evalBody`. This allows us to either accept the arguments as a single list, or as individual arguments.  Further, this prevents us from wrapping an extra `List` around single values, since we make sure there are at least two or more values in `rest` when we pass it to `List`, before subsequently passing to `evalBody`.  There is one more pattern match, for define, but its real worth will only emerge after discussing `evalBody`.     
+`evalBody`  allows us to use the `define` statement, and evaluate body-expressions.  These body expressions are not only important to `lambda` and `let`, but absolutely essentially to the creation of a standard library, where many defines are used to bind library functions to the environment.  `evalBody` pattern matches on a list composed of either (a define expression, and one other expressions) or (a define expression, and two or more other expressions). For the first case, we bind the `define` forms variable and value to the environment, then run the second expression in this modified environment using `eval`.  In the case the the second expression is also a `define` special form, we a pattern match for `eval` that handles `define`. This will come up when loading in our standard library consisting of only `define` values. For the second pattern match on `evalBody`, we do the binding to the environment for the define, then recurse on `evalBody` for the rest of the arguments in the modified environment.  The last S-Expression of the `evalBody` `List` will be passed to `eval`, and the result will be evaluated in an environment created by sequentially applying the defines, and the return value of `evalBody` will be the return value of the evaluated S-Expression.    
 
 #### lambda & applyLambda
 ```Haskell

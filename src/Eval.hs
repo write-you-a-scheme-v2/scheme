@@ -106,6 +106,7 @@ eval args@(List ( (:) (Atom "if") _))  = throwError $ BadSpecialForm "(if <bool>
 -- global definition
 -- https://github.com/write-you-a-scheme-v2/scheme/issues/7
 eval (List [Atom "begin", rest]) = evalBody rest
+eval (List ((:) (Atom "begin") rest )) = evalBody $ List rest
 
 eval (List [Atom "let", List pairs, expr]) = do 
   env   <- ask

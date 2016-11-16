@@ -1,7 +1,7 @@
 ##TODO list
 11/11/2016 (Goal: Write tutorial chapters 00 to 04)
 - [x] Make sure resources from ./sources/* are added to introduction
-- [ ] Balance intro/overview material between chapters
+- [x] Balance intro/overview material between chapters
 - [x] Figure out how Parser is constructing types around m_parens
 - [x] Clean up Parser, remove uneeded variables decide if m_* or Tok.* should be used.
 - [x] Replace String with Text in all LispError
@@ -10,6 +10,8 @@
 - [ ] Write Eval Chapter
 - [ ] Outline Prim chapters
 - [ ] Write Prim Chapter
+- [x] Write Error Chapter
+- [ ] Integrate test framework into narrative to demonstrate features of presented code. 
 
 
 
@@ -26,7 +28,7 @@ get the following to work:
 - [x] eval body to work when 2) let/lambda, support define statements    
 - [x] io on files(read/write), read file to String, write string to file    
 - [x] eval body to work when 1) reading files
-- [ ] Test read/parse/eval files as script, evalBody like define    
-**^^ leave this for later chapters ^^**    
+- [ ] Test read/parse/eval files as script   
+- [x] evalBody like define    
 - [x] write :: LispVal -> T.Text     
 - [x] read  ::            T.Text -> LispVal     

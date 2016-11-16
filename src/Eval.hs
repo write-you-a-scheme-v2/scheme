@@ -76,10 +76,10 @@ getEven (x:xs) = x : getOdd xs
 
 getOdd :: [t] -> [t]
 getOdd [] = []
-getOdd (x:xs) = getEven xs 
+getOdd (x:xs) = getEven xs
 
 applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal
-applyLambda expr params args = do 
+applyLambda expr params args = do
   env <- ask
   argEval <- mapM eval args
   local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a,b)) params argEval) <> env)) $ eval expr
@@ -97,7 +97,7 @@ eval (List ((:) (Atom "write") rest)) = return . String . T.pack . show $ List r
 
 eval (List [Atom "quote", val]) = return val
 
-eval (List [Atom "if", pred, ant, cons]) = do 
+eval (List [Atom "if", pred, ant, cons]) = do
   ifRes <- eval pred
   case ifRes of
       (Bool True)  -> eval ant
@@ -114,37 +114,36 @@ eval (List [Atom "define", varExpr, expr]) = do --top-level define
   env     <- ask
   local (const $ Map.insert (extractVar varAtom) evalVal env) $ return varExpr
 
-eval (List [Atom "let", List pairs, expr]) = do 
+eval (List [Atom "let", List pairs, expr]) = do
   env   <- ask
   atoms <- mapM ensureAtom $ getEven pairs
   vals  <- mapM eval       $ getOdd  pairs
   local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a, b)) atoms vals) <> env))  $ evalBody expr
-eval (List (Atom "let":_) ) = throwError $ BadSpecialForm "lambda funciton expects list of parameters and S-Expression body\n(let <pairs> <s-expr>)" 
+eval (List (Atom "let":_) ) = throwError $ BadSpecialForm "let function expects list of alternating atoms and S-Expressions and S-Expression body\n(let <pairs> <s-expr>)"
 
-eval (List [Atom "lambda", List params, expr]) = do 
+eval (List [Atom "lambda", List params, expr]) = do
   envLocal <- ask
   return  $ Lambda (IFunc $ applyLambda expr params) envLocal
-eval (List (Atom "lambda":_) ) = throwError $ BadSpecialForm "lambda funciton expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)" 
+eval (List (Atom "lambda":_) ) = throwError $ BadSpecialForm "lambda function expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)"
 
-eval (List ((:) x xs)) = do 
+eval (List ((:) x xs)) = do
   funVar <- eval x
   xVal   <- mapM eval  xs
   case funVar of
       (Fun (IFunc internalFn)) -> internalFn xVal
       (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) $ internalfn xVal
-      _                -> throwError $ NotFunction funVar 
+      _                -> throwError $ NotFunction funVar
 
 eval x = throwError $ Default  x --fall thru
 
 evalBody :: LispVal -> Eval LispVal
-evalBody (List [List ((:) (Atom "define") [Atom var, defExpr]), rest]) = do 
+evalBody (List [List ((:) (Atom "define") [Atom var, defExpr]), rest]) = do
   evalVal <- eval defExpr
   env     <- ask
   local (const $ Map.insert var evalVal env) $ eval rest
 
-evalBody (List ((:) (List ((:) (Atom "define") [Atom var, defExpr])) rest)) = do 
+evalBody (List ((:) (List ((:) (Atom "define") [Atom var, defExpr])) rest)) = do
   evalVal <- eval defExpr
   env     <- ask
   local (const $ Map.insert var evalVal env) $ evalBody $ List rest
 evalBody x = eval x
-

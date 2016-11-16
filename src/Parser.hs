@@ -82,8 +82,8 @@ parseExpr = parseReserved <|> parseNumber
   <|> parseSExp
 
 parseReserved :: Parser LispVal
-parseReserved = do
-  reservedOp "Nil" >> return Nil
+parseReserved = 
+      (reservedOp "Nil" >> return Nil)
   <|> (reservedOp "#t" >> return (Bool True))
   <|> (reservedOp "#f" >> return (Bool False))
 

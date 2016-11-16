@@ -28,8 +28,8 @@ primEnv = [   ("+"    , Fun $ IFunc $ binopFold (numOp    (+))  (Number 0) )
             , ("=="   , Fun $ IFunc $ binop $    numCmp   (==))
             , ("even?", Fun $ IFunc $ unop $     numBool   even)
             , ("odd?" , Fun $ IFunc $ unop $     numBool   odd)
-            , ("pos?" , Fun $ IFunc $ unop $     numBool ((<) 0))
-            , ("neg?" , Fun $ IFunc $ unop $     numBool ((>) 0))
+            , ("pos?" , Fun $ IFunc $ unop $     numBool (< 0))
+            , ("neg?" , Fun $ IFunc $ unop $     numBool (> 0))
             , ("eq?"  , Fun $ IFunc $ binop  eqCmd )
             , ("bl-eq?",Fun $ IFunc $ binop $ eqOp     (==))
             , ("and"  , Fun $ IFunc $ binopFold (eqOp     (&&)) (Bool True))
@@ -52,7 +52,7 @@ binop _  args   = throwError $ NumArgs 2 args
 
 fileExists :: LispVal  -> Eval LispVal
 fileExists (Atom atom)  = fileExists $ String atom
-fileExists (String txt) = Bool <$> (liftIO $ doesFileExist $ T.unpack txt)
+fileExists (String txt) = Bool <$> liftIO (doesFileExist $ T.unpack txt)
 fileExists val          = throwError $ TypeMismatch "read expects string, instead got: " val
 
 slurp :: LispVal  -> Eval LispVal
@@ -125,7 +125,7 @@ car x             = throwError $ ExpectedList "car"
 
 cdr :: [LispVal] -> Eval LispVal
 cdr [List (x:xs)] = return $ List xs
-cdr [(List [])]   = return Nil
+cdr [List []]     = return Nil
 cdr []            = return Nil
 cdr x             = throwError $ ExpectedList "cdr"
 
@@ -135,7 +135,7 @@ quote [exp]       = return $ List $ Atom "quote" : [exp]
 
 -- default return to Eval monad (no error handling)
 binopFixPoint :: (LispVal -> LispVal -> LispVal) -> [LispVal] -> Eval LispVal
-binopFixPoint f2 = binop $ (\x y -> return $ f2 x y)
+binopFixPoint f2 = binop (\x y -> return $ f2 x y)
 
 numOpVal :: (Integer -> Integer -> Integer ) -> LispVal -> LispVal -> LispVal
 numOpVal op (Number x) (Number y) = Number $ op x  y

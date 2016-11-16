@@ -9,9 +9,12 @@ Shortcut repl
 $ ./repl
 ```
 Shortcut run binary executable
+
 ```bash 
-$ ./run
+$ ./run -r                 # Interactive shell
+$ ./run -s test/let.scheme # Run file
 ```
+
 Building the reference implementation.
 
 ```bash

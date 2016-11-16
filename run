@@ -1,2 +1,3 @@
 #!/bin/bash
-stack exec scheme
+stack build
+stack exec scheme -- "$@"

@@ -14,6 +14,9 @@ library
     Cli
     Prim
 
+  default-extensions:
+    OverloadedStrings
+
   build-depends:       
     base           >= 4.8 && <5.0,
     mtl            >= 2.2 && <2.3,

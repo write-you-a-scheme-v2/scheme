@@ -22,7 +22,7 @@ import Control.Monad.Reader
 
 basicEnv :: Map.Map T.Text LispVal
 basicEnv = Map.fromList $ primEnv
-          <> [("read" , Fun $ IFunc $ unop $ readFn)]
+          <> [("read" , Fun $ IFunc $ unop readFn)]
 
 readFn :: LispVal -> Eval LispVal
 readFn x = do
@@ -39,7 +39,7 @@ runASTinEnv code action = do
 evalText :: T.Text -> IO () --REPL
 evalText textExpr = do
   out <- runExceptT $ runASTinEnv basicEnv $ textToEvalForm textExpr
-  either (putStrLn . show) (putStrLn . show) out
+  either print print out
 
 textToEvalForm :: T.Text -> Eval LispVal
 textToEvalForm input = either (throwError . PError . show  )  eval $ readExpr input
@@ -47,7 +47,7 @@ textToEvalForm input = either (throwError . PError . show  )  eval $ readExpr in
 evalFile :: T.Text -> IO () --program file
 evalFile fileExpr = do
   out <- runExceptT $ runASTinEnv basicEnv $ fileToEvalForm fileExpr
-  either (putStrLn . show) (putStrLn . show) out
+  either print print out
 
 fileToEvalForm :: T.Text -> Eval LispVal
 fileToEvalForm input = either (throwError . PError . show )  evalBody $ readExprFile input
@@ -105,19 +105,19 @@ eval (List [Atom "if", pred, ant, cons]) = do
 eval args@(List ( (:) (Atom "if") _))  = throwError $ BadSpecialForm "(if <bool> <s-expr> <s-expr>)"
 -- global definition
 -- https://github.com/write-you-a-scheme-v2/scheme/issues/7
-eval (List [(Atom "begin"), rest]) = evalBody rest
+eval (List [Atom "begin", rest]) = evalBody rest
 
 eval (List [Atom "let", List pairs, expr]) = do 
   env   <- ask
   atoms <- mapM ensureAtom $ getEven pairs
   vals  <- mapM eval       $ getOdd  pairs
   local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a, b)) atoms vals) <> env))  $ evalBody expr
-eval (List ((Atom "let"):_) ) = throwError $ BadSpecialForm "lambda funciton expects list of parameters and S-Expression body\n(let <pairs> <s-expr>)" 
+eval (List (Atom "let":_) ) = throwError $ BadSpecialForm "lambda funciton expects list of parameters and S-Expression body\n(let <pairs> <s-expr>)" 
 
 eval (List [Atom "lambda", List params, expr]) = do 
   envLocal <- ask
   return  $ Lambda (IFunc $ applyLambda expr params) envLocal
-eval (List ((Atom "lambda"):_) ) = throwError $ BadSpecialForm "lambda funciton expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)" 
+eval (List (Atom "lambda":_) ) = throwError $ BadSpecialForm "lambda funciton expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)" 
 
 eval (List [Atom fn, arg1, arg2]) = do -- we can probably bounce this?
   funVar <- getVar $ Atom fn

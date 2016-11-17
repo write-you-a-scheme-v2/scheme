@@ -1,6 +1,186 @@
 Primitive Environment
 ------------
 The primitive environment is defined in [Prim.hs](../src/Prim.hs)  
+Our basic strategy is to create a list of tuples, `[(T.Text,LispVal)]`, where the text is the name of the primitive, and the `LispVal` is a `Fun` representing the internal function. We can use `Map.fromList` to convert this to a `Map` which is our environment for evaluation.  To create our `Fun`, we must map an internal Haskell function of some type to a `[LispVal] -> Eval LispVal`. In the process, we must pattern match to get the corresponding `LispVal`s of the correct types, extract the values, and apply our Haskell function. To help with this, we have created `binop`, `binopFold`, and `unop`.  This process is complicated to talk our way through, so I will go through an example in the subsequent sections to show how the type signatures reduce.    
+
+
+
+## Full Definition
+First, we'll take a look at what everything looks like all together. What we see is that a Haskell function is wrapped with a function, like `numOp` or `numCmp`, which pattern matches on `LispVal` to get the internal Haskell values. This is then wrapped again by `binopFold` or `unop`, which convert the type of the argument to `[LispVal] -> Eval Lisp`, regardless of the number of arguments in the function `numCmp` or `numOp`.
+
+
+```haskell
+primEnv :: Prim
+primEnv = [   ("+"    , Fun $ IFunc $ binopFold (numOp    (+))  (Number 0) )
+            , ("*"    , Fun $ IFunc $ binopFold (numOp    (*))  (Number 1) )
+            , ("++"   , Fun $ IFunc $ binopFold (strOp    (<>)) (String ""))
+            , ("-"    , Fun $ IFunc $ binop $    numOp    (-))
+            , ("<"    , Fun $ IFunc $ binop $    numCmp   (<))
+            , ("<="   , Fun $ IFunc $ binop $    numCmp   (<=))
+            , (">"    , Fun $ IFunc $ binop $    numCmp   (>))
+            , (">="   , Fun $ IFunc $ binop $    numCmp   (>=))
+            , ("=="   , Fun $ IFunc $ binop $    numCmp   (==))
+            , ("even?", Fun $ IFunc $ unop $     numBool   even)
+            , ("odd?" , Fun $ IFunc $ unop $     numBool   odd)
+            , ("pos?" , Fun $ IFunc $ unop $     numBool (< 0))
+            , ("neg?" , Fun $ IFunc $ unop $     numBool (> 0))
+            , ("eq?"  , Fun $ IFunc $ binop  eqCmd )
+            , ("bl-eq?",Fun $ IFunc $ binop $ eqOp     (==))
+            , ("and"  , Fun $ IFunc $ binopFold (eqOp     (&&)) (Bool True))
+            , ("or"   , Fun $ IFunc $ binopFold (eqOp     (||)) (Bool False))
+            , ("cons" , Fun $ IFunc  Prim.cons)
+            , ("cdr"  , Fun $ IFunc  Prim.cdr)
+            , ("car"  , Fun $ IFunc  Prim.car)
+            , ("file?" , Fun $ IFunc $ unop  fileExists)
+            , ("slurp" , Fun $ IFunc $ unop  slurp)
+            ]
+```
+## Primitive Creation
+Lets go through an individual example to see how all the types mash!    
+
+#### Function Definition
+```haskell
+type Binary = LispVal -> LispVal -> Eval LispVal
+ ("+"    , Fun $ IFunc $ binopFold (numOp    (+)) (Number 0))
+(+) :: Num a => a -> a -> a
+numOp :: (Integer -> Integer -> Integer) -> LispVal -> LispVal -> Eval LispVal
+binopFold :: Binary -> LispVal -> [LispVal] -> Eval LispVal
+```
+
+#### Function Reduction
+```haskell
+numOp (+)             :: LispVal -> LispVal -> Eval LispVal
+numOp (+)             :: Binary
+binopFold (numOp (+)) :: LispVal -> [LispVal] -> Eval LispVal
+binopFold (numOp (+)) (Number 0)         :: [LispVal] -> Eval LispVal
+IFunc $ binopFold (numOp (+)) (Number 0) :: IFunc
+Fun $ IFunc $ binopFold (numOp (+)) (Number 0) :: LispVal
+```
+Alright, so it's a complicated transformation, but as you can see the types do work out. The engineering principle at play here is to use functions like `numOp` for as many operators as possible, reducing the amount of code needed to be written. `binop` and `unop` can be re-used for most functions. Varags would have to be handled differently, will have to be entered individually, like the functions for list comprehension.     
+
+## Helper Functions
+```Haskell
+type Prim   = [(T.Text, LispVal)]
+type Unary  = LispVal -> Eval LispVal
+type Binary = LispVal -> LispVal -> Eval LispVal
+
+unop :: Unary -> [LispVal] -> Eval LispVal
+unop op [x]    = op x
+unop _ args    = throwError $ NumArgs 1 args
+
+binop :: Binary -> [LispVal] -> Eval LispVal
+binop op [x,y]  = op x y
+binop _  args   = throwError $ NumArgs 2 args
+
+binopFold :: Binary -> LispVal -> [LispVal] -> Eval LispVal
+binopFold op farg args = case args of
+                            [a,b]  -> op a b
+                            (a:as) -> foldM op farg args
+                            []-> throwError $ NumArgs 2 args
+```
+So the `binop`, `unop`, and `binopFold` are basically unwrapping functions that take a `[LispVal]` and an operator and apply the arguments to the operator. `binopFold` just runs the `foldM`, while taking an additional argument. It should be noted that `binopFold` requires the operator to work over monoids.    
+
+## IO Functions   
+
+```haskell
+fileExists :: LispVal  -> Eval LispVal
+fileExists (Atom atom)  = fileExists $ String atom
+fileExists (String txt) = Bool <$> liftIO (doesFileExist $ T.unpack txt)
+fileExists val          = throwError $ TypeMismatch "read expects string, instead got: " val
+
+slurp :: LispVal  -> Eval LispVal
+slurp (String txt) = readTextFile txt
+slurp val          =  throwError $ TypeMismatch "read expects string, instead got: " val
+
+readTextFile ::  T.Text -> Eval LispVal
+readTextFile file =  do
+  inHandle   <- liftIO $ openFile (T.unpack file) ReadMode
+  ineof <- liftIO $ hIsEOF inHandle
+  if ineof
+    then  throwError $ IOError "empty file"
+      else do fileText <- liftIO $ hGetContents  inHandle
+              return $ String $ T.pack fileText
+```
+These are the basic file handling, `slurp`, which reads a file into a string, and `fileExists` which returns a boolean whether or not the file exists.
+
+## List Comprehension
+```haskell
+cons :: [LispVal] -> Eval LispVal
+cons [x,y@(List yList)] = return $ List $ x:yList
+cons [c]                = return $ List [c]
+cons []                 = return $ List []
+cons _  = throwError $ ExpectedList "cons, in second argumnet"
+
+car :: [LispVal] -> Eval LispVal
+car [List []    ] = return Nil
+car [List (x:_)]  = return x
+car []            = return Nil
+car x             = throwError $ ExpectedList "car"
+
+cdr :: [LispVal] -> Eval LispVal
+cdr [List (x:xs)] = return $ List xs
+cdr [List []]     = return Nil
+cdr []            = return Nil
+cdr x             = throwError $ ExpectedList "cdr"
+```
+Since the S-Expression is the central syntactical form of Scheme, list comprehension operators are a big part of the primitive environment. Ours are not using the `unop` or `binop` helper functions, since there are a few cases which varargs need to be support. A alternative approach would be to implement these as special forms, but since special forms are differentiated by their non-standard evaluation of arguments, they rightfully belong here, as primitives.      
+
+
+## Unary and Binary Function Handlers 
+```Haskell
+numBool :: (Integer -> Bool) -> LispVal -> Eval LispVal
+numBool op (Number x) = return $ Bool $ op x
+numBool op  x         = throwError $ TypeMismatch "numeric op " x
+
+numOp :: (Integer -> Integer -> Integer) -> LispVal -> LispVal -> Eval LispVal
+numOp op (Number x) (Number y) = return $ Number $ op x  y
+numOp op x          (Number y) = throwError $ TypeMismatch "numeric op " x
+numOp op (Number x)  y         = throwError $ TypeMismatch "numeric op " y
+numOp op x           y         = throwError $ TypeMismatch "numeric op " x
+
+strOp :: (T.Text -> T.Text -> T.Text) -> LispVal -> LispVal -> Eval LispVal
+strOp op (String x) (String y) = return $ String $ op x y
+strOp op x          (String y) = throwError $ TypeMismatch "string op " x
+strOp op (String x)  y         = throwError $ TypeMismatch "string op " y
+strOp op x           y         = throwError $ TypeMismatch "string op " x
+
+eqOp :: (Bool -> Bool -> Bool) -> LispVal -> LispVal -> Eval LispVal
+eqOp op (Bool x) (Bool y) = return $ Bool $ op x y
+eqOp op  x       (Bool y) = throwError $ TypeMismatch "bool op " x
+eqOp op (Bool x)  y       = throwError $ TypeMismatch "bool op " y
+eqOp op x         y       = throwError $ TypeMismatch "bool op " x
+
+numCmp :: (Integer -> Integer -> Bool) -> LispVal -> LispVal -> Eval LispVal
+numCmp op (Number x) (Number y) = return . Bool $ op x  y
+numCmp op x          (Number y) = throwError $ TypeMismatch "numeric op " x
+numCmp op (Number x)  y         = throwError $ TypeMismatch "numeric op " y
+numCmp op x         y           = throwError $ TypeMismatch "numeric op " x
+
+
+eqCmd :: LispVal -> LispVal -> Eval LispVal
+eqCmd (Atom   x) (Atom   y) = return . Bool $ x == y
+eqCmd (Number x) (Number y) = return . Bool $ x == y
+eqCmd (String x) (String y) = return . Bool $ x == y
+eqCmd (Bool   x) (Bool   y) = return . Bool $ x == y
+eqCmd  Nil        Nil       = return $ Bool True
+eqCmd  _          _         = return $ Bool False
+```
+These are the re-used helper functions for wrapping Haskell functions, and pattern matching the LispVal arguments to make sure they are of the constructor. Further, the pattern matching can be used to dynamically dispatch the function at runtime depending on the data constructor used for the arguments. This is a defining feature of dynamically typed programming languages, and one of the many reasons why their performance is slow compared to statically typed languages! Another key feature within these functions is the throwing of errors for incorrect types, or mismatching types, being passed to functions. This prevents type errors from being thrown in Haskell, and allows us to handle them in a way that allows for verbose error report. Example: `(+ 1 "a")` would give an error!
+
+
+## Conclusion
+We make the primitive environment by wrapping a Haskell function with a helper function that pattern matches on `LispVals` and extracts the internal values that the Haskell function can accept.  Next, we convert that function to be of type `[LispVal] -> Eval LispVal`, which is our type `IFunc`, the sole argument for the `LispVal` data constructor `Fun`. We can now map a `Text` value to a `LispVal` representing a function. This is our primitive environment, which should stay minimal, and if possible, new functions moved into the standard library if they can be defined from existing functions.
+
+## [Understanding Check]
+Implement a new primitive function `nil?` which accepts a single argument, a list, returns true if the list is empty, and false under all other situations.    
+Use the `Lambda` constructor instead of `Fun` for one of the primitive functions.    
+Create a `Division` primitive function which works for `Number`, returning a `Number` by dividing then rounding down.     
+Write a new function,
+```
+binopFold1 :: Binary -> [LispVal] -> Eval LispVal
+```
+that uses the first value of the list as the identity element. More information, see [here](https://wiki.haskell.org/Fold).    
+
 
 #### Next, Let's make a REPL!
 [home](00_overview.md)...[back](04_errors.md)...[next](06_repl.md)

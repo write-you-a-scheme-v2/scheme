@@ -62,7 +62,7 @@ showError err =
 
 ## Conclusion
 Accidents will happen, and so we have error handling for IO, parsing, and evaluation errors via our `LispError`. Errors are realized everywhere we have functions that evaluate, so handling them is composed into our `Eval` monad. Verbose error messages are vital to usability, and we must report enough information to pinpoint the user's error.  
-
+This about adding [enclosed exceptions](https://github.com/jcristovao/enclosed-exceptions)    
 
 ## [ Understanding Check ]
 Where would you implement more, and specific `LispVal` values in the error messages to better help the user debug their expressions?        

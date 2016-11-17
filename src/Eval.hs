@@ -97,11 +97,11 @@ eval (List ((:) (Atom "write") rest)) = return . String . T.pack . show $ List r
 
 eval (List [Atom "quote", val]) = return val
 
-eval (List [Atom "if", pred, ant, cons]) = do
+eval (List [Atom "if", pred, truExpr, flsExpr]) = do
   ifRes <- eval pred
   case ifRes of
-      (Bool True)  -> eval ant
-      (Bool False) -> eval cons
+      (Bool True)  -> eval truExpr
+      (Bool False) -> eval flsExpr
       _            -> throwError $ BadSpecialForm "if's first arg must eval into a boolean"
 eval args@(List ( (:) (Atom "if") _))  = throwError $ BadSpecialForm "(if <bool> <s-expr> <s-expr>)"
 

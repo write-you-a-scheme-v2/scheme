@@ -126,7 +126,7 @@ cdr x             = throwError $ ExpectedList "cdr"
 Since the S-Expression is the central syntactical form of Scheme, list comprehension operators are a big part of the primitive environment. Ours are not using the `unop` or `binop` helper functions, since there are a few cases which varargs need to be support. A alternative approach would be to implement these as special forms, but since special forms are differentiated by their non-standard evaluation of arguments, they rightfully belong here, as primitives.      
 
 
-## Unary and Binary Function Handlers 
+## Unary and Binary Function Handlers
 ```Haskell
 numBool :: (Integer -> Bool) -> LispVal -> Eval LispVal
 numBool op (Number x) = return $ Bool $ op x
@@ -169,7 +169,7 @@ These are the re-used helper functions for wrapping Haskell functions, and patte
 
 
 ## Conclusion
-We make the primitive environment by wrapping a Haskell function with a helper function that pattern matches on `LispVals` and extracts the internal values that the Haskell function can accept.  Next, we convert that function to be of type `[LispVal] -> Eval LispVal`, which is our type `IFunc`, the sole argument for the `LispVal` data constructor `Fun`. We can now map a `Text` value to a `LispVal` representing a function. This is our primitive environment, which should stay minimal, and if possible, new functions moved into the standard library if they can be defined from existing functions.
+In summary, we make the primitive environment by wrapping a Haskell function with a helper function that pattern matches on `LispVals` and extracts the internal values that the Haskell function can accept.  Next, we convert that function to be of type `[LispVal] -> Eval LispVal`, which is our type `IFunc`, the sole argument for the `LispVal` data constructor `Fun`. We can now map a `Text` value to a `LispVal` representing a function. This is our primitive environment, which should stay minimal, and if possible, new functions moved into the standard library if they can be defined from existing functions.
 
 ## [Understanding Check]
 Implement a new primitive function `nil?` which accepts a single argument, a list, returns true if the list is empty, and false under all other situations.    

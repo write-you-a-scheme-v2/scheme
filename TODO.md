@@ -7,12 +7,13 @@
 - [x] Replace String with Text in all LispError
 - [x] Make LispError diversity and usage consistent throughout project
 - [x] Outline Eval chapters
-- [ ] Write Eval Chapter
-- [ ] Outline Prim chapters
-- [ ] Write Prim Chapter
+- [x] Write Eval Chapter
+- [ ] check lambda lexical scoping (in both EnvCtx in Lambda and partial applyLambda)
+- [x] Outline Prim chapters
+- [x] Write Prim Chapter
 - [x] Write Error Chapter
-- [ ] Integrate test framework into narrative to demonstrate features of presented code. 
-
+- [ ] Integrate test framework into narrative to demonstrate features of presented code.
+- [ ] Find an alternave to the ExceptT error IO a 
 
 
 11/1/2016: Goal: Finish Code for initial release (chapters 0-4, enough code for REPL to work & turing completeness)

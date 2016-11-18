@@ -61,8 +61,21 @@ showError err =
 
 
 ## Conclusion
-Accidents will happen, and so we have error handling for IO, parsing, and evaluation errors via our `LispError`. Errors are realized everywhere we have functions that evaluate, so handling them is composed into our `Eval` monad. Verbose error messages are vital to usability, and we must report enough information to pinpoint the user's error.  
-This about adding [enclosed exceptions](https://github.com/jcristovao/enclosed-exceptions)    
+Accidents will happen, and so we have error handling for IO, parsing, and evaluation errors via our `LispError`. Errors are realized everywhere we have functions that evaluate, so handling them is composed into our `Eval` monad. Verbose error messages are vital to usability, and we must report enough information to pinpoint the user's error.  Our main liability with the current monad transformer stack, is that `IO` can throw an error that is not caught, unchecked exception. However, we are only using `IO` to read files, not maintaining open connections for long periods of time, and our exposure is minimal.        
+
+
+## Alternative Exceptions
+We are handling errors in a very basic way. The use of `IO` causes some trickiness that we won't be able to handle.  Here's why:    
+* **ExceptT someErrorType IO a** considered bad [Exceptions Best Practices](https://www.schoolofhaskell.com/user/commercial/content/exceptions-best-practices). The authors list three reasons why this is considered an anti pattern:  1) Its non-composable, we see this when we have to do add in the Parser error, and the information in the parser error is not completely congruent with the information we pass to other error messages. 2) It gives the implication that only `LispError` can be thrown. This is true, during `slurp` or any `IO` operation, an error cna be thrown that will not be caught. 3) We haven't limited the possible exceptions, we've just added `throwError` or `liftIO . throwIO`.
+* **enclosed exceptions**](https://github.com/jcristovao/enclosed-exceptions)  [FP complete's Catching All Exceptions. ](https://www.schoolofhaskell.com/user/snoyberg/general-haskell/exceptions/catching-all-exceptions).  The goal is to catch all exceptions that arise from code.
+* a plethero of options for error/exception handling in hasell:    
+[Control-Monad-Trans-Except](https://hackage.haskell.org/package/transformers-0.5.0.0/docs/Control-Monad-Trans-Except.html)    
+ [Control-Monad-Error](https://hackage.haskell.org/package/mtl-2.2.1/docs/Control-Monad-Error.html)    
+[Control-Monad-Catch](https://hackage.haskell.org/package/exceptions-0.8.0.2/docs/Control-Monad-Catch.html)    
+[Control-Monad-Except](https://hackage.haskell.org/package/mtl-2.2.1/docs/Control-Monad-Except.html)     
+[Control-Exception](https://hackage.haskell.org/package/base-4.8.1.0/docs/Control-Exception.html)   
+[UnexpectionIO](https://hackage.haskell.org/package/unexceptionalio)     
+
 
 ## [ Understanding Check ]
 Where would you implement more, and specific `LispVal` values in the error messages to better help the user debug their expressions?        

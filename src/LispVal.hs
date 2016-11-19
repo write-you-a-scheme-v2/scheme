@@ -12,6 +12,10 @@ import Control.Monad.Reader
 import Control.Monad.Catch
 import Control.Monad.Trans.Resource
 
+
+import Data.Data
+import Data.Typeable
+
 type EnvCtx = Map.Map T.Text LispVal
 -- EnvCtx -> ExceptT LispError IO a
 newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ResourceT IO) a }
@@ -25,12 +29,12 @@ data LispVal
   | Fun IFunc
   | Lambda IFunc EnvCtx
   | Nil
-  | Bool Bool
+  | Bool Bool deriving (Typeable)
 
 instance Show LispVal where
   show = T.unpack . showVal
 
-data IFunc = IFunc { fn :: [LispVal] -> Eval LispVal }
+data IFunc = IFunc { fn :: [LispVal] -> Eval LispVal } deriving (Typeable)
 
 
 showVal :: LispVal -> T.Text
@@ -61,7 +65,7 @@ data LispError
   | UnboundVar T.Text
   | Default LispVal
   | PError String -- from show anyway
-  | IOError T.Text deriving (Data, Typeable) 
+  | IOError T.Text deriving ( Typeable) 
 
 instance Exception LispError
 

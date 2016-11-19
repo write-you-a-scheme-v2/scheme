@@ -1,9 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleContexts #-}
 module Eval (
    evalText
   , evalFile
   , runParseTest
+  , safeExec
 ) where
 
 import Parser
@@ -19,6 +21,7 @@ import System.IO
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.Trans.Resource
+import Control.Exception
 
 basicEnv :: Map.Map T.Text LispVal
 basicEnv = Map.fromList $ primEnv
@@ -29,29 +32,34 @@ readFn x = do
   val <- eval x
   case val of
     (String txt) -> textToEvalForm txt
-    _            -> throwError $ TypeMismatch "read expects string, instead got: " val
+    _            -> throwM $ TypeMismatch "read expects string, instead got: " val
 
 
-runASTinEnv :: EnvCtx -> Eval b -> ExceptT LispError IO b
-runASTinEnv code action = do
-    res <- liftIO $  runResourceT $ runExceptT $ runReaderT (unEval action) code
-    ExceptT $ return res
+safeExec :: IO a -> IO (Either String a)
+safeExec m = do 
+  result <- Control.Exception.try m
+  case result of
+    Left (eTop :: SomeException) -> 
+      case fromException eTop of
+        Just (enclosed :: LispError) -> return $ Left (show enclosed)
+        Nothing                -> return $ Left (show eTop)
+    Right val -> return $ Right val
+
+runASTinEnv :: EnvCtx -> Eval b -> IO b
+runASTinEnv code action = runResourceT $  runReaderT (unEval action) code
 
 evalText :: T.Text -> IO () --REPL
-evalText textExpr = do
-  out <- runExceptT $ runASTinEnv basicEnv $ textToEvalForm textExpr
-  either print print out
+evalText textExpr = (runASTinEnv basicEnv $ textToEvalForm textExpr) >>= print
+
 
 textToEvalForm :: T.Text -> Eval LispVal
-textToEvalForm input = either (throwError . PError . show  )  eval $ readExpr input
+textToEvalForm input = either (throwM . PError . show  )  eval $ readExpr input
 
 evalFile :: T.Text -> IO () --program file
-evalFile fileExpr = do
-  out <- runExceptT $ runASTinEnv basicEnv $ fileToEvalForm fileExpr
-  either print print out
+evalFile fileExpr = (runASTinEnv basicEnv $ fileToEvalForm fileExpr) >>= print
 
 fileToEvalForm :: T.Text -> Eval LispVal
-fileToEvalForm input = either (throwError . PError . show )  evalBody $ readExprFile input
+fileToEvalForm input = either (throwM . PError . show )  evalBody $ readExprFile input
 
 runParseTest :: T.Text -> T.Text -- for view AST
 runParseTest input = either (T.pack . show) (T.pack . show) $ readExpr input
@@ -61,12 +69,12 @@ getVar (Atom atom) = do
   env <- ask
   case Map.lookup atom env of
       Just x  -> return x
-      Nothing -> throwError $ UnboundVar atom
-getVar n = throwError $ TypeMismatch  "failure to get variable: " n
+      Nothing -> throwM $ UnboundVar atom
+getVar n = throwM $ TypeMismatch  "failure to get variable: " n
 
 ensureAtom :: LispVal -> Eval LispVal
 ensureAtom n@(Atom _) = return  n
-ensureAtom n = throwError $ TypeMismatch "expected an atomic value" n
+ensureAtom n = throwM $ TypeMismatch "expected an atomic value" n
 
 extractVar :: LispVal -> T.Text
 extractVar (Atom atom) = atom
@@ -103,8 +111,8 @@ eval (List [Atom "if", pred, ant, cons]) = do
   case ifRes of
       (Bool True)  -> eval ant
       (Bool False) -> eval cons
-      _            -> throwError $ BadSpecialForm "if's first arg must eval into a boolean"
-eval args@(List ( (:) (Atom "if") _))  = throwError $ BadSpecialForm "(if <bool> <s-expr> <s-expr>)"
+      _            -> throwM $ BadSpecialForm "if's first arg must eval into a boolean"
+eval args@(List ( (:) (Atom "if") _))  = throwM $ BadSpecialForm "(if <bool> <s-expr> <s-expr>)"
 
 eval (List [Atom "begin", rest]) = evalBody rest
 eval (List ((:) (Atom "begin") rest )) = evalBody $ List rest
@@ -120,12 +128,12 @@ eval (List [Atom "let", List pairs, expr]) = do
   atoms <- mapM ensureAtom $ getEven pairs
   vals  <- mapM eval       $ getOdd  pairs
   local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a, b)) atoms vals) <> env))  $ evalBody expr
-eval (List (Atom "let":_) ) = throwError $ BadSpecialForm "lambda funciton expects list of parameters and S-Expression body\n(let <pairs> <s-expr>)" 
+eval (List (Atom "let":_) ) = throwM $ BadSpecialForm "lambda funciton expects list of parameters and S-Expression body\n(let <pairs> <s-expr>)" 
 
 eval (List [Atom "lambda", List params, expr]) = do 
   envLocal <- ask
   return  $ Lambda (IFunc $ applyLambda expr params) envLocal
-eval (List (Atom "lambda":_) ) = throwError $ BadSpecialForm "lambda funciton expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)" 
+eval (List (Atom "lambda":_) ) = throwM $ BadSpecialForm "lambda funciton expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)" 
 
 eval (List ((:) x xs)) = do 
   funVar <- eval x
@@ -133,9 +141,9 @@ eval (List ((:) x xs)) = do
   case funVar of
       (Fun (IFunc internalFn)) -> internalFn xVal
       (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) $ internalfn xVal
-      _                -> throwError $ NotFunction funVar 
+      _                -> throwM $ NotFunction funVar 
 
-eval x = throwError $ Default  x --fall thru
+eval x = throwM $ Default  x --fall thru
 
 evalBody :: LispVal -> Eval LispVal
 evalBody (List [List ((:) (Atom "define") [Atom var, defExpr]), rest]) = do 

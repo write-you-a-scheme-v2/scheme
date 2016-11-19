@@ -13,7 +13,9 @@ import System.Console.Haskeline
 type Repl a = InputT IO a
 
 process :: String -> IO ()
-process str = evalText $ T.pack str
+process str = do 
+  res <- safeExec $ evalText $ T.pack str
+  either putStrLn return res
 
 processToAST :: String -> IO ()
 processToAST str = print $ runParseTest $ T.pack str

@@ -116,7 +116,7 @@ data LispVal
   | Fun IFunc
   | Lambda IFunc EnvCtx
   | Nil
-  | Bool Bool
+  | Bool Bool deriving (Typeable)
 
 data IFunc = IFunc { fn :: [LispVal] -> Eval LispVal }
 ```
@@ -125,7 +125,7 @@ Now for the tricker part, functions. There are two basic types of functions we w
 ```Haskell
 ( (lambda (x) (+ x 100)  ) 42)
 ```
-To handle lexical scoping, the lambda function must enclose the environment present at the time the function is created. Conceptually, the easiest way is to just bring the environment along with the function. For an implemention, the data constructor `Fun` accepts  `EnvCtx`, which is lexical environment, as well as `IFunc`, which is its a Haskell function.  You'll notice it takes its arguments as a list of `LispVal`, then returns an object of type `Eval LispVal`. For more on `Eval`, read the next section.       
+To handle lexical scoping, the lambda function must enclose the environment present at the time the function is created. Conceptually, the easiest way is to just bring the environment along with the function. For an implemention, the data constructor `Fun` accepts  `EnvCtx`, which is lexical environment, as well as `IFunc`, which is its a Haskell function.  You'll notice it takes its arguments as a list of `LispVal`, then returns an object of type `Eval LispVal`. For more on `Eval`, read the next section. There's also a `deriving (Typeable)`, which is needed for error handling, more on that later!           
 
 
 ## Evaluation Monad
@@ -139,11 +139,12 @@ import Control.Monad.Reader
 
 type EnvCtx = Map.Map T.Text LispVal
 
-newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ExceptT LispError IO ) a }
-  deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadError LispError, MonadIO)
+newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ResourceT IO) a }
+  deriving (Monad, Functor, Applicative, MonadReader EnvCtx,  MonadIO, MonadCatch, MonadThrow)
+
 ```
 
-For evaluation, we need to handle the context of a couple of things: the environment of variable/value bindings, exception handling, and IO. In Haskell, IO and exception handling are already done with monads. Using [monad transformers](http://dev.stephendiehl.com/hask/#mtl-transformers) we can incorporate IO, Except and Reader (to handle lexical scope) together in a single monad. Using `deriving`, the functions available to each of the constituent monads will be available to the transformed monad without having to define them using `lift`. A great guide about using monad transformers to implement interpreters is [Monad Transformer Step by Step](../sources/Transformers.pdf). It will start with simple a simple example and increase complexity.  For our scheme its important to remember that evaluation is done for `LispVal` that are wrapped within the `Eval` monad, which will provide the context of evaluation. The process of `LispVal -> Eval LispVal` is handled by the `eval` function, and this will be discussed a few chapter ahead.
+For evaluation, we need to handle the context of a couple of things: the environment of variable/value bindings, exception handling, and IO. In Haskell, IO and exception handling are already done with monads. Using [monad transformers](http://dev.stephendiehl.com/hask/#mtl-transformers) we can incorporate IO, and Reader (to handle lexical scope) together in a single monad. Using `deriving`, the functions available to each of the constituent monads will be available to the transformed monad without having to define them using `lift`. A great guide about using monad transformers to implement interpreters is [Monad Transformer Step by Step](../sources/Transformers.pdf). It will start with simple a simple example and increase complexity.  For our scheme its important to remember that evaluation is done for `LispVal` that are wrapped within the `Eval` monad, which will provide the context of evaluation. The process of `LispVal -> Eval LispVal` is handled by the `eval` function, and this will be discussed a few chapter ahead.
 
 #### Reader Monad and Lexical Scope
 
@@ -176,7 +177,7 @@ As you can see, we are using `case` to match data constructors instead of patter
 What's the difference between `Text` and `String`?    
 How do we represent  S-Expressions in Haskell?     
 What is a monad transformer? How is this abstraction used to evaluate S-Expressions?    
-Can you think of some alternative ways to represent S-Expressions? What about [GADT](https://downloads.haskell.org/~ghc/6.6/docs/html/users_guide/gadt.html)?    
+Can you think of some alternative ways to represent S-Expressions? What about [GADT](https://downloads.haskell.org/~ghc/6.6/docs/html/users_guide/gadt.html)? If you would like to see a Haskell language project using GADTs, [GLambda](https://github.com/goldfirere/glambda) is a great project!          
 
 
 #### Next, Parsers :: Text -> LispVal, YAY!

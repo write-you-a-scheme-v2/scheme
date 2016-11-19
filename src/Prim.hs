@@ -20,7 +20,7 @@ type Unary  = LispVal -> Eval LispVal
 type Binary = LispVal -> LispVal -> Eval LispVal
 
 
-mkF :: ([LispVal] -> Eval LispVal) -> LispVal 
+mkF :: ([LispVal] -> Eval LispVal) -> LispVal
 mkF = Fun . IFunc
 
 
@@ -68,21 +68,9 @@ slurp :: LispVal  -> Eval LispVal
 slurp (String txt) = liftIO $ wFileSlurp txt
 slurp val          =  throwM $ TypeMismatch "read expects string, instead got: " val
 
-{-
-readTextFile ::  T.Text -> Eval LispVal
-readTextFile file =  do
-  inHandle   <- liftIO $ openFile (T.unpack file) ReadMode
-  ineof <- liftIO $ hIsEOF inHandle
-  if ineof
-    then  throwM $ IOError "empty file"
-      else do fileText <- liftIO $ TIO.hGetContents  inHandle
-              return $ String $ fileText
--}
-
-wFileSlurp :: T.Text -> IO LispVal 
+wFileSlurp :: T.Text -> IO LispVal
 wFileSlurp fileName = withFile (T.unpack fileName) ReadMode go
   where go = readTextFile fileName
-
 
 readTextFile :: T.Text -> Handle -> IO LispVal
 readTextFile fileName handle = do
@@ -90,7 +78,6 @@ readTextFile fileName handle = do
   if exists
   then (TIO.hGetContents handle) >>= (return . String)
   else throwM $ IOError $ T.concat [" file does not exits: ", fileName]
-
 
 binopFold :: Binary -> LispVal -> [LispVal] -> Eval LispVal
 binopFold op farg args = case args of
@@ -127,7 +114,7 @@ numCmp op (Number x)  y         = throwM $ TypeMismatch "numeric op " y
 numCmp op x         y           = throwM $ TypeMismatch "numeric op " x
 
 
-eqCmd :: LispVal -> LispVal -> Eval LispVal 
+eqCmd :: LispVal -> LispVal -> Eval LispVal
 eqCmd (Atom   x) (Atom   y) = return . Bool $ x == y
 eqCmd (Number x) (Number y) = return . Bool $ x == y
 eqCmd (String x) (String y) = return . Bool $ x == y
@@ -156,10 +143,3 @@ cdr x             = throwM $ ExpectedList "cdr"
 quote :: [LispVal] -> Eval LispVal
 quote [List xs]   = return $ List $ Atom "quote" : xs
 quote [exp]       = return $ List $ Atom "quote" : [exp]
-
--- default return to Eval monad (no throwM handling)
-binopFixPoint :: (LispVal -> LispVal -> LispVal) -> [LispVal] -> Eval LispVal
-binopFixPoint f2 = binop (\x y -> return $ f2 x y)
-
-numOpVal :: (Integer -> Integer -> Integer ) -> LispVal -> LispVal -> LispVal
-numOpVal op (Number x) (Number y) = Number $ op x  y

@@ -17,7 +17,7 @@ import Data.Data
 import Data.Typeable
 
 type EnvCtx = Map.Map T.Text LispVal
--- EnvCtx -> ExceptT LispError IO a
+
 newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ResourceT IO) a }
   deriving (Monad, Functor, Applicative, MonadReader EnvCtx,  MonadIO, MonadCatch, MonadThrow)
 
@@ -60,12 +60,12 @@ data LispError
   | LengthOfList T.Text Int
   | ExpectedList T.Text
   | TypeMismatch T.Text LispVal
-  | BadSpecialForm T.Text 
+  | BadSpecialForm T.Text
   | NotFunction LispVal
   | UnboundVar T.Text
   | Default LispVal
   | PError String -- from show anyway
-  | IOError T.Text deriving ( Typeable) 
+  | IOError T.Text deriving (Typeable)
 
 instance Exception LispError
 
@@ -77,7 +77,7 @@ showError :: LispError -> T.Text
 showError err =
   case err of
     (IOError txt)            -> T.concat ["Error reading file: ", txt]
-    (NumArgs int args)       -> T.concat ["Error Number Arguments, expected ", T.pack $ show int, " recieved args: ", unwordsList args] 
+    (NumArgs int args)       -> T.concat ["Error Number Arguments, expected ", T.pack $ show int, " recieved args: ", unwordsList args]
     (LengthOfList txt int)   -> T.concat ["Error Length of List in ", txt, " length: ", T.pack $ show int]
     (ExpectedList txt)       -> T.concat ["Error Expected List in funciton ", txt]
     (TypeMismatch txt val)   -> T.concat ["Error Type Mismatch: ", txt, showVal val]

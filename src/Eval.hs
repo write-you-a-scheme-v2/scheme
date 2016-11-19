@@ -18,7 +18,7 @@ import System.Directory
 import System.IO
 import Control.Monad.Except
 import Control.Monad.Reader
-
+import Control.Monad.Trans.Resource
 
 basicEnv :: Map.Map T.Text LispVal
 basicEnv = Map.fromList $ primEnv
@@ -31,9 +31,10 @@ readFn x = do
     (String txt) -> textToEvalForm txt
     _            -> throwError $ TypeMismatch "read expects string, instead got: " val
 
+
 runASTinEnv :: EnvCtx -> Eval b -> ExceptT LispError IO b
 runASTinEnv code action = do
-    res <- liftIO $ runExceptT $ runReaderT (unEval action) code
+    res <- liftIO $  runResourceT $ runExceptT $ runReaderT (unEval action) code
     ExceptT $ return res
 
 evalText :: T.Text -> IO () --REPL

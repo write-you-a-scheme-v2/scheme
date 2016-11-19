@@ -1,18 +1,21 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-
 module LispVal where
 
 import qualified Data.Text as T
 import qualified Data.Map as Map
 
 import Control.Monad.Except
-import Control.Monad.Reader
 
+import Control.Monad.Reader
+import Control.Monad.Catch
+import Control.Monad.Trans.Resource
 
 type EnvCtx = Map.Map T.Text LispVal
-newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ExceptT LispError IO ) a }
-  deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadError LispError, MonadIO)
+-- EnvCtx -> ExceptT LispError IO a
+newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ResourceT IO) a }
+  deriving (Monad, Functor, Applicative, MonadReader EnvCtx,  MonadIO, MonadCatch, MonadThrow)
 
 data LispVal
   = Atom T.Text
@@ -58,7 +61,10 @@ data LispError
   | UnboundVar T.Text
   | Default LispVal
   | PError String -- from show anyway
-  | IOError T.Text
+  | IOError T.Text deriving (Data, Typeable) 
+
+instance Exception LispError
+
 
 instance Show LispError where
   show = T.unpack . showError

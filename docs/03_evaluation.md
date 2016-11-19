@@ -55,7 +55,7 @@ readExprFile = parse (contents parseList) "<file>"
 There is a lot of movement here (possibly dragons), and the functions above do the following things:    
 * `evalFile` is used from the `main :: IO ()` loop to run a program file.    
 * `readExprFile` runs the parser on the program text to return a `LispVal` or `ParseError`.    
-* `fileToEvalForm` runs the parser, if an error occurs, it converts it into a `LispError`, `PError` and throws it, else, it evaluates it using `evalBody`.     
+* `fileToEvalForm` runs the parser, if an error occurs, it converts it into a `LispException`, `PError` and throws it, else, it evaluates it using `evalBody`.     
 * `runASTinEnv` executes the the `evalBody :: LispVal -> Eval Body` with the `EnvCtx`, essentially running our program by first unwrapping `Eval` with `unEval` (the data accessor to `Eval`), then using the `runReaderT` and `runResourceT` functions on the transformed monad.
 
 ## eval function: rationale     
@@ -81,7 +81,7 @@ These will be known as our "Special Forms", different from functions defined in 
 ```Haskell
 eval :: LispVal -> Eval LispVal
 ```
-The eval function is the heart of our interpreter, and must be able to pattern match every possible valid syntax, as well as the special forms. This is a pretty tall order, so we are going to approach this by going through the eval function piece by piece along with the helper functions needed to run that code. It's a little disjoint, but the simplest way to explain exactly how we are going to implement the syntax and semantics of Scheme in Haskell.  As always, to see it all together, see [Eval.hs](../src/Eval.hs). As we go through the code you will see some `throwM`, which are covered in the next chapter, for now, recognize that `throwM $ LispErrorConstructor "message-1"` returns `Eval LispVal`.          
+The eval function is the heart of our interpreter, and must be able to pattern match every possible valid syntax, as well as the special forms. This is a pretty tall order, so we are going to approach this by going through the eval function piece by piece along with the helper functions needed to run that code. It's a little disjoint, but the simplest way to explain exactly how we are going to implement the syntax and semantics of Scheme in Haskell.  As always, to see it all together, see [Eval.hs](../src/Eval.hs). As we go through the code you will see some `throwM`, which are covered in the next chapter, for now, recognize that `throwM $ LispExceptionConstructor "message-1"` returns `Eval LispVal`.          
 
 
 #### quote     

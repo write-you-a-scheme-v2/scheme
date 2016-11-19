@@ -41,7 +41,7 @@ safeExec m = do
   case result of
     Left (eTop :: SomeException) -> 
       case fromException eTop of
-        Just (enclosed :: LispError) -> return $ Left (show enclosed)
+        Just (enclosed :: LispException) -> return $ Left (show enclosed)
         Nothing                -> return $ Left (show eTop)
     Right val -> return $ Right val
 

@@ -55,7 +55,7 @@ unwordsList :: [LispVal] -> T.Text
 unwordsList list = T.unwords $  showVal <$> list
 
 -- TODO make a pretty printer
-data LispError
+data LispException
   = NumArgs Integer [LispVal]
   | LengthOfList T.Text Int
   | ExpectedList T.Text
@@ -67,13 +67,13 @@ data LispError
   | PError String -- from show anyway
   | IOError T.Text deriving (Typeable)
 
-instance Exception LispError
+instance Exception LispException
 
 
-instance Show LispError where
+instance Show LispException where
   show = T.unpack . showError
 
-showError :: LispError -> T.Text
+showError :: LispException -> T.Text
 showError err =
   case err of
     (IOError txt)            -> T.concat ["Error reading file: ", txt]

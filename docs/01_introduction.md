@@ -85,7 +85,7 @@ This may seem like a lot. But don't worry, all these things, and more, are alrea
 * **Repl.hs**    Read Evaluate Print Loop code.  
 * **Parser.hs**    Lexer and Parser using Parsec code. Responsibility for the creation of LispVal object from Text input.  .
 * **Eval.hs**    Contains the evaluation function, `eval`. Patten matches on all configurations of S-Expressions and computes the resultant `LispVal`.  
-* **LispVal.hs**    defines LispVal, evaluation monad, LispError, and report printing functions.  
+* **LispVal.hs**    defines LispVal, evaluation monad, LispException, and report printing functions.  
 * **Prims.hs**    Creates the primitive environment functions, which themselves are contained in a map. These primitive functions are Haskell functions mapped to `LispVal`s.
 * **Pretty.hs**    Pretty Printer, used for formatting error messages. Might drop this, what do you think?  
 

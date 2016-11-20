@@ -18,8 +18,8 @@ import Data.Typeable
 
 type EnvCtx = Map.Map T.Text LispVal
 
-newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ResourceT IO) a }
-  deriving (Monad, Functor, Applicative, MonadReader EnvCtx,  MonadIO, MonadCatch, MonadThrow)
+newtype Eval a = Eval { unEval :: ReaderT EnvCtx IO a }
+  deriving (Monad, Functor, Applicative, MonadReader EnvCtx,  MonadIO)
 
 data LispVal
   = Atom T.Text

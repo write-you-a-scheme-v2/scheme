@@ -32,7 +32,7 @@ readFn x = do
   val <- eval x
   case val of
     (String txt) -> textToEvalForm txt
-    _            -> throwM $ TypeMismatch "read expects string, instead got: " val
+    _            -> throw $ TypeMismatch "read expects string, instead got: " val
 
 
 safeExec :: IO a -> IO (Either String a)
@@ -46,20 +46,20 @@ safeExec m = do
     Right val -> return $ Right val
 
 runASTinEnv :: EnvCtx -> Eval b -> IO b
-runASTinEnv code action = runResourceT $  runReaderT (unEval action) code
+runASTinEnv code action = runReaderT (unEval action) code
 
 evalText :: T.Text -> IO () --REPL
 evalText textExpr = (runASTinEnv basicEnv $ textToEvalForm textExpr) >>= print
 
 
 textToEvalForm :: T.Text -> Eval LispVal
-textToEvalForm input = either (throwM . PError . show  )  eval $ readExpr input
+textToEvalForm input = either (throw . PError . show  )  eval $ readExpr input
 
 evalFile :: T.Text -> IO () --program file
 evalFile fileExpr = (runASTinEnv basicEnv $ fileToEvalForm fileExpr) >>= print
 
 fileToEvalForm :: T.Text -> Eval LispVal
-fileToEvalForm input = either (throwM . PError . show )  evalBody $ readExprFile input
+fileToEvalForm input = either (throw . PError . show )  evalBody $ readExprFile input
 
 runParseTest :: T.Text -> T.Text -- for view AST
 runParseTest input = either (T.pack . show) (T.pack . show) $ readExpr input
@@ -69,12 +69,12 @@ getVar (Atom atom) = do
   env <- ask
   case Map.lookup atom env of
       Just x  -> return x
-      Nothing -> throwM $ UnboundVar atom
-getVar n = throwM $ TypeMismatch  "failure to get variable: " n
+      Nothing -> throw $ UnboundVar atom
+getVar n = throw $ TypeMismatch  "failure to get variable: " n
 
 ensureAtom :: LispVal -> Eval LispVal
 ensureAtom n@(Atom _) = return  n
-ensureAtom n = throwM $ TypeMismatch "expected an atomic value" n
+ensureAtom n = throw $ TypeMismatch "expected an atomic value" n
 
 extractVar :: LispVal -> T.Text
 extractVar (Atom atom) = atom
@@ -111,8 +111,8 @@ eval (List [Atom "if", pred, truExpr, flsExpr]) = do
   case ifRes of
     (Bool True)  -> eval truExpr
     (Bool False) -> eval flsExpr
-    _            -> throwM $ BadSpecialForm "if's first arg must eval into a boolean"
-eval args@(List ( (:) (Atom "if") _))  = throwM $ BadSpecialForm "(if <bool> <s-expr> <s-expr>)"
+    _            -> throw $ BadSpecialForm "if's first arg must eval into a boolean"
+eval args@(List ( (:) (Atom "if") _))  = throw $ BadSpecialForm "(if <bool> <s-expr> <s-expr>)"
 
 eval (List [Atom "begin", rest]) = evalBody rest
 eval (List ((:) (Atom "begin") rest )) = evalBody $ List rest
@@ -128,12 +128,12 @@ eval (List [Atom "let", List pairs, expr]) = do
   atoms <- mapM ensureAtom $ getEven pairs
   vals  <- mapM eval       $ getOdd  pairs
   local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a, b)) atoms vals) <> env))  $ evalBody expr
-eval (List (Atom "let":_) ) = throwM $ BadSpecialForm "lambda funciton expects list of parameters and S-Expression body\n(let <pairs> <s-expr>)" 
+eval (List (Atom "let":_) ) = throw $ BadSpecialForm "lambda funciton expects list of parameters and S-Expression body\n(let <pairs> <s-expr>)" 
 
 eval (List [Atom "lambda", List params, expr]) = do
   envLocal <- ask
   return  $ Lambda (IFunc $ applyLambda expr params) envLocal
-eval (List (Atom "lambda":_) ) = throwM $ BadSpecialForm "lambda function expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)"
+eval (List (Atom "lambda":_) ) = throw $ BadSpecialForm "lambda function expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)"
 
 eval (List ((:) x xs)) = do
   funVar <- eval x
@@ -141,9 +141,9 @@ eval (List ((:) x xs)) = do
   case funVar of
       (Fun (IFunc internalFn)) -> internalFn xVal
       (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) $ internalfn xVal
-      _                -> throwM $ NotFunction funVar 
+      _                -> throw $ NotFunction funVar 
 
-eval x = throwM $ Default  x --fall thru
+eval x = throw $ Default  x --fall thru
 
 evalBody :: LispVal -> Eval LispVal
 evalBody (List [List ((:) (Atom "define") [Atom var, defExpr]), rest]) = do

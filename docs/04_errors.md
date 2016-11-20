@@ -12,7 +12,7 @@ Undefined, unexpected, and generally out of control situations are a big type of
 Thus, there are three types of exceptions that exist in our implementations of Scheme: **Parsing, Evaluation, and IO**. Each of these originate in a distinct type of activity the parser or interpreter is undergoing, but all of them are end up going through the `Eval` monad and are caught and displayed in the same place. (see [Eval.hs](../src/Eval.hs))
 ```Haskell
 someFun :: GoodType -> Eval LispVal
-someFun (BadMatch x) = return $ throwM $ LispExceptionConstructor "message we send"
+someFun (BadMatch x) = return $ throw $ LispExceptionConstructor "message we send"
 ```
 
 ```Haskell

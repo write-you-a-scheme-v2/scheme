@@ -1,4 +1,4 @@
-Evaluation, Part 1
+Evaluation
 ------------
 #### Evaluation Context
 ![img](../img/WYAS-Eval-If-Statement.png)
@@ -8,13 +8,13 @@ LispVal.hs defines our key data structure for evaluation:
 ## Eval Monad
 
 ```haskell
-newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ResourceT IO) a }
-  deriving (Monad, Functor, Applicative, MonadReader EnvCtx,  MonadIO, MonadCatch, MonadThrow)
+newtype Eval a = Eval { unEval :: ReaderT EnvCtx IO a }
+  deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadIO)
 
 ```
 
-This code will be the form used to control evaluation. Specifically, it allows for lexical scoping, user input, error throwing, error catching, and will contain the return `LispVal` for any valid expression. If your asking yourself how such a complex data structure is possible, then welcome to the world of monad transformers. These wonderful abstractions allow programmers to combine monads and automatically generate the correctly lifted functions. For instance, our `Eval`'s `IO` would need its functions to be lifted, but since we derived `MonadIO`, this automatically happens for us.    
-This 'magic' is made possible through `{-# LANGUAGE GeneralizedNewtypeDeriving #-}` pragma. I will not be discusses this further, but its really a powerful technique that enables wonderfully powerful yet succinct abstractions to serve at the heart of our Lisp!    
+This code will be the form used to control evaluation. Specifically, it allows for lexical scoping, user input, and will contain the return `LispVal` for any valid expression. If your asking yourself how such a complex data structure is possible, then welcome to the world of monad transformers. These wonderful abstractions allow programmers to combine monads and automatically generate the correctly lifted functions. For instance, our `Eval`'s `IO` would need its functions to be lifted, but since we derived `MonadIO`, this automatically happens for us.    
+This 'magic' is made possible through `{-# LANGUAGE GeneralizedNewtypeDeriving #-}` pragma. The big addition we get here is `liftIO`, which lets us operate `IO` actions within `Eval` context: `liftIO :: IO a -> m a`. We will not be discussing this further, but its really a powerful technique that enables wonderfully powerful yet succinct abstractions to serve at the heart of our Lisp!    
 
 ## Running The Eval Monad
 Getting the `EnvCtx`    
@@ -36,7 +36,7 @@ evalFile :: T.Text -> IO () --program file
 evalFile fileExpr = (runASTinEnv basicEnv $ fileToEvalForm fileExpr) >>= print
 
 fileToEvalForm :: T.Text -> Eval LispVal
-fileToEvalForm input = either (throwM . PError . show )  evalBody $ readExprFile input
+fileToEvalForm input = either (throw . PError . show )  evalBody $ readExprFile input
 
 runParseTest :: T.Text -> T.Text -- for view AST
 runParseTest input = either (T.pack . show) (T.pack . show) $ readExpr input
@@ -81,7 +81,7 @@ These will be known as our "Special Forms", different from functions defined in 
 ```Haskell
 eval :: LispVal -> Eval LispVal
 ```
-The eval function is the heart of our interpreter, and must be able to pattern match every possible valid syntax, as well as the special forms. This is a pretty tall order, so we are going to approach this by going through the eval function piece by piece along with the helper functions needed to run that code. It's a little disjoint, but the simplest way to explain exactly how we are going to implement the syntax and semantics of Scheme in Haskell.  As always, to see it all together, see [Eval.hs](../src/Eval.hs). As we go through the code you will see some `throwM`, which are covered in the next chapter, for now, recognize that `throwM $ LispExceptionConstructor "message-1"` returns `Eval LispVal`.          
+The eval function is the heart of our interpreter, and must be able to pattern match every possible valid syntax, as well as the special forms. This is a pretty tall order, so we are going to approach this by going through the eval function piece by piece along with the helper functions needed to run that code. It's a little disjoint, but the simplest way to explain exactly how we are going to implement the syntax and semantics of Scheme in Haskell.  As always, to see it all together, see [Eval.hs](../src/Eval.hs). As we go through the code you will see some `throw`, which are covered in the next chapter, for now, recognize that `throw $ LispExceptionConstructor "message-1"` returns `Eval LispVal`.          
 
 
 #### quote     
@@ -118,7 +118,7 @@ getVar (Atom atom) = do
   env <- ask
   case Map.lookup atom env of
       Just x  -> return x
-      Nothing -> throwM $ UnboundVar atom
+      Nothing -> throw $ UnboundVar atom
 ```
 Now we're talking! When we evaluate an Atom, we are essentially doing variable lookup. `getVar` will do this lookup by getting the `EnvCtx` via ask, then running a `Map` lookup, returning the value if found, else throwing an error.  
 
@@ -129,7 +129,7 @@ eval (List [Atom "if", pred, truExpr, flsExpr]) = do
   case ifRes of
       (Bool True)  -> eval truExpr
       (Bool False) -> eval flsExpr
-      _            -> throwM $ BadSpecialForm "if"
+      _            -> throw $ BadSpecialForm "if"
 ```
 Here we implement the familiar `if` special form. First, we evaluate the predicate by recursing on the `eval` function.  Given that value, we pass it to a case statement, for True, we evaluate the third S-Expression, and for false, the fourth.  Thus, `if` only evaluates one of its third or fourth arguments, requiring it to be a special form.
 
@@ -152,7 +152,7 @@ getOdd (x:xs) = getEven xs
 
 ensureAtom :: LispVal -> Eval LispVal
 ensureAtom n@(Atom _) = return  n
-ensureAtom n = throwM $ TypeMismatch "atom" n
+ensureAtom n = throw $ TypeMismatch "atom" n
 
 extractVar :: LispVal -> T.Text
 extractVar (Atom atom) = atom
@@ -192,7 +192,7 @@ The begin special form is designed to accept two types of inputs: one for each o
 eval (List [Atom "lambda", List params, expr]) = do
   envLocal <- ask
   return  $ Lambda (IFunc $ applyLambda expr params) envLocal
-eval (List (Atom "lambda":_) ) = throwM $ BadSpecialForm "lambda"
+eval (List (Atom "lambda":_) ) = throw $ BadSpecialForm "lambda"
 
 applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal
 applyLambda expr params args = do
@@ -220,7 +220,7 @@ eval (List ((:) x xs)) = do
   case funVar of
       (Fun (IFunc internalFn)) -> internalFn xVal
       (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) $ internalfn xVal
-      _                -> throwM $ NotFunction funVar
+      _                -> throw $ NotFunction funVar
 ```
 The final form is application, we've made it!  If you are familiar with lambda calculus, this is one of the three forms, along with variables and lambdas. The way we perform application is to pattern match on the head, then tail of `List`. Next, we evaluate both of these values. We run `case` on `funVar`, which should be either a `Fun` (internal function), or `Lambda`, a user-defined or library function. If internal, we simply extract the function of type `[LispVal] -> Eval LispVal` and apply the arguments. For `Lambda`, we must evaluate the function within the environment provided by the `Lambda` to ensure lexical scope is maintained.  
 * note // is Lambda defining the lexical scope twice? Once in the partial funciton and once via the EnvCtx ??

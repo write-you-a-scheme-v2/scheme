@@ -69,17 +69,17 @@ type Binary = LispVal -> LispVal -> Eval LispVal
 
 unop :: Unary -> [LispVal] -> Eval LispVal
 unop op [x]    = op x
-unop _ args    = throwM $ NumArgs 1 args
+unop _ args    = throw $ NumArgs 1 args
 
 binop :: Binary -> [LispVal] -> Eval LispVal
 binop op [x,y]  = op x y
-binop _  args   = throwM $ NumArgs 2 args
+binop _  args   = throw $ NumArgs 2 args
 
 binopFold :: Binary -> LispVal -> [LispVal] -> Eval LispVal
 binopFold op farg args = case args of
                             [a,b]  -> op a b
                             (a:as) -> foldM op farg args
-                            []-> throwM $ NumArgs 2 args
+                            []-> throw $ NumArgs 2 args
 ```
 So the `binop`, `unop`, and `binopFold` are basically unwrapping functions that take a `[LispVal]` and an operator and apply the arguments to the operator. `binopFold` just runs the `foldM`, while taking an additional argument. It should be noted that `binopFold` requires the operator to work over monoids.    
 
@@ -89,11 +89,11 @@ So the `binop`, `unop`, and `binopFold` are basically unwrapping functions that 
 fileExists :: LispVal  -> Eval LispVal
 fileExists (Atom atom)  = fileExists $ String atom
 fileExists (String txt) = Bool <$> liftIO (doesFileExist $ T.unpack txt)
-fileExists val          = throwM $ TypeMismatch "read expects string, instead got: " val
+fileExists val          = throw $ TypeMismatch "read expects string, instead got: " val
 
 slurp :: LispVal  -> Eval LispVal
 slurp (String txt) = liftIO $ wFileSlurp txt
-slurp val          =  throwM $ TypeMismatch "read expects string, instead got: " val
+slurp val          =  throw $ TypeMismatch "read expects string, instead got: " val
 
 wFileSlurp :: T.Text -> IO LispVal
 wFileSlurp fileName = withFile (T.unpack fileName) ReadMode go
@@ -105,7 +105,7 @@ readTextFile fileName handle = do
   exists <- hIsEOF handle
   if exists
   then (TIO.hGetContents handle) >>= (return . String)
-  else throwM $ IOError $ T.concat [" file does not exits: ", fileName]
+  else throw $ IOError $ T.concat [" file does not exits: ", fileName]
 
 
 ```
@@ -117,19 +117,19 @@ cons :: [LispVal] -> Eval LispVal
 cons [x,y@(List yList)] = return $ List $ x:yList
 cons [c]                = return $ List [c]
 cons []                 = return $ List []
-cons _  = throwM $ ExpectedList "cons, in second argumnet"
+cons _  = throw $ ExpectedList "cons, in second argumnet"
 
 car :: [LispVal] -> Eval LispVal
 car [List []    ] = return Nil
 car [List (x:_)]  = return x
 car []            = return Nil
-car x             = throwM $ ExpectedList "car"
+car x             = throw $ ExpectedList "car"
 
 cdr :: [LispVal] -> Eval LispVal
 cdr [List (x:xs)] = return $ List xs
 cdr [List []]     = return Nil
 cdr []            = return Nil
-cdr x             = throwM $ ExpectedList "cdr"
+cdr x             = throw $ ExpectedList "cdr"
 ```
 Since the S-Expression is the central syntactical form of Scheme, list comprehension operators are a big part of the primitive environment. Ours are not using the `unop` or `binop` helper functions, since there are a few cases which varargs need to be support. A alternative approach would be to implement these as special forms, but since special forms are differentiated by their non-standard evaluation of arguments, they rightfully belong here, as primitives.      
 
@@ -138,31 +138,31 @@ Since the S-Expression is the central syntactical form of Scheme, list comprehen
 ```Haskell
 numBool :: (Integer -> Bool) -> LispVal -> Eval LispVal
 numBool op (Number x) = return $ Bool $ op x
-numBool op  x         = throwM $ TypeMismatch "numeric op " x
+numBool op  x         = throw $ TypeMismatch "numeric op " x
 
 numOp :: (Integer -> Integer -> Integer) -> LispVal -> LispVal -> Eval LispVal
 numOp op (Number x) (Number y) = return $ Number $ op x  y
-numOp op x          (Number y) = throwM $ TypeMismatch "numeric op " x
-numOp op (Number x)  y         = throwM $ TypeMismatch "numeric op " y
-numOp op x           y         = throwM $ TypeMismatch "numeric op " x
+numOp op x          (Number y) = throw $ TypeMismatch "numeric op " x
+numOp op (Number x)  y         = throw $ TypeMismatch "numeric op " y
+numOp op x           y         = throw $ TypeMismatch "numeric op " x
 
 strOp :: (T.Text -> T.Text -> T.Text) -> LispVal -> LispVal -> Eval LispVal
 strOp op (String x) (String y) = return $ String $ op x y
-strOp op x          (String y) = throwM $ TypeMismatch "string op " x
-strOp op (String x)  y         = throwM $ TypeMismatch "string op " y
-strOp op x           y         = throwM $ TypeMismatch "string op " x
+strOp op x          (String y) = throw $ TypeMismatch "string op " x
+strOp op (String x)  y         = throw $ TypeMismatch "string op " y
+strOp op x           y         = throw $ TypeMismatch "string op " x
 
 eqOp :: (Bool -> Bool -> Bool) -> LispVal -> LispVal -> Eval LispVal
 eqOp op (Bool x) (Bool y) = return $ Bool $ op x y
-eqOp op  x       (Bool y) = throwM $ TypeMismatch "bool op " x
-eqOp op (Bool x)  y       = throwM $ TypeMismatch "bool op " y
-eqOp op x         y       = throwM $ TypeMismatch "bool op " x
+eqOp op  x       (Bool y) = throw $ TypeMismatch "bool op " x
+eqOp op (Bool x)  y       = throw $ TypeMismatch "bool op " y
+eqOp op x         y       = throw $ TypeMismatch "bool op " x
 
 numCmp :: (Integer -> Integer -> Bool) -> LispVal -> LispVal -> Eval LispVal
 numCmp op (Number x) (Number y) = return . Bool $ op x  y
-numCmp op x          (Number y) = throwM $ TypeMismatch "numeric op " x
-numCmp op (Number x)  y         = throwM $ TypeMismatch "numeric op " y
-numCmp op x         y           = throwM $ TypeMismatch "numeric op " x
+numCmp op x          (Number y) = throw $ TypeMismatch "numeric op " x
+numCmp op (Number x)  y         = throw $ TypeMismatch "numeric op " y
+numCmp op x         y           = throw $ TypeMismatch "numeric op " x
 
 
 eqCmd :: LispVal -> LispVal -> Eval LispVal

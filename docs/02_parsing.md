@@ -2,6 +2,8 @@ Parsing
 ------------
 > Writing a really general parser is a major but different undertaking, by far the hardest points being sensitivity to context and resolution of ambiguity.  **Graham Nelson**    
 
+
+
 ![](../img/WYAS-Text-To-Eval.png)
 
 ## What is Parsing?

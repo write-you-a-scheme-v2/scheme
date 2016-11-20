@@ -1,6 +1,8 @@
 Introduction: The Bolts and Nuts of Scheme Interpreters in Haskell
 ------------
 > The most important thing in the programming language is the name. A language will not succeed without a good name. I have recently invented a very good name and now I am looking for a suitable language. **Donald Knuth**    
+
+
 ## 1.0 What are we going to do?
 We are going to make a very basic, but robust, programming language both simple to use and highly extendible. You are encouraged to take the language we build and add more functionality. For instance, you could use this language for running jobs on a High Performance Computing Cluster, or analyzing financial data. Language development is really a "killer app" for Haskell, and the approach we take in this tutorial is the basis you'll need to create a domain specific language for industrial purposes.    
 

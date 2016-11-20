@@ -1,6 +1,8 @@
 Write You A Scheme, Version 2.0
 ------------
 > A programming language is for thinking about programs, not for expressing programs you've already thought of. It should be a pencil, not a pen **Paul Graham**    
+
+
 ## Welcome
 Welcome to Write You a Scheme, Version 2.0. ([version 1](https://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours/
 https://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf)) You may be familiar with the original Write You a Scheme, and this is a much needed upgraded version. We use as much modern, industry ready Haskell to implement a Scheme on its way to being ready for production. This series will teach how to create a programming language by walking the reader through the components of a Scheme variant Lisp in Haskell. This should take about a weekend of study/programming for a beginner who might have to look up a few new concepts to really internalize the material.  The ideal reader with have some experience in Haskell, and eager to see how all the pieces come together in a medium to large sized project.

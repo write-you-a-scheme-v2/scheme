@@ -8,7 +8,7 @@ First some definitions:
 
 * **lexeme** the basic lexical unit of meaning.        
 * **token** structure representing a lexeme that explicitly indicates its categorization for the purpose of parsing.    
-* **lexer** A algorithm for lexical analysis that separates a stream of text into its component lexemes.  Defines the rules for individual words, or allowed symbols in a programming language.     
+* **lexer** A algorithm for lexical analysis that separates a stream of text into its component lexemes. Defines the rules for individual words, or allowed symbols in a programming language.     
 * **parser** an algorithm for converting the lexemes into valid language grammar. Operates on the level above the lexer, and defines the grammatical rules.
 
 ![](../img/WYAS-Lisp-Interpreter-Steps.png)    

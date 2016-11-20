@@ -1,5 +1,6 @@
 Evaluation
 ------------
+> True genius resides in the capacity for evaluation of uncertain, hazardous, and conflicting information. **Winston Churchill**    
 #### Evaluation Context
 ![img](../img/WYAS-Eval-If-Statement.png)
 LispVal.hs defines our key data structure for evaluation:   

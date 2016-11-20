@@ -1,9 +1,11 @@
 Primitive Environment
 ------------
+
+> And I say also unto thee, That thou art Peter, and upon this rock I will build my church; and the gates of hell shall not prevail against it. **Mathew 16:18**    
+
+## Primitive Strategy 
 The primitive environment is defined in [Prim.hs](../src/Prim.hs)  
 Our basic strategy is to create a list of tuples, `[(T.Text,LispVal)]`, where the text is the name of the primitive, and the `LispVal` is a `Fun` representing the internal function. We can use `Map.fromList` to convert this to a `Map` which is our environment for evaluation.  To create our `Fun`, we must map an internal Haskell function of some type to a `[LispVal] -> Eval LispVal`. In the process, we must pattern match to get the corresponding `LispVal`s of the correct types, extract the values, and apply our Haskell function. To help with this, we have created `binop`, `binopFold`, and `unop`.  This process is complicated to talk our way through, so I will go through an example in the subsequent sections to show how the type signatures reduce.    
-
-
 
 ## Full Definition
 First, we'll take a look at what everything looks like all together. What we see is that a Haskell function is wrapped with a function, like `numOp` or `numCmp`, which pattern matches on `LispVal` to get the internal Haskell values. This is then wrapped again by `binopFold` or `unop`, which convert the type of the argument to `[LispVal] -> Eval Lisp`, regardless of the number of arguments in the function `numCmp` or `numOp`.

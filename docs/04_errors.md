@@ -1,9 +1,6 @@
 Error Checking and Exceptions
 ------------
-"Illusions of control are common even in purely chance situations. They are
-particularly likely to occur in setting that are characterized by personal
-involvement, familiarity, foreknowledge of the desired outcome, and a focus on
-success." -- Suzanne C. Thompson     
+> Illusions of control are common even in purely chance situations. They are particularly likely to occur in setting that are characterized by personal involvement, familiarity, foreknowledge of the desired outcome, and a focus on success. **Suzanne C. Thompson**   
 ## Error Exceptions and All That!
 When the user enters some incorrect input, we can say they have made an error, and people understand what we mean in general terms. However, we are in the business of engineering, and there is a technical distinction between errors and exceptions. Errors, refer to situations where our project cannot handle itself, and we must change the source code to remedy the situation. These are unexpected situations. Exceptions, on the other hand, represent expected, but still irregular situations that we can control. Exceptions can represent problems with a potential Scheme program, like an error parsing, or a bad special form. [Haskell Wiki](https://wiki.haskell.org/Error_vs._Exception).     
 The sources for errors and exceptions in Haskell are as follows:    

@@ -12,13 +12,8 @@ import System.Console.Haskeline
 
 type Repl a = InputT IO a
 
-process :: String -> IO ()
-process str = do 
-  res <- safeExec $ evalText $ T.pack str
-  either putStrLn return res
-
-processToAST :: String -> IO ()
-processToAST str = print $ runParseTest $ T.pack str
+mainLoop :: IO ()
+mainLoop = runInputT defaultSettings repl
 
 repl :: Repl ()
 repl = do
@@ -28,5 +23,10 @@ repl = do
     Just input -> liftIO (process input) >> repl
     --Just input -> (liftIO $ processToAST input) >> repl
 
-mainLoop :: IO ()
-mainLoop = runInputT defaultSettings repl
+process :: String -> IO ()
+process str = do
+  res <- safeExec $ evalText $ T.pack str
+  either putStrLn return res
+
+processToAST :: String -> IO ()
+processToAST str = print $ runParseTest $ T.pack str

@@ -4,12 +4,12 @@ Primitive Environment
 > And I say also unto thee, That thou art Peter, and upon this rock I will build my church; and the gates of hell shall not prevail against it. **Mathew 16:18**    
 
 
-## Primitive Strategy 
+## Primitive Strategy
 The primitive environment is defined in [Prim.hs](../src/Prim.hs)  
-Our basic strategy is to create a list of tuples, `[(T.Text,LispVal)]`, where the text is the name of the primitive, and the `LispVal` is a `Fun` representing the internal function. We can use `Map.fromList` to convert this to a `Map` which is our environment for evaluation.  To create our `Fun`, we must map an internal Haskell function of some type to a `[LispVal] -> Eval LispVal`. In the process, we must pattern match to get the corresponding `LispVal`s of the correct types, extract the values, and apply our Haskell function. To help with this, we have created `binop`, `binopFold`, and `unop`.  This process is complicated to talk our way through, so I will go through an example in the subsequent sections to show how the type signatures reduce.    
+Our basic strategy is to create a list of tuples, `[(T.Text,LispVal)]`, where the text is the name of the primitive, and the `LispVal` is a `Fun` representing the internal function.  We can use `Map.fromList` to convert this to a `Map` which is our environment for evaluation.  To create our `Fun`, we must map an internal Haskell function of some type to a `[LispVal] -> Eval LispVal`.  In the process, we must pattern match to get the corresponding `LispVal`s of the correct types, extract the values, and apply our Haskell function.  To help with this, we have created `binop`, `binopFold`, and `unop`.  This process is complicated to talk our way through, so I will go through an example in the subsequent sections to show how the type signatures reduce.    
 
 ## Full Definition
-First, we'll take a look at what everything looks like all together. What we see is that a Haskell function is wrapped with a function, like `numOp` or `numCmp`, which pattern matches on `LispVal` to get the internal Haskell values. This is then wrapped again by `binopFold` or `unop`, which convert the type of the argument to `[LispVal] -> Eval Lisp`, regardless of the number of arguments in the function `numCmp` or `numOp`.
+First, we'll take a look at what everything looks like all together. What we see is that a Haskell function is wrapped with a function, like `numOp` or `numCmp`, which pattern matches on `LispVal` to get the internal Haskell values.  This is then wrapped again by `binopFold` or `unop`, which convert the type of the argument to `[LispVal] -> Eval Lisp`, regardless of the number of arguments in the function `numCmp` or `numOp`.
 
 
 ```haskell
@@ -62,7 +62,7 @@ binopFold (numOp (+)) (Number 0)         :: [LispVal] -> Eval LispVal
 IFunc $ binopFold (numOp (+)) (Number 0) :: IFunc
 mkF $ binopFold (numOp (+)) (Number 0) :: LispVal
 ```
-Alright, so it's a complicated transformation, but as you can see the types do work out. The engineering principle at play here is to use functions like `numOp` for as many operators as possible, reducing the amount of code needed to be written. `binop` and `unop` can be re-used for most functions. Varags would have to be handled differently, will have to be entered individually, like the functions for list comprehension.     
+Alright, so it's a complicated transformation, but as you can see the types do work out.  The engineering principle at play here is to use functions like `numOp` for as many operators as possible, reducing the amount of code needed to be written.  `binop` and `unop` can be re-used for most functions.  Varags would have to be handled differently, will have to be entered individually, like the functions for list comprehension.     
 
 ## Helper Functions
 ```Haskell
@@ -134,7 +134,7 @@ cdr [List []]     = return Nil
 cdr []            = return Nil
 cdr x             = throw $ ExpectedList "cdr"
 ```
-Since the S-Expression is the central syntactical form of Scheme, list comprehension operators are a big part of the primitive environment. Ours are not using the `unop` or `binop` helper functions, since there are a few cases which varargs need to be support. A alternative approach would be to implement these as special forms, but since special forms are differentiated by their non-standard evaluation of arguments, they rightfully belong here, as primitives.      
+Since the S-Expression is the central syntactical form of Scheme, list comprehension operators are a big part of the primitive environment.  Ours are not using the `unop` or `binop` helper functions, since there are a few cases which varargs need to be support.  A alternative approach would be to implement these as special forms, but since special forms are differentiated by their non-standard evaluation of arguments, they rightfully belong here, as primitives.      
 
 
 ## Unary and Binary Function Handlers
@@ -176,11 +176,11 @@ eqCmd (Bool   x) (Bool   y) = return . Bool $ x == y
 eqCmd  Nil        Nil       = return $ Bool True
 eqCmd  _          _         = return $ Bool False
 ```
-These are the re-used helper functions for wrapping Haskell functions, and pattern matching the LispVal arguments to make sure they are of the constructor. Further, the pattern matching can be used to dynamically dispatch the function at runtime depending on the data constructor used for the arguments. This is a defining feature of dynamically typed programming languages, and one of the many reasons why their performance is slow compared to statically typed languages! Another key feature within these functions is the throwing of errors for incorrect types, or mismatching types, being passed to functions. This prevents type errors from being thrown in Haskell, and allows us to handle them in a way that allows for verbose error report. Example: `(+ 1 "a")` would give an error!
+These are the re-used helper functions for wrapping Haskell functions, and pattern matching the LispVal arguments to make sure they are of the constructor.  Further, the pattern matching can be used to dynamically dispatch the function at runtime depending on the data constructor used for the arguments.  This is a defining feature of dynamically typed programming languages, and one of the many reasons why their performance is slow compared to statically typed languages! Another key feature within these functions is the throwing of errors for incorrect types, or mismatching types, being passed to functions.  This prevents type errors from being thrown in Haskell, and allows us to handle them in a way that allows for verbose error report.  Example: `(+ 1 "a")` would give an error!
 
 
 ## Conclusion
-In summary, we make the primitive environment by wrapping a Haskell function with a helper function that pattern matches on `LispVals` and extracts the internal values that the Haskell function can accept.  Next, we convert that function to be of type `[LispVal] -> Eval LispVal`, which is our type `IFunc`, the sole argument for the `LispVal` data constructor `Fun`. We can now map a `Text` value to a `LispVal` representing a function. This is our primitive environment, which should stay minimal, and if possible, new functions moved into the standard library if they can be defined from existing functions.
+In summary, we make the primitive environment by wrapping a Haskell function with a helper function that pattern matches on `LispVals` and extracts the internal values that the Haskell function can accept.  Next, we convert that function to be of type `[LispVal] -> Eval LispVal`, which is our type `IFunc`, the sole argument for the `LispVal` data constructor `Fun`.  We can now map a `Text` value to a `LispVal` representing a function.  This is our primitive environment, which should stay minimal, and if possible, new functions moved into the standard library if they can be defined from existing functions.
 
 ## [Understanding Check]
 Implement a new primitive function `nil?` which accepts a single argument, a list, returns true if the list is empty, and false under all other situations.    
@@ -190,7 +190,7 @@ Write a new function,
 ```
 binopFold1 :: Binary -> [LispVal] -> Eval LispVal
 ```
-that uses the first value of the list as the identity element. More information, see [here](https://wiki.haskell.org/Fold).    
+that uses the first value of the list as the identity element.  More information, see [here](https://wiki.haskell.org/Fold).    
 
 
 #### Next, Let's make a REPL!

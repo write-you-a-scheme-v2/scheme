@@ -4,7 +4,7 @@ Building a REPL: Basic I/O
 > Galileo alone had risked asserting the truth about our planet, and this made him a great man... His was a genuine career as I understand it. **Yevgeny Yevtushenko**
 
 ## REPL: Read Evaluate Print Loop
-[Repl.hs](../src/Repl.hs) defines the code we use for our REPL loop.  Our strategy will be to have the user enter text, parse, interpret, then display the result, then allow the user to enter another line of text. If an exception is thrown, we will catch and display the exception, then return to our normal mode.    
+[Repl.hs](../src/Repl.hs) defines the code we use for our REPL loop.   Our strategy will be to have the user enter text, parse, interpret, then display the result, then allow the user to enter another line of text.  If an exception is thrown, we will catch and display the exception, then return to our normal mode.    
 
 ```Haskell
 type Repl a = InputT IO a

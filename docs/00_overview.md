@@ -1,5 +1,10 @@
-Write You A Scheme, Version 2.0
-------------
+---
+title: Write You A Scheme, Version 2.0
+date: November 28, 2016
+author: Adam Wespiser
+---
+
+##Write You A Scheme, Version 2.0
 > A programming language is for thinking about programs, not for expressing programs you've already thought of. It should be a pencil, not a pen **Paul Graham**    
 
 

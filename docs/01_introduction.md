@@ -1,4 +1,10 @@
-Introduction: The Bolts and Nuts of Scheme Interpreters in Haskell
+---
+title: Introduction: The Bolts and Nuts of Scheme Interpreters in Haskell
+date: November 28, 2016
+author: Adam Wespiser
+---
+
+## Introduction: The Bolts and Nuts of Scheme Interpreters in Haskell
 ------------
 > The most important thing in the programming language is the name. A language will not succeed without a good name. I have recently invented a very good name and now I am looking for a suitable language. **Donald Knuth**    
 

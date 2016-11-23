@@ -1,4 +1,10 @@
-Evaluation
+---
+title: Evaluation
+date: November 28, 2016
+author: Adam Wespiser
+---
+
+## Evaluation
 ------------
 > True genius resides in the capacity for evaluation of uncertain, hazardous, and conflicting information. **Winston Churchill**    
 

@@ -1,4 +1,10 @@
-Primitive Environment
+---
+title: Primitive Environment
+date: November 28, 2016
+author: Adam Wespiser
+---
+
+## Primitive Environment
 ------------
 
 > And I say also unto thee, That thou art Peter, and upon this rock I will build my church; and the gates of hell shall not prevail against it. **Mathew 16:18**    

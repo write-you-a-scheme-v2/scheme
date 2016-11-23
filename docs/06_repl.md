@@ -1,4 +1,10 @@
-Building a REPL: Basic I/O
+---
+title: Primitive Environment
+date: November 28, 2016
+author: Adam Wespiser
+---
+
+## Building a REPL: Basic I/O
 ------------
 
 > Galileo alone had risked asserting the truth about our planet, and this made him a great man... His was a genuine career as I understand it. **Yevgeny Yevtushenko**

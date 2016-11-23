@@ -1,4 +1,10 @@
-Error Checking and Exceptions
+---
+title: Error Checking and Exceptions
+date: November 28, 2016
+author: Adam Wespiser
+---
+
+## Error Checking and Exceptions
 ------------
 > Illusions of control are common even in purely chance situations. They are particularly likely to occur in setting that are characterized by personal involvement, familiarity, foreknowledge of the desired outcome, and a focus on success. **Suzanne C. Thompson**   
 

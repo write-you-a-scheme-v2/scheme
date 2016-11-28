@@ -3,15 +3,14 @@ title: Primitive Environment
 date: November 28, 2016
 author: Adam Wespiser
 ---
-
-## Primitive Environment
 ------------
 
-> And I say also unto thee, That thou art Peter, and upon this rock I will build my church; and the gates of hell shall not prevail against it. **Mathew 16:18**    
+> *And I say also unto thee, That thou art Peter, and upon this rock I will build my church; and the gates of hell shall not prevail against it.*  **Mathew 16:18**    
 
 
 ## Primitive Strategy
-The primitive environment is defined in [Prim.hs](../src/Prim.hs)  
+The primitive environment is defined in
+[Prim.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Prim.hs)  
 Our basic strategy is to create a list of tuples, `[(T.Text,LispVal)]`, where the text is the name of the primitive, and the `LispVal` is a `Fun` representing the internal function.  We can use `Map.fromList` to convert this to a `Map` which is our environment for evaluation.  To create our `Fun`, we must map an internal Haskell function of some type to a `[LispVal] -> Eval LispVal`.  In the process, we must pattern match to get the corresponding `LispVal`s of the correct types, extract the values, and apply our Haskell function.  To help with this, we have created `binop`, `binopFold`, and `unop`.  This process is complicated to talk our way through, so I will go through an example in the subsequent sections to show how the type signatures reduce.    
 
 ## Full Definition
@@ -98,11 +97,11 @@ So the `binop`, `unop`, and `binopFold` are basically unwrapping functions that 
 fileExists :: LispVal  -> Eval LispVal
 fileExists (Atom atom)  = fileExists $ String atom
 fileExists (String txt) = Bool <$> liftIO (doesFileExist $ T.unpack txt)
-fileExists val          = throw $ TypeMismatch "read expects string, instead got: " val
+fileExists val  = throw $ TypeMismatch "expects str, got: " val
 
 slurp :: LispVal  -> Eval LispVal
 slurp (String txt) = liftIO $ wFileSlurp txt
-slurp val          =  throw $ TypeMismatch "read expects string, instead got: " val
+slurp val          =  throw $ TypeMismatch "expects str, got:" val
 
 wFileSlurp :: T.Text -> IO LispVal
 wFileSlurp fileName = withFile (T.unpack fileName) ReadMode go
@@ -200,4 +199,4 @@ that uses the first value of the list as the identity element.  More information
 
 
 #### Next, Let's make a REPL!
-[home](00_overview.md)...[back](04_errors.md)...[next](06_repl.md)
+[home](home.html)...[back](04_errors.html)...[next](06_repl.html)

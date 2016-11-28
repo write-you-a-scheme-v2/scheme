@@ -4,31 +4,31 @@ date: November 28, 2016
 author: Adam Wespiser
 ---
 
-##Write You A Scheme, Version 2.0
-> A programming language is for thinking about programs, not for expressing programs you've already thought of. It should be a pencil, not a pen **Paul Graham**    
+> *A programming language is for thinking about programs, not for expressing programs you've already thought of. It should be a pencil, not a pen.*  **Paul Graham**    
 
 
 ## Welcome
 Welcome to Write You a Scheme, Version 2.0. ([version 1](https://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours/
-https://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf)) You may be familiar with the original Write You a Scheme, and this is a much needed upgraded version.  We use as much modern, industry ready Haskell to implement a Scheme on its way to being ready for production.  This series will teach how to create a programming language by walking the reader through the components of a Scheme variant Lisp in Haskell.  This should take about a weekend of study/programming for a beginner who might have to look up a few new concepts to really internalize the material.   The ideal reader with have some experience in Haskell, and eager to see how all the pieces come together in a medium to large sized project.
+https://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf)) [Github repo ](https://github.com/write-you-a-scheme-v2/scheme).  You may be familiar with the original Write You a Scheme, and this is a much needed upgraded version.  We use as much modern, industry ready Haskell to implement a Scheme on its way to being ready for production.  This series will teach how to create a programming language by walking the reader through the components of a Scheme variant Lisp in Haskell.  This should take about a weekend of study/programming for a beginner who might have to look up a few new concepts to really internalize the material.   The ideal reader with have some experience in Haskell, and eager to see how all the pieces come together in a medium to large sized project.
 
 We won't have time to go into a lot of detail on things like monad transformers or interpreter theory. Instead, links to further information will be provided when needed. If you are looking for a good Haskell intro, the concepts from [Learn You a Haskell for Great Good](http://learnyouahaskell.com) should be internalized. A great reference while reading this book is [What I Wish I Knew When Learning Haskell](http://dev.stephendiehl.com/hask). Specifically for industry, FP-Complete's [Haskell Syllabus](https://www.fpcomplete.com/haskell-syllabus) is a great guide. Finally, the [HaskellWiki](https://wiki.haskell.org/Learning_Haskell) has a comprehensive list of resources available for learning Haskell.    
 
-This a community project, and if you have improvements, please contact me over Github or on Twitter [\@wespiser](http://www.twitter.com/wespiser). Better yet, submit a PR! We've had to balance language features, tutorial breadth, and level of complexity to provide beginners with a robust implementation that will not take long to understand.  If you have any ideas on how I can better meet these goals, please let us know! We advocate open source languages, although it is possible to use our Scheme to build a vendor-specific language, [this](https://www.stickyminds.com/article/hey-vendors-give-us-real-scripting-languages?page=0%2C0) article spells out why that is a bad idea. However, if you need an interpreter for commercial purposes, [Abstract Definition Interpreters](../sources/AbstractDefinitionalInterpreters.pdf) contains the conceptual underpinnings and "invents" the kind of interpreter we will be making.         
+This a community project, and if you have improvements, please contact me over Github or on Twitter [\@wespiser](http://www.twitter.com/wespiser). Better yet, submit a PR! We've had to balance language features, tutorial breadth, and level of complexity to provide beginners with a robust implementation that will not take long to understand.  If you have any ideas on how I can better meet these goals, please let us know! We advocate open source languages, although it is possible to use our Scheme to build a vendor-specific language, [this](https://www.stickyminds.com/article/hey-vendors-give-us-real-scripting-languages?page=0%2C0) article spells out why that is a bad idea. However, if you need an interpreter for commercial purposes, [Abstract Definition Interpreters](https://github.com/write-you-a-scheme-v2/scheme/tree/master/sources/AbstractDefinitionalInterpreters.pdf) contains the conceptual underpinnings and "invents" the kind of interpreter we will be making.         
 
 ## Roadmap
 Here's the overview of what we will be doing and where we will go:    
 
-* [00_overview.md](../docs/00_overview.md) What you are reading right now.      
-* [01_introduction.md](../docs/01_introduction.md) Introduces Scheme syntax and semantics, as well as the Haskell implementation.    
-* [02_parsing.md](../docs/02_parsing.md) Parsing of text into abstract syntax tree.    
-* [03_evaluation.md](../docs/03_evaluation.md) Evaluation of abstract syntax tree using monad transformers.       
-* [04_errors.md](../docs/04_errors.md) Error messages used throughout project. Creation of error messages.    
-* [05_primitives.md](../docs/05_primitives.md) Primitive functions that are loaded into the environment.    
-* [06_repl.md](../docs/06_repl.md) Read Eval Print Loop.   
-* [07_io.md](../docs/09_io.md) Reading and writing to files for both Scheme commands and the reading of program files.    
-* [08_stdlib.md](../docs/10_stdlib.md) Creation of Scheme standard library from primitive functions.    
-* [09_conclusion.md](../docs/11_conclusion.md) We conclude the project.        
+* [Overview](00_overview.html) What you are reading right now.      
+* [Introduction](01_introduction.html) Introduces Scheme syntax and semantics, as well as the Haskell implementation.    
+* [Parser](02_parsing.html) Parsing of text into abstract syntax tree.    
+* [Evaluation](03_evaluation.html) Evaluation of abstract syntax tree using monad transformers.       
+* [Errors & Exceptions](04_errors.html) Error/Exception messages used throughout project. Creation of error messages.    
+* [Primitives](05_primitives.html) Primitive functions that are loaded into the environment.    
+* [REPL](06_repl.html) Read Eval Print Loop.   
+* **IO** Reading and writing to files for both Scheme commands and the reading of program files.    
+* **Standard Library** Creation of Scheme standard library from primitive functions.    
+* **Conclusion** We conclude the project, giving some final
+  thoughts on the project.        
 
 ## Why Lisp ?
 Although the majority of modern programming follows C/Algo, Lisp syntax is simple, using the same syntax to represent code and data, the list.  This is called homoiconicity, a feature which makes both parsing and evaluation much simpler compared to other languages. Scheme, a dialect of Lisp, is a straight-forward lisp.  We won't strictly follow the Scheme standard for the sake of brevity, but aim to include as many useful features as possible.  If you are interested in what a fully fledged Scheme looks like, Haskell-Scheme (github) is a fully featured language, in Haskell, and Chicken-Scheme implements in C. The scheme we will write will contain the basic elements of these more featured languages. The Scheme Programming Language is a great book to teach the function of an industrial strength reference Scheme, and is a great source to explain language features. Another great book to learn Scheme and interpretation is Structure and Interpretation of Computer Programs (SICP), which discusses how to build a meta-circular evaluator in Lisp.  Lisp has a history as an educational language, and its simplicity is mostly why we will be following the tradition here.    
@@ -99,12 +99,12 @@ The `if` statement acts like it does in any language.
 `(let (x 2 y 40) (+ x y))` => `42`    
 
 **Begin**    
-`begin` evaluates a series of one or more S-Expressions in order.  S-Expressions can modify the environment using `define`, then subsequent expressions may access to the variable.  Further, when running a Scheme program, its S-Expressions are essentially wrapped in a single begin function.  More on this when we go over [Eval.hs](../src/Eval.hs).     
+`begin` evaluates a series of one or more S-Expressions in order.  S-Expressions can modify the environment using `define`, then subsequent expressions may access to the variable.  Further, when running a Scheme program, its S-Expressions are essentially wrapped in a single begin function.  More on this when we go over [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs).     
 `(begin (define x 413000) (define y (+ x 281)) (+ x y))` => `413281`    
 
 **The Rest**    
 
-Although Scheme is a minimal language, this list of functions is not complete.  There are two files that contain the rest of the internally defined functions: special forms in [Eval.hs](../src/Eval.hs), and the primitives in [Prim.hs](src/Prim.hs). For a full Scheme specification, see [R5RS](../sources/r5rs.pdf). It's not the most modern, but its complete enough to work.    
+Although Scheme is a minimal language, this list of functions is not complete.  There are two files that contain the rest of the internally defined functions: special forms in [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs), and the primitives in [Prim.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Prim.hs). For a full Scheme specification, see [R5RS](https://github.com/write-you-a-scheme-v2/scheme/tree/master/sources/r5rs.pdf). It's not the most modern, but its complete enough to work.    
 
 #### [Understanding Check]
 What form does Scheme use to represent data? what about code?    
@@ -114,4 +114,4 @@ Can you rearrange `let` expressions into `lambda`? What about `lambda` into `let
 Write out an explanation and example that demonstrates lexical scope using a `lambda` expression.
 
 #### Next, Introduction to our implementing Scheme
-[next](01_introduction.md)
+[home](home.html)...[next](01_introduction.html)

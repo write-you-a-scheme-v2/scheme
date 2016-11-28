@@ -3,17 +3,15 @@ title: Introduction: The Bolts and Nuts of Scheme Interpreters in Haskell
 date: November 28, 2016
 author: Adam Wespiser
 ---
-
-## Introduction: The Bolts and Nuts of Scheme Interpreters in Haskell
 ------------
-> The most important thing in the programming language is the name. A language will not succeed without a good name. I have recently invented a very good name and now I am looking for a suitable language. **Donald Knuth**    
+> *The most important thing in the programming language is the name. A language will not succeed without a good name. I have recently invented a very good name and now I am looking for a suitable language.*  **Donald Knuth**    
 
 
 
 
 ## What do we need to build a Scheme?
 
-![](../img/WYAS-Lisp-Interpreter-Steps.png)    
+[](../wyas/img/WYAS-Lisp-Interpreter-Steps.png)    
 
 To make any programming language, we must take user inputed text, turn that text into
 tokens, parse that into an abstract syntax tree, then evaluate that format into a result.  Fortunately, we can use the same structure, `LispVal`, for both the abstract syntax tree, returned by the parser, and the return result of the interpreter.  Homoiconicity for the win! The lexer and parser is contained in a single library, Parsec, which does most of the work for us.  Once we have parsed into LispVal, we have to evaluate that `LispVal` to get the result of the computation. Evaluation must be done for all the different configurations of S-Expressions, including specials forms like `begin` and `define`. During that computation we need to have an environment for keeping track of bound variable, an IO monad for reading or writing files during execution, and Except monad for throwing/catching different errors.  We will also need a way to convert Haskell functions to internal Scheme functions, and a collection of these functions stored in the Scheme environment.  Finally, a suitable user interface, including Read/Evaluate/Print/Loop, way to run read files/run programs, and standard library of functions loaded at runtime defined in Scheme is needed.    
@@ -23,7 +21,7 @@ This may seem like a lot.  But don't worry, all these things, and more, are alre
 
 ## Project Road Map: What do we have?
 
-![](../img/WYAS-Dependency-Tree.png)    
+[](../wyas/img/WYAS-Dependency-Tree.png)    
 
 * **Main.hs**  Handles the creation of the binary executable, parsing of command line options.  
 * **Repl.hs**    Read Evaluate Print Loop code.  
@@ -125,4 +123,4 @@ Can you think of some alternative ways to represent S-Expressions? What about [G
 
 
 #### Next, Parsers :: Text -> LispVal, YAY!
-[back](00_overview.md)...[next](02_parsing.md)
+[home](home.html)...[back](00_overview.html)...[next](02_parsing.html)

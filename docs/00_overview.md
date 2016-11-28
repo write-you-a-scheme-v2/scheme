@@ -1,11 +1,16 @@
-Write You A Scheme, Version 2.0
-------------
+---
+title: Write You A Scheme, Version 2.0
+date: November 28, 2016
+author: Adam Wespiser
+---
+
+##Write You A Scheme, Version 2.0
 > A programming language is for thinking about programs, not for expressing programs you've already thought of. It should be a pencil, not a pen **Paul Graham**    
 
 
 ## Welcome
 Welcome to Write You a Scheme, Version 2.0. ([version 1](https://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours/
-https://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf)) You may be familiar with the original Write You a Scheme, and this is a much needed upgraded version. We use as much modern, industry ready Haskell to implement a Scheme on its way to being ready for production. This series will teach how to create a programming language by walking the reader through the components of a Scheme variant Lisp in Haskell. This should take about a weekend of study/programming for a beginner who might have to look up a few new concepts to really internalize the material.  The ideal reader with have some experience in Haskell, and eager to see how all the pieces come together in a medium to large sized project.
+https://upload.wikimedia.org/wikipedia/commons/a/aa/Write_Yourself_a_Scheme_in_48_Hours.pdf)) You may be familiar with the original Write You a Scheme, and this is a much needed upgraded version.  We use as much modern, industry ready Haskell to implement a Scheme on its way to being ready for production.  This series will teach how to create a programming language by walking the reader through the components of a Scheme variant Lisp in Haskell.  This should take about a weekend of study/programming for a beginner who might have to look up a few new concepts to really internalize the material.   The ideal reader with have some experience in Haskell, and eager to see how all the pieces come together in a medium to large sized project.
 
 We won't have time to go into a lot of detail on things like monad transformers or interpreter theory. Instead, links to further information will be provided when needed. If you are looking for a good Haskell intro, the concepts from [Learn You a Haskell for Great Good](http://learnyouahaskell.com) should be internalized. A great reference while reading this book is [What I Wish I Knew When Learning Haskell](http://dev.stephendiehl.com/hask). Specifically for industry, FP-Complete's [Haskell Syllabus](https://www.fpcomplete.com/haskell-syllabus) is a great guide. Finally, the [HaskellWiki](https://wiki.haskell.org/Learning_Haskell) has a comprehensive list of resources available for learning Haskell.    
 
@@ -40,6 +45,73 @@ What you need to run the project is in `Readme.md`, and if you are excited to st
 
 Haskell is not an island unto itself, and we must manage the libraries required to build the project. I recommend using Ubuntu, version 14.04 or 16.04, (any Linux distribution should work, contact me if you have problems) and the build tool Stack. The library versions are determined for Stack in `scheme.cabal`, while `stack.yaml` is the version of Stack's dependency resolver, and `Build.hs` is Haskell code for generating documents from these markdown files. More info on stack, here: https://www.fpcomplete.com/blog/2015/06/why-is-stack-not-cabal. The `Readme.md` contains full instructions on how to build the project source code and documentation, which I encourage you to do. The best way to learn is to modify, break, fix, and finally improve the source code. Two included scripts, `build` which will monitor for file changes then build upon updates, and `run`, which will drop you into an interactive REPL, were invaluable in the development of this project. Please feel free to contact with me with any great ideas, modifications, improvements, or vaguely related but interesting concepts. I made this project for you, use it however you please.
 
+
+
+## What are we going to do?
+We are going to make a very basic, but robust, programming language both simple to use and highly extendible. You are encouraged to take the language we build and add more functionality. For instance, you could use this language for running jobs on a High Performance Computing Cluster, or analyzing financial data. Language development is really a "killer app" for Haskell, and the approach we take in this tutorial is the basis you'll need to create a domain specific language for industrial purposes.    
+
+## Scheme Syntax
+Lisp is a list processing language, and is old enough to join the AARP with a very storied history.  Scheme is an fully specified Lisp implementation, although we will be taking many liberties for the sake of simplicity.  For Scheme, this means every expression is a list. This parenthesized list has a prefix operator and is known as an S-Expression. Whenever a S-Expression is encountered, it is evaluated in the same way, minus a handful of special forms. Data is also represented as an S-Expression, and there is no syntactical difference between code and data.  Scheme is well known for this minimalism.
+
+## Scheme semantics
+Similar to Haskell, Scheme is a functional programming language. Everything in our Scheme in an object, for instance numbers, strings, functions, variables, and booleans. This is our Haskell type, `LispVal`.  These objects are stored in a single environment, `EnvCtx` which is queried to resolve the value of an evaluated variable. In Scheme, no object is ever destroyed, however, the scope of a variable is limited to its lexical context.  Further, arguments in scheme are passed by value, so when a function is called, all of its arguments are evaluated before being passed into the function. Contrast this to Haskell, where evaluation is lazy, and values are not computed until they are needed, which is sometimes never. The environment to find and store variables is the same environment is used to find primitive functions, so when `(file? "tmp")` is evaluated, `file?` is a variable with a corresponding value (a function) in the environment.
+
+## Scheme Type System   
+Scheme is a dynamic language, like Python, Ruby, Perl, or [as compared to a static language](https://pythonconquerstheuniverse.wordpress.com/2009/10/03/static-vs-dynamic-typing-of-programming-languages/) like C++ or Java. Dynamic languages are simpler to implement, but allow for some preventable errors that would be impossible in a static language.  For an example from our Scheme, `(+ 'a' 1)` is valid syntax wildly open to interpretation at runtime.  (Try it on the REPL!) If you are interested in building a typed language in Haskell, [this](http://okmij.org/ftp/Haskell/AlgorithmsH.html#teval) guide shows how type inference makes language engineering significantly more complex.  Dynamic languages are not all doom and gloom, they give the user tremendous flexibility.  The R Programming Language is an excellent example of a dynamic language that excels at statistical computing by giving the user incredible flexibility and choice over how to implement ideas.  A concept called Dynamic Dispatch allows functions to be determined, at runtime, by the types of the arguments passed in, so `(+ 1 1)` and `(+ "a" "b")` could use different versions of the `+` function.  This is a key feature is dynamically typed programming languages, and we will be implementing this feature in our Scheme.    
+
+## Interpreted
+We are building an interpreted language, an alternative to compiling down to assembly language, LLVM or using a virtual machine like Java's JVM.  Most generally this means that we have a program that actively runs to evaluate a program in our Scheme.  This approach yields slower performance due to the higher memory and processor overhead, but we will be able to finish in the project in a single weekend.  For the motivated, Lisp In Small Pieces walks you through over 30 interpreted and  2 compiled versions of Scheme, written in Scheme.  You can find the program code  [here](https://pages.lip6.fr/Christian.Queinnec/WWW/LiSP.html). If you want to write a language with performance in mind, you'll want to use an [LLVM backend](http://stephendiehl.com/llvm).  I warn you, there be dragons!    
+
+#### On Type System Complexity, Cautionary Tail
+Type systems are extremely complex to build, and balancing programming productivity versus performance gains is a difficult balance.  For instance, Guy Steele has worked on successful languages like Common Lisp and Java, but spent most of the 8 years building Fortress getting the type system right.  Steele cited issues with the complexity of the type system when winding down development on Fortress.  Although type systems are complex, its theoretical possible to create a type system so advanced that programs can have provable properties and abstractions as powerful as those in mathematics.  This is far beyond the scope of this tutorial, and the majority of production code written is done in a dynamic language. However, If your are a novice, then this tutorial is a great way to get involved in a very exciting movement that will shape the way of things to come for industry programming.   For now, the best we get is an industrial language that if it compiles, it runs.      
+
+## Scheme Examples
+To get a feel for our Scheme, here is the evaluation of some functions and their arguments.  Keep in mind that we must build the abstracts that are capable of evaluating these forms.  Both the right and left hand side of the form are represented with `LispVal`.    
+
+**List Processing**    
+
+There are three primitive functions for manipulating these structures in our Scheme.  We will be implementing them later as part of the standard library and discussing the tradeoffs of other implementations.    
+`car`  ... `(car '(1 2 3))`  => `(1)`    
+`cadr` ... `(cadr '(1 2 3))` => `(2 3)`     
+`cons` ... `(cons 1 '(2 3))` => `(1 2 3)`    
+
+**Mathematics**     
+Mathematical functions can take 2 or more functions.    
+`(* 60 9)` => `69`    
+`(+ 10 30 2))` => `42`    
+
+**Quote**    
+`quote` is a special form that delays evaluation on its argument.    
+`(quote (1 2 3 4))` => `(1 2 3 4)`    
+`'(1 2 3 4)` => `(1 2 3 4)`    
+
+**Conditional Statements**    
+The `if` statement acts like it does in any language.    
+`(if (< 4 5) #f 42)` => `#f`    
+
+**Lambdas & Anonymous functions**    
+`lambda` is used to create an anonymous function.    
+`((lambda (y) (+ y 2)) 40)` => `42`    
+
+**Let Statements**    
+`let` takes two arguments. Its first is a paired list of variables and values. These variables are set the to corresponding values, which are then in scope for the evaluation of the second argument.    
+`(let (x 42) x)` => `42`    
+`(let (x 2 y 40) (+ x y))` => `42`    
+
+**Begin**    
+`begin` evaluates a series of one or more S-Expressions in order.  S-Expressions can modify the environment using `define`, then subsequent expressions may access to the variable.  Further, when running a Scheme program, its S-Expressions are essentially wrapped in a single begin function.  More on this when we go over [Eval.hs](../src/Eval.hs).     
+`(begin (define x 413000) (define y (+ x 281)) (+ x y))` => `413281`    
+
+**The Rest**    
+
+Although Scheme is a minimal language, this list of functions is not complete.  There are two files that contain the rest of the internally defined functions: special forms in [Eval.hs](../src/Eval.hs), and the primitives in [Prim.hs](src/Prim.hs). For a full Scheme specification, see [R5RS](../sources/r5rs.pdf). It's not the most modern, but its complete enough to work.    
+
+#### [Understanding Check]
+What form does Scheme use to represent data? what about code?    
+How would you create a function in Scheme? How about set a variable?    
+If Scheme is a Dynamically-Typed Interpreted Functional Language? What does this make C, or your favorite programming language?    
+Can you rearrange `let` expressions into `lambda`? What about `lambda` into `let`?    
+Write out an explanation and example that demonstrates lexical scope using a `lambda` expression.
 
 #### Next, Introduction to our implementing Scheme
 [next](01_introduction.md)

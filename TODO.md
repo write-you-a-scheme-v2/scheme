@@ -8,12 +8,12 @@
 - [x] Make LispError diversity and usage consistent throughout project
 - [x] Outline Eval chapters
 - [x] Write Eval Chapter
-- [ ] check lambda lexical scoping (in both EnvCtx in Lambda and partial applyLambda)
+- [x] check lambda lexical scoping (in both EnvCtx in Lambda and partial applyLambda)
 - [x] Outline Prim chapters
 - [x] Write Prim Chapter
 - [x] Write Error Chapter
 - [ ] Integrate test framework into narrative to demonstrate features of presented code.
-- [ ] Find an alternave to the ExceptT error IO a 
+- [x] Find an alternative to the ExceptT error IO a
 
 
 11/1/2016: Goal: Finish Code for initial release (chapters 0-4, enough code for REPL to work & turing completeness)
@@ -29,7 +29,7 @@ get the following to work:
 - [x] eval body to work when 2) let/lambda, support define statements    
 - [x] io on files(read/write), read file to String, write string to file    
 - [x] eval body to work when 1) reading files
-- [ ] Test read/parse/eval files as script   
+- [x] Test read/parse/eval files as script   
 - [x] evalBody like define    
 - [x] write :: LispVal -> T.Text     
 - [x] read  ::            T.Text -> LispVal     

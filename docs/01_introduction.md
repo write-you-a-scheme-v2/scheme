@@ -43,9 +43,12 @@ This declaration will be at the top of every file in the project. Not every libr
 T.pack :: String -> Text
 T.unpack :: Text -> String
 ```
-However, this project is able to use overloaded strings in all of the files.  I strongly suggest you do the same in a production environment, and I advocate Text becoming the standard for the language.
+However, this project is able to use overloaded strings in all of the files.  I strongly suggest you do the same in a production environment, and I advocate Text becoming the standard for the language.    
+
+
 ## Internal representation, welcome to LispVal
-We need a way to represent the structure of a program that can be manipulated within Haskell.  Haskell's type system that allows for pattern matching on data constructors, which will allow our `eval` function to differentiate different forms of S-Expressions.    
+We need a way to represent the structure of a program that can be manipulated within Haskell.  Haskell's type system that allows for pattern matching on data constructors, which will allow our `eval` function to differentiate different forms of S-Expressions.     
+
 
 ## LispVal Definition
 After much ado, here's the representation of the S-Expression. All code and data will be represented by one of the following data constructors.  There is nothing else, let's take a look!     

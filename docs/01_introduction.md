@@ -7,14 +7,12 @@ author: Adam Wespiser
 > *The most important thing in the programming language is the name. A language will not succeed without a good name. I have recently invented a very good name and now I am looking for a suitable language.*  **Donald Knuth**    
 
 
-
-
 ## What do we need to build a Scheme?
 
 [](../wyas/img/WYAS-Lisp-Interpreter-Steps.png)    
 
 To make any programming language, we must take user inputed text, turn that text into
-tokens, parse that into an abstract syntax tree, then evaluate that format into a result.  Fortunately, we can use the same structure, `LispVal`, for both the abstract syntax tree, returned by the parser, and the return result of the interpreter.  Homoiconicity for the win! The lexer and parser is contained in a single library, Parsec, which does most of the work for us.  Once we have parsed into LispVal, we have to evaluate that `LispVal` to get the result of the computation. Evaluation must be done for all the different configurations of S-Expressions, including specials forms like `begin` and `define`. During that computation we need to have an environment for keeping track of bound variable, an IO monad for reading or writing files during execution, and Except monad for throwing/catching different errors.  We will also need a way to convert Haskell functions to internal Scheme functions, and a collection of these functions stored in the Scheme environment.  Finally, a suitable user interface, including Read/Evaluate/Print/Loop, way to run read files/run programs, and standard library of functions loaded at runtime defined in Scheme is needed.    
+tokens, parse that into an abstract syntax tree, then evaluate that format into a result.  Fortunately, we can use the same structure, `LispVal`, for both the abstract syntax tree, returned by the parser, and the return result of the interpreter.  Homoiconicity for the win! The lexer and parser is contained in a single library, Parsec, which does most of the work for us.  Once we have parsed into LispVal, we have to evaluate that `LispVal` to get the result of the computation. Evaluation must be done for all the different configurations of S-Expressions, including specials forms like `begin` and `define`. During that computation we need to have an environment for keeping track of bound variable, and an IO monad for reading or writing files during execution.  We will also need a way to convert Haskell functions to internal Scheme functions, and a collection of these functions stored in the Scheme environment.  Finally, a suitable user interface, including Read/Evaluate/Print/Loop, way to run read files/run programs, and standard library of functions loaded at runtime defined in Scheme is needed.    
 
 This may seem like a lot.  But don't worry, all these things, and more, are already available in this project.  Together, we'll go through line by line and make sense out of how these Haskell abstraction coalesce to implement a Scheme!    
 
@@ -43,7 +41,7 @@ This declaration will be at the top of every file in the project. Not every libr
 T.pack :: String -> Text
 T.unpack :: Text -> String
 ```
-However, this project is able to use overloaded strings in all of the files.  I strongly suggest you do the same in a production environment, and I advocate Text becoming the standard for the language.    
+However, this project is able to use overloaded strings in all of the files.  I strongly suggest you do the same in a production environment, and I advocate Text becoming the standard for the language.  This is the "strong" position on Text, and requires that all upstream libraries be written to either Text agnostic, or work with Text. This may not always be the case. For these situations, you can convert into Text using `T.pack`, or just keep using `String`.        
 
 
 ## Internal representation, welcome to LispVal
@@ -68,7 +66,7 @@ data IFunc = IFunc { fn :: [LispVal] -> Eval LispVal }
 `Bool`, `Number` and  `String` are straight forward warpers for Haskell values.  `Nil` is the null type, and the result of evaluating an empty list.  `Atom` represents variables, and when evaluated with return some other value from the environment.  To represent an S-Expression we will use `List`, with 0 or more `LispVal`.    
 Now for the tricker part, functions.  There are two basic types of functions we will encounter in Scheme.  Primitive functions like `+` use `Fun`.  The second type of function is generated in an expression like:
 ```Haskell
-( (lambda (x) (+ x 100)  ) 42)
+((lambda (x) (+ x 100)) 42)
 ```
 To handle lexical scoping, the lambda function must enclose the environment present at the time the function is created.  Conceptually, the easiest way is to just bring the environment along with the function.  For an implemention, the data constructor `Fun` accepts  `EnvCtx`, which is lexical environment, as well as `IFunc`, which is its a Haskell function.  You'll notice it takes its arguments as a list of `LispVal`, then returns an object of type `Eval LispVal`.  For more on `Eval`, read the next section.  There's also a `deriving (Typeable)`, which is needed for error handling, more on that later!           
 
@@ -85,7 +83,11 @@ import Control.Monad.Reader
 type EnvCtx = Map.Map T.Text LispVal
 
 newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ResourceT IO) a }
-  deriving (Monad, Functor, Applicative, MonadReader EnvCtx,  MonadIO, MonadCatch, MonadThrow)
+  deriving (Monad
+           , Functor
+           , Applicative
+           , MonadReader EnvCtx
+           , MonadIO)
 
 ```
 
@@ -93,7 +95,7 @@ For evaluation, we need to handle the context of a couple of things: the environ
 
 #### Reader Monad and Lexical Scope
 
-We will be using the `ReaderT` monad to handle lexical scope. If you are not familiar with monads, or `ReaderT`, you can see the definitions.  [here](http://dev.stephendiehl.com/hask/#reader-monad). I'll try to explain how we are using. `ReaderT` has to basic functions: `ask` and `local`.  Within the monadic context, `ask` is a function which gets `EnvCtx`, and `local` is a function which sets `EnvCtx` and evaluates an expression.  As you can imagine, we will be using `ask` a lot to get the `EnvCtx`, then using `Map` functions to either get or add variables, then using `local` with a modified `EnvCtx` and evaluating the next function.  If this doesn't make sense yet, that's okay.  There is example code on the way!
+We will be using the `ReaderT` monad to handle lexical scope.  Reader is basically a function `e -> a`, which in our case is `EnvCtx -> Eval LispVal`.  If you are not familiar with monads, or `ReaderT`, [you can see the definitions here](http://dev.stephendiehl.com/hask/#reader-monad). I'll try to explain how we are using. `ReaderT` has to basic functions: `ask` and `local`.  Within the monadic context, `ask` is a function which gets `EnvCtx`, and `local` is a function which sets `EnvCtx` and evaluates an expression.  As you can imagine, we will be using `ask` a lot to get the `EnvCtx`, then using `Map` functions to either get or add variables, then using `local` with a modified `EnvCtx` and evaluating the next function.  If this doesn't make sense yet, that's okay.  There is example code on the way!
 
 
 ## Show LispVal

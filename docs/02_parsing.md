@@ -30,7 +30,7 @@ Parsec is a monadic parser, and works by matching streaming text to lexeme then 
 
 ## Why Parsec?
 
-Parsec is preferable for its simplicity compared to the alternatives: Alex & Happy or Attoparsec.  Alex & Happy are more complex, and require a separate compilation step.  Parsec works well for most grammars, but is computationally expensive for left recursive grammars.  Attoparsec is faster, and preferable for parsing network messages or other binary formats.  Parsec has better error messages, a helpful feature for programming languages.  If our language required a lot of left-recursive parsing, Alex & Happy would probably be a better choice.  However, the simplicity and minimalism of Scheme syntax makes parsing relatively simple.
+Parsec is preferable for its simplicity compared to the alternatives: Alex & Happy or Attoparsec.  Alex & Happy are more complex, and require a separate compilation step.  Parsec works well for most grammars, but is computationally expensive for left recursive grammars.  Attoparsec is faster, and preferable for parsing network messages or other binary formats.  Parsec has better error messages, a helpful feature for programming languages.  If our language required a lot of left-recursive parsing, Alex & Happy would probably be a better choice.  However, the simplicity and minimalism of Scheme syntax makes parsing relatively simple.  *Note* A new library has been created from a fork of Parsec called [MegaParsec](https://mrkkrp.github.io/megaparsec/), it takes a monad transformer approach to parsing, and appears quite feature rich and claims to be industry ready!    
 
 
 ## How parsing will work

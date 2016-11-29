@@ -1,5 +1,7 @@
 Write You a Scheme
 ==================
+[About this project](docs/home.md)    
+==================
 Shortcut build
 ```bash
 $ ./build 

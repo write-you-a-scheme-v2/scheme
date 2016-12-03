@@ -1,6 +1,6 @@
 Write You a Scheme
 ==================
-[About this project](docs/home.md)    
+[About this project](https://www.wespiser.com/writings/wyas/home.html)    
 ==================
 Shortcut build
 ```bash

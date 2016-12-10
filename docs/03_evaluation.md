@@ -3,14 +3,13 @@ title: Evaluation
 date: November 28, 2016
 author: Adam Wespiser
 ---
-
-## Evaluation
 ------------
-> True genius resides in the capacity for evaluation of uncertain, hazardous, and conflicting information. **Winston Churchill**    
+
+> *True genius resides in the capacity for evaluation of uncertain, hazardous, and conflicting information.*  **Winston Churchill**    
 
 
 #### Evaluation Context
-![img](../img/WYAS-Eval-If-Statement.png)
+![img](../wyas/img/WYAS-Eval-If-Statement.png)
 LispVal.hs defines our key data structure for evaluation:   
 
 
@@ -18,7 +17,11 @@ LispVal.hs defines our key data structure for evaluation:
 
 ```haskell
 newtype Eval a = Eval { unEval :: ReaderT EnvCtx IO a }
-  deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadIO)
+  deriving (Monad
+           , Functor
+           , Applicative
+           , MonadReader EnvCtx
+           , MonadIO)
 
 ```
 
@@ -31,10 +34,10 @@ Getting the `EnvCtx`
 ```haskell
 basicEnv :: Map.Map T.Text LispVal
 basicEnv = Map.fromList $ primEnv
-          <> [("read" , Fun $ IFunc $ unop $ readFn)]
+        <> [("read" , Fun $ IFunc $ unop $ readFn)]
 ```
 
-This is our primitive environment, which will be detailed in the next chapter on [Prim.hs](../src/Prim.hs). Recall that we defined `EnvCtx` in [LispVal.hs](../src/LispVal.hs) as:
+This is our primitive environment, which will be detailed in the next chapter on [Prim.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Prim.hs). Recall that we defined `EnvCtx` in [LispVal.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/LispVal.hs) as:
 
 ```haskell
 type EnvCtx = Map.Map T.Text LispVal
@@ -42,20 +45,26 @@ type EnvCtx = Map.Map T.Text LispVal
 Our environment is a collection of bindings between names and entities referenced by the names.  For now, we must only concern ourselves with the fact that the names in the environment comes from `LispVal's` `Atom` data constructor.  This data structure is going to be the basis of our lexical scoped variable look up.    
 ```haskell
 evalFile :: T.Text -> IO () --program file
-evalFile fileExpr = (runASTinEnv basicEnv $ fileToEvalForm fileExpr) >>= print
+evalFile fileExpr = (runASTinEnv basicEnv $ fileToEvalForm fileExpr) 
+                     >>= print
 
 fileToEvalForm :: T.Text -> Eval LispVal
-fileToEvalForm input = either (throw . PError . show )  evalBody $ readExprFile input
+fileToEvalForm input = either (throw . PError . show )  
+                              evalBody 
+                              $ readExprFile input
 
 runParseTest :: T.Text -> T.Text -- for view AST
-runParseTest input = either (T.pack . show) (T.pack . show) $ readExpr input
+runParseTest input = either (T.pack . show) 
+                            (T.pack . show) 
+                            $ readExpr input
 
 runASTinEnv :: EnvCtx -> Eval b -> IO b
-runASTinEnv code action = runResourceT $  runReaderT (unEval action) code
+runASTinEnv code action = runResourceT 
+                          $ runReaderT (unEval action) code
 
 ```
 
-From [Parser.hs](../src/Parser.hs) we have
+From [Parser.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Parser.hs) we have
 
 ```haskell
 readExprFile :: T.Text -> Either ParseError LispVal
@@ -68,7 +77,7 @@ There is a lot of movement here (possibly dragons), and the functions above do t
 * `runASTinEnv` executes the the `evalBody :: LispVal -> Eval Body` with the `EnvCtx`, essentially running our program by first unwrapping `Eval` with `unEval` (the data accessor to `Eval`), then using the `runReaderT` and `runResourceT` functions on the transformed monad.
 
 ## eval function: rationale     
-Using our aptly named `Eval` structure, we will define the `eval` function within [Eval.hs]](../src/Eval.hs) as follows:
+Using our aptly named `Eval` structure, we will define the `eval` function within [Eval.hs]](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs) as follows:
 
 ```haskell
 eval :: LispVal -> Eval LispVal
@@ -90,7 +99,7 @@ These will be known as our "Special Forms", different from functions defined in 
 ```Haskell
 eval :: LispVal -> Eval LispVal
 ```
-The eval function is the heart of our interpreter, and must be able to pattern match every possible valid syntax, as well as the special forms.  This is a pretty tall order, so we are going to approach this by going through the eval function piece by piece along with the helper functions needed to run that code.  It's a little disjoint, but the simplest way to explain exactly how we are going to implement the syntax and semantics of Scheme in Haskell.  As always, to see it all together, see [Eval.hs](../src/Eval.hs). As we go through the code you will see some `throw`, which are covered in the next chapter, for now, recognize that `throw $ LispExceptionConstructor "message-1"` returns `Eval LispVal`.          
+The eval function is the heart of our interpreter, and must be able to pattern match every possible valid syntax, as well as the special forms.  This is a pretty tall order, so we are going to approach this by going through the eval function piece by piece along with the helper functions needed to run that code.  It's a little disjoint, but the simplest way to explain exactly how we are going to implement the syntax and semantics of Scheme in Haskell.  As always, to see it all together, see [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs). As we go through the code you will see some `throw`, which are covered in the next chapter, for now, recognize that `throw $ LispExceptionConstructor "message-1"` returns `Eval LispVal`.          
 
 
 #### quote     
@@ -113,8 +122,11 @@ For Number, String, Bool, and Nil, when we evaluate, we simply return the value.
 autoquote returns self for Number, Bool, String, Nil. () => Nil,
 #### write     
 ```Haskell
-eval (List [Atom "write", rest])      = return . String . T.pack $ show rest
-eval (List ((:) (Atom "write") rest)) = return . String . T.pack . show $ List rest
+eval (List [Atom "write", rest]) = 
+           return . String . T.pack $ show rest
+
+eval (List ((:) (Atom "write") rest)) =
+           return . String . T.pack . show $ List rest
 ```
 Write does not evaluate argument or arguments, and instead runs `show` on them before return that value in a `String`.  For the second version, we are taking the two or more arguments passed to write and simply converting them into a `List`.
 
@@ -228,7 +240,8 @@ eval (List ((:) x xs)) = do
   xVal   <- mapM eval  xs
   case funVar of
       (Fun (IFunc internalFn)) -> internalFn xVal
-      (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) $ internalfn xVal
+      (Lambda (IFunc internalfn) boundenv) -> local (const boundenv) 
+                                                   $ internalfn xVal
       _                -> throw $ NotFunction funVar
 ```
 The final form is application, we've made it!  If you are familiar with lambda calculus, this is one of the three forms, along with variables and lambdas.  The way we perform application is to pattern match on the head, then tail of `List`.  Next, we evaluate both of these values.  We run `case` on `funVar`, which should be either a `Fun` (internal function), or `Lambda`, a user-defined or library function.  If internal, we simply extract the function of type `[LispVal] -> Eval LispVal` and apply the arguments.  For `Lambda`, we must evaluate the function within the environment provided by the `Lambda` to ensure lexical scope is maintained.  
@@ -236,14 +249,14 @@ The final form is application, we've made it!  If you are familiar with lambda c
 
 
 ## Conclusion
-That was a lot! If `LispVal` defines the syntax, then `Eval` defines the semantics.  Now is a good time to read [Eval.hs](../src/Eval.hs) and see it work all together, since that's all that defines the mechanism of evaluation.  Our implementation is made possible by monad transformers, specifically the integration of `ReaderT`, which we use to implement lexical scope.  Without monads, we would have to pass in an extra argument to every `eval`, as well as some of the helper functions, not to mention the complication of handling the other functionality of monads composed within our `Eval`.  For a simple interpreter, its hard to do much better.  For a faster interpreter, we would need to compile.      
+That was a lot! If `LispVal` defines the syntax, then `Eval` defines the semantics.  Now is a good time to read [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs) and see it work all together, since that's all that defines the mechanism of evaluation.  Our implementation is made possible by monad transformers, specifically the integration of `ReaderT`, which we use to implement lexical scope.  Without monads, we would have to pass in an extra argument to every `eval`, as well as some of the helper functions, not to mention the complication of handling the other functionality of monads composed within our `Eval`.  For a simple interpreter, its hard to do much better.  For a faster interpreter, we would need to compile.      
 Anyway, we have the the basis for our language and could start work on proving theoretical properties.  We won't do this, and instead move towards gaining the next thing needed to be practical, a collection of basic operations to manipulate data.  But before moving on to primitives, we quickly cover errors, which show up all over `eval` function.  If you just can't wait to define some functions and get the REPL up and running, the basic message is, when bad things happen, throw an error that gives the user enough information to fix the problem.        
 
 ## [Understanding Check]
 Implement a delay function as a special form that returns its argument as the body of a lambda expression that accepts no arguments. `(delay x) => (lambda () x)`    
 You careful read the R5RS standard and are upset to realize we have implemented `let` incorrectly. Instead of `(let (x 1 y 2) (+ x y))` the standard calls for `(let ((x 1) (y 2)) (+ x y))`. Make this change.    
 GADTs are sometimes used to implement `LispVal`. How would evaluation change?        
-Implement one of (`case`, `letrec`, `let*`, `sequence`, `do`, `loop`) as a special form.  Check the [R5RS](../docs/R5RS.pdf) standard for more information.    
+Implement one of (`case`, `letrec`, `let*`, `sequence`, `do`, `loop`) as a special form.  Check the [R5RS](https://github.com/write-you-a-scheme-v2/scheme/tree/master/docs/R5RS.pdf) standard for more information.    
 [Bonus] Find a unique difference in the implementation of special forms between this project and R5RS, implement the special form, then submit a new PR.        
 
 #### Additional Resources:
@@ -252,4 +265,4 @@ Implement one of (`case`, `letrec`, `let*`, `sequence`, `do`, `loop`) as a speci
 * https://github.com/justinethier/husk-scheme/tree/master/hs-src/Language/Scheme  
 
 #### Danger Will Robinson, on to Errors!
-[home](00_overview.md)...[back](03_evaluation.md)...[next](04_errors.md)
+[home](home.html)...[back](03_evaluation.html)...[next](04_errors.html)

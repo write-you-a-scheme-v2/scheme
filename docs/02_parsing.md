@@ -3,13 +3,13 @@ title: Parsing
 date: November 28, 2016
 author: Adam Wespiser
 ---
-## Parsing
 ------------
-> Writing a really general parser is a major but different undertaking, by far the hardest points being sensitivity to context and resolution of ambiguity.  **Graham Nelson**    
+
+> *Writing a really general parser is a major but different undertaking, by far the hardest points being sensitivity to context and resolution of ambiguity.*  **Graham Nelson**    
 
 
 
-![](../img/WYAS-Text-To-Eval.png)
+![](../wyas/img/WYAS-Text-To-Eval.png)
 
 ## What is Parsing?
 
@@ -20,7 +20,7 @@ First some definitions:
 * **lexer** A algorithm for lexical analysis that separates a stream of text into its component lexemes.  Defines the rules for individual words, or allowed symbols in a programming language.     
 * **parser** an algorithm for converting the lexemes into valid language grammar.  Operates on the level above the lexer, and defines the grammatical rules.
 
-![](../img/WYAS-Lisp-Interpreter-Steps.png)    
+![](../wyas/img/WYAS-Lisp-Interpreter-Steps.png)    
 
 Most basically, Parsing and Lexing is the process of converting the input text of either the REPL or program and converting that into a format that can be evaluated by the interpreter.  That covertted format, in our case, is `LispVal`.  The library we will use for parsing is called `Parsec`.
 
@@ -30,7 +30,7 @@ Parsec is a monadic parser, and works by matching streaming text to lexeme then 
 
 ## Why Parsec?
 
-Parsec is preferable for its simplicity compared to the alternatives: Alex & Happy or Attoparsec.  Alex & Happy are more complex, and require a separate compilation step.  Parsec works well for most grammars, but is computationally expensive for left recursive grammars.  Attoparsec is faster, and preferable for parsing network messages or other binary formats.  Parsec has better error messages, a helpful feature for programming languages.  If our language required a lot of left-recursive parsing, Alex & Happy would probably be a better choice.  However, the simplicity and minimalism of Scheme syntax makes parsing relatively simple.
+Parsec is preferable for its simplicity compared to the alternatives: Alex & Happy or Attoparsec.  Alex & Happy are more complex, and require a separate compilation step.  Parsec works well for most grammars, but is computationally expensive for left recursive grammars.  Attoparsec is faster, and preferable for parsing network messages or other binary formats.  Parsec has better error messages, a helpful feature for programming languages.  If our language required a lot of left-recursive parsing, Alex & Happy would probably be a better choice.  However, the simplicity and minimalism of Scheme syntax makes parsing relatively simple.  *Note* A new library has been created from a fork of Parsec called [MegaParsec](https://mrkkrp.github.io/megaparsec/), it takes a monad transformer approach to parsing, and appears quite feature rich and claims to be industry ready!    
 
 
 ## How parsing will work
@@ -113,9 +113,11 @@ parseNumber :: Parser LispVal
 parseNumber = Number . read <$> many1 digit
 
 parseList :: Parser LispVal
-parseList = List . concat <$> Text.Parsec.many parseExpr `sepBy` (char ' ' <|> char '\n')
+parseList = List . concat <$> Text.Parsec.many parseExpr 
+                                  `sepBy` (char ' ' <|> char '\n')
 
-parseSExp = List . concat <$> m_parens (Text.Parsec.many parseExpr `sepBy` (char ' ' <|> char '\n'))
+parseSExp = List . concat <$> m_parens (Text.Parsec.many parseExpr 
+                                         `sepBy` (char ' ' <|> char '\n'))
 
 parseQuote :: Parser LispVal
 parseQuote = do
@@ -170,11 +172,11 @@ readExprFile = parse (contents parseList) "<file>"
 
 #### Conclusion
 
-From the top, we have gone from text input, to tokens, to `LispVal`.  Now that we have `LispVal` representing the abstract syntax tree, we need to get to `Eval LispVal`, the final computed value.  We've left a standalone parsing test at the bottom of [Parser.hs](../src/Parser.hs) which you can compile and run with `bash$ ghc ./src/Parser.hs -o ~/a.out && a.out` if you want a quick way to experiment.  Now, it's time to start running programs, let's take it to eval and see how `LispVal` gets computed!       
+From the top, we have gone from text input, to tokens, to `LispVal`.  Now that we have `LispVal` representing the abstract syntax tree, we need to get to `Eval LispVal`, the final computed value.  We've left a standalone parsing test at the bottom of [Parser.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Parser.hs) which you can compile and run with `bash$ ghc ./src/Parser.hs -o ~/a.out && a.out` if you want a quick way to experiment.  Now, it's time to start running programs, let's take it to eval and see how `LispVal` gets computed!       
 
 #### Next, Evaluation
 
-[home](00_overview.md)...[back](01_introduction.md)...[next](03_evaluation.md)
+[home](home.html)...[back](01_introduction.html)...[next](03_evaluation.html)
 
 #### Additional Reading
 

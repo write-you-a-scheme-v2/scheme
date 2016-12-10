@@ -3,14 +3,11 @@ title: Read Eval Print Loop Repeat
 date: November 28, 2016
 author: Adam Wespiser
 ---
-
-## Building a REPL: Basic I/O
 ------------
 
-> Galileo alone had risked asserting the truth about our planet, and this made him a great man... His was a genuine career as I understand it. **Yevgeny Yevtushenko**
+> *Galileo alone had risked asserting the truth about our planet, and this made him a great man... His was a genuine career as I understand it.*  **Yevgeny Yevtushenko**
 
-## REPL: Read Evaluate Print Loop
-[Repl.hs](../src/Repl.hs) defines the code we use for our REPL loop.   Our strategy will be to have the user enter text, parse, interpret, then display the result, then allow the user to enter another line of text.  If an exception is thrown, we will catch and display the exception, then return to our normal mode.    
+[Repl.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Repl.hs) defines the code we use for our REPL loop.   Our strategy will be to have the user enter text, parse, interpret, then display the result, then allow the user to enter another line of text.  If an exception is thrown, we will catch and display the exception, then return to our normal mode.    
 
 ```Haskell
 type Repl a = InputT IO a
@@ -18,7 +15,7 @@ type Repl a = InputT IO a
 mainLoop :: IO ()
 mainLoop = runInputT defaultSettings repl
 ```
-Here we define out `Repl` type using `InputT` from the mtl library to wrap `IO`. `mainLoop` will run the REPL with default settings, and is the top-level function exported by [Repl.hs.](../src/Repl.hs) that will be loaded into [Main.hs](../exec/Main.hs) and used to create the executable.        
+Here we define out `Repl` type using `InputT` from the mtl library to wrap `IO`. `mainLoop` will run the REPL with default settings, and is the top-level function exported by [Repl.hs.](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Repl.hs) that will be loaded into [Main.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/exec/Main.hs) and used to create the executable.        
 
 ```haskell
 repl :: Repl ()
@@ -54,4 +51,4 @@ REPL keywords like ":quit" ":help" ":clear" or ":ast" can be entered to allow fo
 
 
 #### Next?
-[home](00_overview.md)...[back](05_primitives.md)
+[home](home.html)...[back](05_primitives.html)

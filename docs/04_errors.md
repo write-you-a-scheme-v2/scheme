@@ -3,10 +3,9 @@ title: Error Checking and Exceptions
 date: November 28, 2016
 author: Adam Wespiser
 ---
-
-## Error Checking and Exceptions
 ------------
-> Illusions of control are common even in purely chance situations. They are particularly likely to occur in setting that are characterized by personal involvement, familiarity, foreknowledge of the desired outcome, and a focus on success. **Suzanne C. Thompson**   
+
+> *Illusions of control are common even in purely chance situations. They are particularly likely to occur in setting that are characterized by personal involvement, familiarity, foreknowledge of the desired outcome, and a focus on success.*  **Suzanne C. Thompson**   
 
 
 ## Error Exceptions and All That!
@@ -18,7 +17,7 @@ Try to keep these in mind, but expect to see only exceptions, unless I've made a
 We say an exception is checked when it after it is "thrown", another part of code "handles" or "catches" it.  This is how our exception system in Haskell will work.   
 ## Exceptions Everywhere!
 Undefined, unexpected, and generally out of control situations are a big type of any kind of large system, especially one interacting with the outside world or dealing with use input as complex and complicated as a programming language.  Control is an illusion.  For our system, we must accept user input, determine that it is valid Scheme syntax, then compute that syntax into a final value.  During this process we may interact with the file system or network.  It is especially important for programming languages to report and describe the nature of the irregularity.     
-Thus, there are three types of exceptions that exist in our implementations of Scheme: **Parsing, Evaluation, and IO**.  Each of these originate in a distinct type of activity the parser or interpreter is undergoing, but all of them are end up going through the `Eval` monad and are caught and displayed in the same place.  (see [Eval.hs](../src/Eval.hs))
+Thus, there are three types of exceptions that exist in our implementations of Scheme: **Parsing, Evaluation, and IO**.  Each of these originate in a distinct type of activity the parser or interpreter is undergoing, but all of them are end up going through the `Eval` monad and are caught and displayed in the same place.  (see [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs))
 ```Haskell
 someFun :: GoodType -> Eval LispVal
 someFun (BadMatch x) = return $ throw $ LispExceptionConstructor "message we send"
@@ -81,7 +80,7 @@ showError err =
 
 ```
 
- Similar to our `showVal`, from [Chapter 1](01_introduction.md), we override the `show` Typeclass to give a custom message for the type.  The showError has a special case for PError, which uses  `String` and just wraps the error message from the parser.  The next source `IO`, can also be tricky.  Although we have the ability to throw an `IOError`, if there is an unchecked exception during `IO` operations, it will fall through and not be handling via our `LispException` pathway.      
+ Similar to our `showVal`, from [Chapter 1](01_introduction.html), we override the `show` Typeclass to give a custom message for the type.  The showError has a special case for PError, which uses  `String` and just wraps the error message from the parser.  The next source `IO`, can also be tricky.  Although we have the ability to throw an `IOError`, if there is an unchecked exception during `IO` operations, it will fall through and not be handling via our `LispException` pathway.      
 
 
 
@@ -110,4 +109,4 @@ The list is pretty daunting, and building upon the approach taken here is a good
 
 #### Next, Let's make some functions!
 
-[home](00_overview.md)...[back](03_evaluation.md)...[next](05_primitives.md)
+[home](home.html)...[back](03_evaluation.html)...[next](05_primitives.html)

@@ -36,7 +36,7 @@ primEnv = [   ("+"     , mkF $ binopFold (numOp    (+))  (Number 0) )
             , ("pos?"  , mkF $ unop $     numBool (< 0))
             , ("neg?"  , mkF $ unop $     numBool (> 0))
             , ("eq?"   , mkF $ binop   eqCmd )
-            , ("bl-eq?",mkF  $ binop $ eqOp     (==))
+            , ("bl-eq?", mkF  $ binop $ eqOp     (==))
             , ("and"   , mkF $ binopFold (eqOp     (&&)) (Bool True))
             , ("or"    , mkF $ binopFold (eqOp     (||)) (Bool False))
             , ("cons"  , mkF   Prim.cons)
@@ -67,7 +67,7 @@ binopFold (numOp (+)) (Number 0)         :: [LispVal] -> Eval LispVal
 IFunc $ binopFold (numOp (+)) (Number 0) :: IFunc
 mkF $ binopFold (numOp (+)) (Number 0) :: LispVal
 ```
-Alright, so it's a complicated transformation, but as you can see the types do work out.  The engineering principle at play here is to use functions like `numOp` for as many operators as possible, reducing the amount of code needed to be written.  `binop` and `unop` can be re-used for most functions.  Varags would have to be handled differently, will have to be entered individually, like the functions for list comprehension.     
+Alright, so it's a complicated transformation, but as you can see the types do work out.  The engineering principle at play here is the use of the function `numOp`, and similar functions, for as many operators as possible. This reduces the amount of code needed to be written.  Further, `binop` and `unop` can be re-used for most functions.  Varags would have to be handled differently, possibly by entering each pattern match individually.     
 
 ## Helper Functions
 ```Haskell
@@ -181,7 +181,7 @@ eqCmd (Bool   x) (Bool   y) = return . Bool $ x == y
 eqCmd  Nil        Nil       = return $ Bool True
 eqCmd  _          _         = return $ Bool False
 ```
-These are the re-used helper functions for wrapping Haskell functions, and pattern matching the LispVal arguments to make sure they are of the constructor.  Further, the pattern matching can be used to dynamically dispatch the function at runtime depending on the data constructor used for the arguments.  This is a defining feature of dynamically typed programming languages, and one of the many reasons why their performance is slow compared to statically typed languages! Another key feature within these functions is the throwing of errors for incorrect types, or mismatching types, being passed to functions.  This prevents type errors from being thrown in Haskell, and allows us to handle them in a way that allows for verbose error report.  Example: `(+ 1 "a")` would give an error!
+These are the re-used helper functions for wrapping Haskell functions, and pattern matching the LispVal arguments.  Further, the pattern matching can be used to dynamically dispatch the function at runtime depending on the data constructor of the arguments.  This is a defining feature of dynamically typed programming languages, and one of the many reasons why their performance is slow compared to statically typed languages! Another key feature within these functions is the throwing of errors for incorrect types, or mismatching types, being passed to functions.  This prevents type errors from being thrown in Haskell, and allows us to handle them in a way that allows for verbose error report.  Example: `(+ 1 "a")` would give an error!
 
 
 ## Conclusion

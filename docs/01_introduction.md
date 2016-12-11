@@ -11,8 +11,8 @@ author: Adam Wespiser
 
 [](../wyas/img/WYAS-Lisp-Interpreter-Steps.png)    
 
-To make any programming language, we must take user inputed text, turn that text into
-tokens, parse that into an abstract syntax tree, then evaluate that format into a result.  Fortunately, we can use the same structure, `LispVal`, for both the abstract syntax tree, returned by the parser, and the return result of the interpreter.  Homoiconicity for the win! The lexer and parser is contained in a single library, Parsec, which does most of the work for us.  Once we have parsed into LispVal, we have to evaluate that `LispVal` to get the result of the computation. Evaluation must be done for all the different configurations of S-Expressions, including specials forms like `begin` and `define`. During that computation we need to have an environment for keeping track of bound variable, and an IO monad for reading or writing files during execution.  We will also need a way to convert Haskell functions to internal Scheme functions, and a collection of these functions stored in the Scheme environment.  Finally, a suitable user interface, including Read/Evaluate/Print/Loop, way to run read files/run programs, and standard library of functions loaded at runtime defined in Scheme is needed.    
+To make a programming language, we must take user inputed text, turn that text into
+tokens, parse that into an abstract syntax tree, then evaluate that format into a result.  Fortunately, we can use the same structure, `LispVal`, for the abstract syntax tree, which is returned by the parser and also the result of interpretation.  Homoiconicity for the win! The lexer and parser is contained in a single library, Parsec, which does most of the work for us.  Once we have parsed into LispVal, we have to evaluate that `LispVal` to get the result of the computation. Evaluation must be done for all the different configurations of S-Expressions, including specials forms like `begin` and `define`. During that computation we need to have an environment for keeping track of bound variable, and an IO monad for reading or writing files during execution.  We will also need a way to convert Haskell functions to internal Scheme functions, and a collection of these functions stored in the Scheme environment.  Finally, a suitable user interface, including Read/Evaluate/Print/Loop, way to run read files/run programs, and standard library of functions loaded at runtime defined in Scheme is needed.  
 
 This may seem like a lot.  But don't worry, all these things, and more, are already available in this project.  Together, we'll go through line by line and make sense out of how these Haskell abstraction coalesce to implement a Scheme!    
 
@@ -41,15 +41,15 @@ This declaration will be at the top of every file in the project. Not every libr
 T.pack :: String -> Text
 T.unpack :: Text -> String
 ```
-However, this project is able to use overloaded strings in all of the files.  I strongly suggest you do the same in a production environment, and I advocate Text becoming the standard for the language.  This is the "strong" position on Text, and requires that all upstream libraries be written to either Text agnostic, or work with Text. This may not always be the case. For these situations, you can convert into Text using `T.pack`, or just keep using `String`.        
+However, this project uses overloaded strings in all files.  Do this in a production environment, and I advocate Text becoming the standard for the language.  This is the "strong" position on Text, and requires that all upstream libraries be written to be either Text agnostic, or work with Text. This may not always be the case. For these situations, you can convert into Text using `T.pack`, or just keep using `String`.         
 
 
 ## Internal representation, welcome to LispVal
-We need a way to represent the structure of a program that can be manipulated within Haskell.  Haskell's type system that allows for pattern matching on data constructors, which will allow our `eval` function to differentiate different forms of S-Expressions.     
+We need a way to represent the structure of a program that can be manipulated within Haskell.  Haskell's type system that allows for pattern matching on data constructors, which will allow our `eval` function to differentiate forms of S-Expressions.     
 
 
 ## LispVal Definition
-After much ado, here's the representation of the S-Expression. All code and data will be represented by one of the following data constructors.  There is nothing else, let's take a look!     
+After much ado, here's the representation of the S-Expression. All code and data is represented by one of the following data constructors.  There is nothing else, let's take a look!     
 ```Haskell
 data LispVal
   = Atom T.Text
@@ -68,7 +68,7 @@ Now for the tricker part, functions.  There are two basic types of functions we 
 ```Haskell
 ((lambda (x) (+ x 100)) 42)
 ```
-To handle lexical scoping, the lambda function must enclose the environment present at the time the function is created.  Conceptually, the easiest way is to just bring the environment along with the function.  For an implemention, the data constructor `Fun` accepts  `EnvCtx`, which is lexical environment, as well as `IFunc`, which is its a Haskell function.  You'll notice it takes its arguments as a list of `LispVal`, then returns an object of type `Eval LispVal`.  For more on `Eval`, read the next section.  There's also a `deriving (Typeable)`, which is needed for error handling, more on that later!           
+To handle lexical scoping, the lambda function must enclose the environment present at the time the function is created.  Conceptually, the easiest way is to just bring the environment along with the function.  For an implementation, the data constructor `Fun` accepts  `EnvCtx`, which is lexical environment, as well as `IFunc`, which is its a Haskell function.  You'll notice it takes its arguments as a list of `LispVal`, then returns an object of type `Eval LispVal`.  For more on `Eval`, read the next section.  There's also a `deriving (Typeable)`, which is needed for error handling, more on that later!           
 
 
 ## Evaluation Monad
@@ -91,7 +91,7 @@ newtype Eval a = Eval { unEval :: ReaderT EnvCtx (ResourceT IO) a }
 
 ```
 
-For evaluation, we need to handle the context of a couple of things: the environment of variable/value bindings, exception handling, and IO.  In Haskell, IO and exception handling are already done with monads.  Using [monad transformers](http://dev.stephendiehl.com/hask/#mtl-transformers) we can incorporate IO, and Reader (to handle lexical scope) together in a single monad.  Using `deriving`, the functions available to each of the constituent monads will be available to the transformed monad without having to define them using `lift`.  A great guide about using monad transformers to implement interpreters is [Monad Transformer Step by Step](../sources/Transformers.pdf).  It will start with simple a simple example and increase complexity.  For our scheme its important to remember that evaluation is done for `LispVal` that are wrapped within the `Eval` monad, which will provide the context of evaluation.  The process of `LispVal -> Eval LispVal` is handled by the `eval` function, and this will be discussed a few chapter ahead.    
+For evaluation, we need to handle the context of a couple of things: the environment of variable/value bindings, exception handling, and IO.  In Haskell, IO and exception handling are already done with monads.  Using [monad transformers](http://dev.stephendiehl.com/hask/#mtl-transformers) we can incorporate IO, and Reader (to handle lexical scope) together in a single monad.  Using `deriving`, the functions available to each of the constituent monads will be available to the transformed monad without having to define them using `lift`.  A great guide about using monad transformers to implement interpreters is [Monad Transformer Step by Step](../sources/Transformers.pdf).  It will start with a simple example and increase complexity.  For our scheme its important to remember that evaluation is done for `LispVal` that are wrapped within the `Eval` monad, which will provide the context of evaluation.  The process of `LispVal -> Eval LispVal` is handled by the `eval` function, and this will be discussed a few chapter ahead.    
 
 #### Reader Monad and Lexical Scope
 

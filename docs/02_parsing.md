@@ -22,11 +22,11 @@ First some definitions:
 
 ![](../wyas/img/WYAS-Lisp-Interpreter-Steps.png)    
 
-Most basically, Parsing and Lexing is the process of converting the input text of either the REPL or program and converting that into a format that can be evaluated by the interpreter.  That covertted format, in our case, is `LispVal`.  The library we will use for parsing is called `Parsec`.
+Most basically, Parsing and Lexing is the process of reading the input text of either the REPL or program and converting that into a format that can be evaluated by the interpreter.  That converted format, in our case, is `LispVal`.  The library we will use for parsing is called `Parsec`.
 
 ## About Parsec
 
-Parsec is a monadic parser, and works by matching streaming text to lexeme then parsing that into an abstract syntax via data constructors. Thus, for text input, the lexemes, or units of text that define a language feature, are converted a `LispVal` structure (abstract syntax tree). These lexemes are individually defined via Parsec, and wholly define the valid lexical structure of our Scheme.
+Parsec is a monadic parser, and works by matching text to lexeme then parsing that into an abstract syntax via data constructors. Thus, for text input, the lexemes, or units of text that define a language feature, are converted a `LispVal` structure (abstract syntax tree). These lexemes are individually defined via Parsec, and wholly define the valid lexical structure of our Scheme.
 
 ## Why Parsec?
 
@@ -40,7 +40,7 @@ The parser will consume text, and return a `LispVal` representing the abstract s
 newtype Parser LispVal = Parser (Text -> [(LispVal,Text)])
 ```    
 
-Thus, a Parser is a type consisting of a function that 1) takes some `Text` and 2) return a `LispVal` and some `Text`
+Thus, a Parser is a type consisting of a function that 1) takes some `Text` and 2) return a `LispVal` and some `Text`    
 
 
 ## Parser.hs imports
@@ -77,15 +77,14 @@ style = Lang.emptyDef {
   }
 ```
 
-Whelp, that's about all we need.  Parsec does the heavy lifting for us, all we need to do is supply the specification for the lexeme.  Starting with comments, we'll use the same standards as Haskell, and moving on to operators and identifiers.  Finally, we established reserved operators, which will be single and double quotes.  Almost feels like cheating, but we end up for the tokens needed to parse all the same!
-
+Whelp, that's about all we need.  Parsec does the heavy lifting for us, all we need to do is supply the specification for the lexeme.  Starting with comments, we'll use the same standards as Haskell, and moving on to operators and identifiers.  Finally, we established reserved operators, which will be single and double quotes.  
 ```haskell
 -- pattern binding using record destructing !
 Tok.TokenParser { Tok.parens = m_parens
            , Tok.identifier = m_identifier } = Tok.makeTokenParser style
 ```
 
-Before we move on, I'm going to use record deconstruction and pattern binding to define some shortcuts. It's a neat trick.
+Before we move on, I'm going to use record deconstruction and pattern binding to define some shortcuts. It's a neat trick!  
 
 ## Parser
 
@@ -113,10 +112,10 @@ parseNumber :: Parser LispVal
 parseNumber = Number . read <$> many1 digit
 
 parseList :: Parser LispVal
-parseList = List . concat <$> Text.Parsec.many parseExpr 
+parseList = List . concat <$> Text.Parsec.many parseExpr
                                   `sepBy` (char ' ' <|> char '\n')
 
-parseSExp = List . concat <$> m_parens (Text.Parsec.many parseExpr 
+parseSExp = List . concat <$> m_parens (Text.Parsec.many parseExpr
                                          `sepBy` (char ' ' <|> char '\n'))
 
 parseQuote :: Parser LispVal
@@ -132,7 +131,7 @@ parseReserved = do
   <|> (reservedOp "#t" >> return (Bool True))
   <|> (reservedOp "#f" >> return (Bool False))
 ```
-Phew! That wasn't so bad! Monadic parsing makes things somewhat manageable, we consume a little bit of text, grab what we need with monadic binding, maybe consume some more text, then return our `LispVal` data constructor with the bound value.  There is one extra parser, `parseList`, which will be used to parse programs, since programs can be a list of newline delimited S-Expressions.  Now that we can parse each of the individual `LispVals`, how would we parse an entire S-Expression with `parseExpr`?
+Phew! That wasn't so bad! Monadic parsing makes this somewhat manageable.  We consume a little bit of text, grab what we need with monadic binding, maybe consume some more text, then return our `LispVal` data constructor with the bound value.  There is one extra parser, `parseList`. This is used to parse programs since programs can be a list of newline delimited S-Expressions.  Now that we can parse each of the individual `LispVals`, how would we parse an entire S-Expression with `parseExpr`?
 
 ```Haskell
 
@@ -143,7 +142,7 @@ parseExpr = parseReserved
   <|> parseQuote
   <|> parseSExp
 ```
-Of course! `<|>` is a combinator that will go with the first parser that can successfully parse into a `LispVal`.  If you are writing this parser, or don't like mine and decide to write your own (do it!), this part will require some thought.  Here be dragons, and if your syntax is very complex, use Alex & Happy.      
+Of course! `<|>` is a combinator that will go with the first parser that can successfully parse into a `LispVal`.  If you are writing this parser, or don't like mine and decide to write your own (do it!), this part will require some thought.  Here be dragons, and if your syntax is very complex, Alex & Happy provide a nice alternative way to define syntax.      
 
 ## [Understanding Check]
 You just moved to Paris, France and can't find the "quote" on a local keyboard.  Change the "quote" to a "less than" symbol in the parser.  (single or double, I can't find either one on european keyboards) Where do all the changes need to be made?    

@@ -9,7 +9,7 @@ author: Adam Wespiser
 
 
 ## Error Exceptions and All That!
-When the user enters some incorrect input, we can say they have made an error, and people understand what we mean in general terms. However, we are in the business of engineering, and there is a technical distinction between errors and exceptions.  Errors, refer to situations where our project cannot handle itself, and we must change the source code to remedy the situation.  These are unexpected situations.  Exceptions, on the other hand, represent expected, but still irregular situations that we can control.  Exceptions can represent problems with a potential Scheme program, like an error parsing, or a bad special form.  [Haskell Wiki](https://wiki.haskell.org/Error_vs._Exception).     
+When the user enters incorrect input, we can say they have made an error, and people understand this general as a general term. However, we are in the business of engineering, and there is a technical distinction between errors and exceptions.  Errors, refer to situations where our project cannot handle itself, and we must change the source code to remedy the situation.  These are unexpected situations.  Exceptions, on the other hand, represent expected, but still irregular situations that we can control.  Exceptions can represent problems with a potential Scheme program, like an error parsing, or a bad special form.  [Haskell Wiki](https://wiki.haskell.org/Error_vs._Exception).     
 The sources for errors and exceptions in Haskell are as follows:    
 [Exceptions](https://wiki.haskell.org/Exception): `Prelude.catch`, `Control.Exception.catch`, `Control.Exception.try`, `IOError`, `Control.Monad.Error`    
 [Errors](https://wiki.haskell.org/Error): `error`, `assert`, `Control.Exception.catch`, `Debug.Trace.trace`. `error` is syntactical sugar for undefined.         
@@ -80,7 +80,7 @@ showError err =
 
 ```
 
- Similar to our `showVal`, from [Chapter 1](01_introduction.html), we override the `show` Typeclass to give a custom message for the type.  The showError has a special case for PError, which uses  `String` and just wraps the error message from the parser.  The next source `IO`, can also be tricky.  Although we have the ability to throw an `IOError`, if there is an unchecked exception during `IO` operations, it will fall through and not be handling via our `LispException` pathway.      
+ Similar to our `showVal`, from [Chapter 1](01_introduction.html), we override the `show` Typeclass to give a custom message for the show function.  The showError has a special case for PError, which uses  `String` and just wraps the error message from the parser.  The next source `IO`, can also be tricky.  Although we have the ability to throw an `IOError`, if there is an unchecked exception during `IO` operations, it will fall through and not be handling via our `LispException` pathway.      
 
 
 

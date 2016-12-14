@@ -99,7 +99,7 @@ The `if` statement acts like it does in any language.
 
 **Begin**    
 `begin` evaluates a series of one or more S-Expressions in order.  S-Expressions can modify the environment using `define`, then subsequent expressions may access the modified environment.  Further, when running a Scheme program, its S-Expressions are essentially wrapped in a single begin function.  More on this when we go over [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs).     
-`(begin (define x 413000) (define y (+ x 281)) (+ x y))` => `413281`    
+`(begin (define x 413000) (define y (+ x 281)) (+ x y))` => `826281`    
 
 **The Rest**    
 

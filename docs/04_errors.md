@@ -9,14 +9,14 @@ author: Adam Wespiser
 
 
 ## Error Exceptions and All That!
-When the user enters incorrect input, we can say they have made an error, and people understand this general as a general term. However, we are in the business of engineering, and there is a technical distinction between errors and exceptions.  Errors, refer to situations where our project cannot handle itself, and we must change the source code to remedy the situation.  These are unexpected situations.  Exceptions, on the other hand, represent expected, but still irregular situations that we can control.  Exceptions can represent problems with a potential Scheme program, like an error parsing, or a bad special form.  [Haskell Wiki](https://wiki.haskell.org/Error_vs._Exception).     
+When the user enters incorrect input, we can say they have made an error, and people understand this statement as a general term. However, we are in the business of engineering, and there is a technical distinction between errors and exceptions.  Errors, refer to situations where our project cannot handle itself, and we must change the source code to remedy the situation.  These are unexpected situations.  Exceptions, on the other hand, represent expected, but still irregular situations that we can control.  Exceptions can represent problems with a potential Scheme program, like an error parsing, or a bad special form.  [Haskell Wiki](https://wiki.haskell.org/Error_vs._Exception).     
 The sources for errors and exceptions in Haskell are as follows:    
 [Exceptions](https://wiki.haskell.org/Exception): `Prelude.catch`, `Control.Exception.catch`, `Control.Exception.try`, `IOError`, `Control.Monad.Error`    
 [Errors](https://wiki.haskell.org/Error): `error`, `assert`, `Control.Exception.catch`, `Debug.Trace.trace`. `error` is syntactical sugar for undefined.         
 Try to keep these in mind, but expect to see only exceptions, unless I've made an error in my assertion, in which case I'll have to trace through and catch my mistake.    
 We say an exception is checked when it after it is "thrown", another part of code "handles" or "catches" it.  This is how our exception system in Haskell will work.   
 ## Exceptions Everywhere!
-Undefined, unexpected, and generally out of control situations are a big type of any kind of large system, especially one interacting with the outside world or dealing with use input as complex and complicated as a programming language.  Control is an illusion.  For our system, we must accept user input, determine that it is valid Scheme syntax, then compute that syntax into a final value.  During this process we may interact with the file system or network.  It is especially important for programming languages to report and describe the nature of the irregularity.     
+Undefined, unexpected, and generally out of control situations are present in any kind of large system, especially one interacting with the outside world or dealing with use input as complex and complicated as a programming language.  Control is an illusion.  For our system, we must accept user input, determine that it is valid Scheme syntax, then compute that abstract syntax into a final value.  During this process we may interact with the file system or network.  It is especially important for programming languages to report and describe the nature of the irregularity.     
 Thus, there are three types of exceptions that exist in our implementations of Scheme: **Parsing, Evaluation, and IO**.  Each of these originate in a distinct type of activity the parser or interpreter is undergoing, but all of them are end up going through the `Eval` monad and are caught and displayed in the same place.  (see [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs))
 ```Haskell
 someFun :: GoodType -> Eval LispVal
@@ -56,7 +56,7 @@ data LispException
 
 ```
 
-Each of these data constructors serve to distinguish the source of their error.  Whenever a `LispException` is created, it is then immediately thrown.  Ideally, they provide enough useful information to the user on how to debug their program after a `LispException` is returned.  Though not as descriptive as a fully featured language, we do have the capacity to provide a fair amount of information, including the a custom message and `LispVal` that are not compatible.  The key to improvement here is keeping track and passing more information to `LispException` when it is created then thrown.
+Each of these data constructors distinguish the source of their error.  Whenever a `LispException` is created, it is then immediately thrown.  Ideally, they provide useful information to the user on how to debug their program after a `LispException` is returned.  Though not as descriptive as a fully featured language, we do have the capacity to provide a fair amount of information, including the a custom message and `LispVal` that are not compatible.  The key to improvement here is keeping track and passing more information to `LispException` when it is created then thrown.
 
 ```haskell
 instance Show LispException where
@@ -80,7 +80,7 @@ showError err =
 
 ```
 
- Similar to our `showVal`, from [Chapter 1](01_introduction.html), we override the `show` Typeclass to give a custom message for the show function.  The showError has a special case for PError, which uses  `String` and just wraps the error message from the parser.  The next source `IO`, can also be tricky.  Although we have the ability to throw an `IOError`, if there is an unchecked exception during `IO` operations, it will fall through and not be handling via our `LispException` pathway.      
+ Similar to our `showVal`, from [Chapter 1](01_introduction.html), we override the `show` Typeclass to give a custom message.  The showError has a special case for PError, which uses  `String` and just wraps the error message from the parser.  The next source `IO`, can also be tricky.  Although we have the ability to throw an `IOError`, if there is an unchecked exception during `IO` operations, it will fall through and not be handling via our `LispException` pathway.      
 
 
 

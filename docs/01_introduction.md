@@ -12,7 +12,7 @@ author: Adam Wespiser
 [](../wyas/img/WYAS-Lisp-Interpreter-Steps.png)    
 
 To make a programming language, we must take user inputed text, turn that text into
-tokens, parse that into an abstract syntax tree, then evaluate that format into a result.  Fortunately, we can use the same structure, `LispVal`, for the abstract syntax tree, which is returned by the parser and also the result of interpretation.  Homoiconicity for the win! The lexer and parser is contained in a single library, Parsec, which does most of the work for us.  Once we have parsed into LispVal, we have to evaluate that `LispVal` to get the result of the computation. Evaluation must be done for all the different configurations of S-Expressions, including specials forms like `begin` and `define`. During that computation we need to have an environment for keeping track of bound variable, and an IO monad for reading or writing files during execution.  We will also need a way to convert Haskell functions to internal Scheme functions, and a collection of these functions stored in the Scheme environment.  Finally, a suitable user interface, including Read/Evaluate/Print/Loop, way to run read files/run programs, and standard library of functions loaded at runtime defined in Scheme is needed.  
+tokens, parse that into an abstract syntax tree, then evaluate that format into a result.  Fortunately, we can use the same structure, `LispVal`, for the abstract syntax tree, which is returned by the parser and also the result of interpretation.  Homoiconicity for the win! The lexer and parser are contained in a single library, Parsec, which does most of the work for us.  Once we have parsed into LispVal, we have to evaluate that `LispVal` into the result of the computation. Evaluation is performed for all valid configurations of S-Expressions, including specials forms like `begin` and `define`. During that computation we need to have an environment for keeping track of bound variable, and an IO monad for reading or writing files during execution.  We will also need a way to convert Haskell functions to internal Scheme functions, and a collection of these functions stored in the Scheme environment.  Finally, a suitable user interface, including Read/Evaluate/Print/Loop, way to run read files/run programs, and standard library of functions loaded at runtime defined in Scheme is needed.  
 
 This may seem like a lot.  But don't worry, all these things, and more, are already available in this project.  Together, we'll go through line by line and make sense out of how these Haskell abstraction coalesce to implement a Scheme!    
 
@@ -41,11 +41,11 @@ This declaration will be at the top of every file in the project. Not every libr
 T.pack :: String -> Text
 T.unpack :: Text -> String
 ```
-However, this project uses overloaded strings in all files.  Do this in a production environment, and I advocate Text becoming the standard for the language.  This is the "strong" position on Text, and requires that all upstream libraries be written to be either Text agnostic, or work with Text. This may not always be the case. For these situations, you can convert into Text using `T.pack`, or just keep using `String`.         
+However, this project uses overloaded strings in all files, and I advocate Text becoming the standard for the language.  This is the "strong" position on Text, and requires that all upstream libraries be written to be either Text agnostic, or work with Text. This may not always be the case. For these situations, you can convert into Text using `T.pack`, or just keep using `String`.         
 
 
 ## Internal representation, welcome to LispVal
-We need a way to represent the structure of a program that can be manipulated within Haskell.  Haskell's type system that allows for pattern matching on data constructors, which will allow our `eval` function to differentiate forms of S-Expressions.     
+We need a way to represent the structure of a program that can be manipulated with Haskell.  Haskell's type system allows for pattern matching on data constructors. Our `eval` function uses this mechanism to differentiate forms of S-Expressions.     
 
 
 ## LispVal Definition
@@ -95,7 +95,7 @@ For evaluation, we need to handle the context of a couple of things: the environ
 
 #### Reader Monad and Lexical Scope
 
-We will be using the `ReaderT` monad to handle lexical scope.  Reader is basically a function `e -> a`, which in our case is `EnvCtx -> Eval LispVal`.  If you are not familiar with monads, or `ReaderT`, [you can see the definitions here](http://dev.stephendiehl.com/hask/#reader-monad). I'll try to explain how we are using. `ReaderT` has to basic functions: `ask` and `local`.  Within the monadic context, `ask` is a function which gets `EnvCtx`, and `local` is a function which sets `EnvCtx` and evaluates an expression.  As you can imagine, we will be using `ask` a lot to get the `EnvCtx`, then using `Map` functions to either get or add variables, then using `local` with a modified `EnvCtx` and evaluating the next function.  If this doesn't make sense yet, that's okay.  There is example code on the way!
+We will be using the `ReaderT` monad to handle lexical scope.  ReaderT is basically a function `e -> m a`, which in our case is `EnvCtx -> Eval LispVal`.  If you are not familiar with monads, or `ReaderT`, [you can see the definitions here](http://dev.stephendiehl.com/hask/#reader-monad). `ReaderT` has two basic functions: `ask` and `local`.  Within the monadic context, `ask` is a function which gets `EnvCtx`, and `local` is a function which sets `EnvCtx` and evaluates an expression.  As you can imagine, we will be using `ask` a lot to get the `EnvCtx`, then using `Map` functions to either get or add variables, then using `local` with a modified `EnvCtx` and evaluating the next function.  If this doesn't make sense yet, that's okay.  There is example code on the way!
 
 
 ## Show LispVal
@@ -123,7 +123,8 @@ As you can see, we are using `case` to match data constructors instead of patter
 #### [Understanding Check]
 What's the difference between `Text` and `String`?    
 How do we represent  S-Expressions in Haskell?     
-What is a monad transformer? How is this abstraction used to evaluate S-Expressions?    
+What is a monad transformer? How is this abstraction used to evaluate S-Expressions?
+I mentioned `ReaderT` gives us `e -> m a` functionality via `runReaderT`, imagine if we want `e -> m (e, a)`. What monad would we use, and how would that affect lexical scoping?     
 Can you think of some alternative ways to represent S-Expressions? What about [GADT](https://downloads.haskell.org/~ghc/6.6/docs/html/users_guide/gadt.html)? If you would like to see a Haskell language project using GADTs, [GLambda](https://github.com/goldfirere/glambda) is a great project!          
 
 

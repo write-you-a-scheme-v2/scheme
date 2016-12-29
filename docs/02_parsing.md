@@ -17,7 +17,7 @@ First some definitions:
 
 * **lexeme** the basic lexical unit of meaning.        
 * **token** structure representing a lexeme that explicitly indicates its categorization for the purpose of parsing.    
-* **lexer** A algorithm for lexical analysis that separates a stream of text into its component lexemes.  Defines the rules for individual words, or allowed symbols in a programming language.     
+* **lexer** A algorithm for lexical analysis that separates a stream of text into its component lexemes.  Defines the rules for individual words, or set of allowed symbols in a programming language.     
 * **parser** an algorithm for converting the lexemes into valid language grammar.  Operates on the level above the lexer, and defines the grammatical rules.
 
 ![](../wyas/img/WYAS-Lisp-Interpreter-Steps.png)    
@@ -26,7 +26,7 @@ Most basically, Parsing and Lexing is the process of reading the input text of e
 
 ## About Parsec
 
-Parsec is a monadic parser, and works by matching text to lexeme then parsing that into an abstract syntax via data constructors. Thus, for text input, the lexemes, or units of text that define a language feature, are converted a `LispVal` structure (abstract syntax tree). These lexemes are individually defined via Parsec, and wholly define the valid lexical structure of our Scheme.
+Parsec is a monadic parser, and matches text to lexeme then parsing that into an abstract syntax via data constructors. Thus, for text input, the lexemes, or units of text that define a language feature, are converted a `LispVal` structure (abstract syntax tree). These lexemes are individually defined via Parsec, and wholly define the valid lexical structure of our Scheme.
 
 ## Why Parsec?
 
@@ -56,7 +56,7 @@ import qualified Data.Text as T
 import Control.Applicative hiding ((<|>))
 import Data.Functor.Identity (Identity)
 ```
-Good for us, Parsec is available with `Text`, not just `String`. If you are looking online for examples of Parsec, make sure you have the correct encoding of strings.  Converting can be a little bit of a hassle, but its worth the extra effort.  If you are really serious about your language project, I suggest using Alex & Happy. I've used them happily used them in production to parse a javascipt-esque language!
+Good for us, Parsec is available with `Text`, not just `String`. If you are looking online for examples of Parsec, make sure you have the correct encoding of strings.  Converting can be a little bit of a hassle, but its worth the extra effort.  If you are really serious about your language project, I suggest using Alex & Happy. I've happily used them in production to parse a javascipt-esque language!
 
 ## Lexer
 
@@ -167,7 +167,7 @@ readExpr = parse (contents parseExpr) "<stdin>"
 readExprFile :: T.Text -> Either ParseError LispVal
 readExprFile = parse (contents parseList) "<file>"
 ```
-`contents` is a wrapper for a Parser that allow leading whitespace and a terminal end of file (eof).  For `readExpr` and `readExprFile` we are using Parsec's `parse` function, which takes a parser, and a `Text` input describing the input source.  `readExpr` is used for the REPL, and `readExprFile`, which uses our `parseList` and can handle newline or whitespace delimmited S-Expressions, for program files.
+`contents` is a wrapper for a Parser that allows leading whitespace and a terminal end of file (eof).  For `readExpr` and `readExprFile` we are using Parsec's `parse` function, which takes a parser, and a `Text` input describing the input source.  `readExpr` is used for the REPL, and `readExprFile`, which uses our `parseList` and can handle newline or whitespace delimmited S-Expressions, for program files.
 
 #### Conclusion
 

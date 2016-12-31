@@ -7,14 +7,12 @@ import LispVal
 import Data.Text as T
 import Data.Text.IO as TIO
 import Data.Monoid
-import Control.Monad.Except
-import Control.Monad.Catch
-import Control.Monad.Reader
 import System.Directory
 import System.IO
-import System.Environment
 
-import Control.Exception 
+import Control.Monad.Except
+import Control.Exception hiding (handle)
+
 type Prim   = [(T.Text, LispVal)]
 type Unary  = LispVal -> Eval LispVal
 type Binary = LispVal -> LispVal -> Eval LispVal

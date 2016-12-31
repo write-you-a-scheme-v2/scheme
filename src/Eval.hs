@@ -1,26 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleContexts #-}
+
 module Eval (
-   evalText
-  , evalFile
-  , runParseTest
-  , safeExec
+  evalText,
+  evalFile,
+  runParseTest,
+  safeExec,
 ) where
 
 import Parser
-import Text.Parsec
 import LispVal
 import Prim
 
 import Data.Text as T
 import Data.Map as Map
 import Data.Monoid
-import System.Directory
-import System.IO
-import Control.Monad.Except
 import Control.Monad.Reader
-import Control.Monad.Trans.Resource
 import Control.Exception
 
 basicEnv :: Map.Map T.Text LispVal

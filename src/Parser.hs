@@ -10,11 +10,9 @@ import LispVal
 
 import Text.Parsec
 import Text.Parsec.Text
-import Text.Parsec.Expr
 import qualified Text.Parsec.Token as Tok
 import qualified Text.Parsec.Language as Lang
 import qualified Data.Text as T
-import Control.Applicative hiding ((<|>))
 
 import Data.Functor.Identity (Identity)
 

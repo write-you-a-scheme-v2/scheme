@@ -21,15 +21,33 @@ library
     base                 >= 4.8 && <5.0,
     containers           >= 0.5 && <0.6,
     directory            >= 1.2 && <1.3,
-    exceptions           >= 0.8 && <0.9,
     haskeline            >= 0.7 && <0.8,
     mtl                  >= 2.2 && <2.3,
-    optparse-applicative >= 0.12 && < 0.13,
+    optparse-applicative >= 0.12 && <0.13,
     parsec               >= 3.1 && <3.2,
-    resourcet            >= 1.1 && <1.2, 
     text                 >= 1.2 && <1.3,
     transformers         >= 0.4 && <0.6,
     wl-pprint-text       >= 1.1 && <1.2
+
+  ghc-options:
+    -fno-warn-unused-do-bind
+    -fno-warn-unused-binds
+    -fno-warn-type-defaults
+    -fno-warn-type-defaults
+    -fno-warn-name-shadowing
+
+    -fwarn-duplicate-exports
+    -fwarn-dodgy-exports
+    -fwarn-dodgy-imports
+    -fwarn-incomplete-patterns
+    -fwarn-incomplete-record-updates
+    -fwarn-missing-fields
+    -fwarn-missing-methods
+    -fwarn-orphans
+    -fwarn-overlapping-patterns
+    -fwarn-unused-imports
+    -fwarn-tabs
+    -fwarn-unrecognised-pragmas
  
   hs-source-dirs: src
   default-language: Haskell2010
@@ -47,5 +65,18 @@ executable docs
   build-depends:       
     base     >= 4.8 && < 5.0,
     shake    >= 0.15 && <0.16,
-    pandoc   >= 1.15 && <1.16
+    pandoc   >= 1.15 && <1.20
   default-language: Haskell2010
+
+test-Suite test
+  type: exitcode-stdio-1.0
+  main-is: Test.hs
+  hs-source-dirs: test
+  default-language: Haskell2010
+  build-depends:
+    base         >= 4.8 && < 5.0,
+    text         >= 1.2 && <1.3,
+    tasty        >= 0.11 && <0.12,
+    tasty-hunit  >= 0.9 && <1.0,
+    tasty-golden >= 2.3 && <2.5,
+    scheme == 0.1

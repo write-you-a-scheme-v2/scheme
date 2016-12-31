@@ -6,10 +6,7 @@ module Cli (
 
 import Eval -- evalFile :: T.Text -> IO ()
 import Repl -- Repl.mainLoop :: IO ()
-import System.IO
-import System.Environment --getArgs
 import System.Directory
-import Data.Text as T
 import Data.Text.IO as TIO
 import Options.Applicative
 

@@ -1,20 +1,21 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module LispVal where
 
+module LispVal (
+  LispVal(..),
+  Eval(..),
+  IFunc(..),
+  EnvCtx,
+  LispException(..),
+) where
+
+import Data.Typeable (Typeable)
 import qualified Data.Text as T
 import qualified Data.Map as Map
 
+import Control.Exception
 import Control.Monad.Except
-
 import Control.Monad.Reader
-import Control.Monad.Catch
-import Control.Monad.Trans.Resource
-
-
-import Data.Data
-import Data.Typeable
 
 type EnvCtx = Map.Map T.Text LispVal
 

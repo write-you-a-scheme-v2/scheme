@@ -14,6 +14,7 @@ import LispVal
 import Prim
 
 import Data.Text as T
+import Data.Text.IO as TIO
 import Data.Map as Map
 import Data.Monoid
 import System.Directory
@@ -48,12 +49,11 @@ safeExec m = do
 runASTinEnv :: EnvCtx -> Eval b -> IO b
 runASTinEnv code action = runReaderT (unEval action) code
 
-evalText :: T.Text -> IO () --REPL
-evalText textExpr = (runASTinEnv basicEnv $ textToEvalForm textExpr) >>= print
 
 
 textToEvalForm :: T.Text -> Eval LispVal
 textToEvalForm input = either (throw . PError . show  )  eval $ readExpr input
+
 
 evalFile :: T.Text -> IO () --program file
 evalFile fileExpr = (runASTinEnv basicEnv $ fileToEvalForm fileExpr) >>= print
@@ -63,6 +63,36 @@ fileToEvalForm input = either (throw . PError . show )  evalBody $ readExprFile 
 
 runParseTest :: T.Text -> T.Text -- for view AST
 runParseTest input = either (T.pack . show) (T.pack . show) $ readExpr input
+
+sTDLIB :: T.Text
+--sTDLIB = "test/stdlib_mod.scm"
+sTDLIB = "test/lib.scm"
+
+endOfList :: LispVal -> LispVal -> LispVal 
+endOfList (List x) expr = List $ x ++ [expr]
+
+parseWithLib :: T.Text -> T.Text -> Either ParseError LispVal
+parseWithLib std inp = do
+  stdlib <- readExprFile std
+  expr   <- readExpr inp
+  return $ endOfList stdlib expr 
+
+--readExprFile std >>= (\stdlib -> readExpr inp >>= (\expr -> return $ endOfList stdlib expr)
+
+getFileContents :: FilePath -> IO T.Text
+getFileContents fname = do
+  exists <- doesFileExist fname
+  if exists then TIO.readFile  fname else return "File does not exist."
+
+textToEvalForm1 :: T.Text -> T.Text -> Eval LispVal
+textToEvalForm1 std input = either (throw . PError . show )  evalBody $ parseWithLib std input
+
+evalText :: T.Text -> IO () --REPL
+evalText textExpr = do 
+  stdlib <- getFileContents $ T.unpack  sTDLIB
+  print stdlib
+  res <- runASTinEnv basicEnv $ textToEvalForm1 stdlib textExpr
+  print res
 
 getVar :: LispVal ->  Eval LispVal
 getVar (Atom atom) = do
@@ -93,6 +123,9 @@ applyLambda expr params args = do
   argEval <- mapM eval args
   local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a,b)) params argEval) <> env)) $ eval expr
 
+quoteL :: LispVal -> LispVal 
+quoteL x = List $ [Atom "quote",x]
+
 eval :: LispVal -> Eval LispVal
 eval (Number i) = return $ Number i
 eval (String s) = return $ String s
@@ -117,6 +150,13 @@ eval args@(List ( (:) (Atom "if") _))  = throw $ BadSpecialForm "(if <bool> <s-e
 eval (List [Atom "begin", rest]) = evalBody rest
 eval (List ((:) (Atom "begin") rest )) = evalBody $ List rest
 
+
+-- define for scheme std lib
+eval (List [Atom "define", List ((:) (Atom funName) rest), expr]) = do
+  params <- mapM ensureAtom $ rest
+  envLocal <- ask
+  return  $ Lambda (IFunc $ applyLambda expr params) envLocal
+
 eval (List [Atom "define", varExpr, expr]) = do --top-level define
   varAtom <- ensureAtom varExpr
   evalVal <- eval expr
@@ -134,6 +174,29 @@ eval (List [Atom "lambda", List params, expr]) = do
   envLocal <- ask
   return  $ Lambda (IFunc $ applyLambda expr params) envLocal
 eval (List (Atom "lambda":_) ) = throw $ BadSpecialForm "lambda function expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)"
+
+-- (a (quote (1 2 3)))
+-- L ['a', L [q 1 2 3 4]]
+-- car and cdr definitions to support (define cdar (lambda (x) (cdr (car x))))
+-- and similar definitions
+-- try alternative AST transform
+eval all@(List [Atom "cdr", List [Atom "quote", List (x:xs)]]) = 
+  return $ quoteL $ List xs
+eval all@(List [Atom "cdr", arg@(List (x:xs))]) =  
+  case x of
+      Atom  _ -> do val <- eval arg
+                    eval $ List [Atom "cdr", val]
+      _           -> return $ quoteL $ List xs
+
+
+eval all@(List [Atom "car", List [Atom "quote", List (x:xs)]]) = 
+  return $ quoteL x
+eval all@(List [Atom "car", arg@(List (x:xs))]) =  
+  case x of
+      Atom _       -> do val <- eval arg
+                         eval $ List [Atom "car", val]
+      _            -> return $ quoteL x
+
 
 eval (List ((:) x xs)) = do
   funVar <- eval x

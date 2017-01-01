@@ -30,12 +30,14 @@ data LispVal
   | Fun IFunc
   | Lambda IFunc EnvCtx
   | Nil
-  | Bool Bool deriving (Typeable)
+  | Bool Bool
+  deriving (Typeable)
 
 instance Show LispVal where
   show = T.unpack . showVal
 
-data IFunc = IFunc { fn :: [LispVal] -> Eval LispVal } deriving (Typeable)
+data IFunc = IFunc { fn :: [LispVal] -> Eval LispVal }
+  deriving (Typeable)
 
 
 showVal :: LispVal -> T.Text
@@ -66,7 +68,8 @@ data LispException
   | UnboundVar T.Text
   | Default LispVal
   | PError String -- from show anyway
-  | IOError T.Text deriving (Typeable)
+  | IOError T.Text
+  deriving (Typeable)
 
 instance Exception LispException
 

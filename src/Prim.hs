@@ -17,37 +17,35 @@ type Prim   = [(T.Text, LispVal)]
 type Unary  = LispVal -> Eval LispVal
 type Binary = LispVal -> LispVal -> Eval LispVal
 
-
 mkF :: ([LispVal] -> Eval LispVal) -> LispVal
 mkF = Fun . IFunc
 
-
-
 primEnv :: Prim
-primEnv = [   ("+"    , mkF $ binopFold (numOp    (+))  (Number 0) )
-            , ("*"    , mkF $ binopFold (numOp    (*))  (Number 1) )
-            , ("++"   , mkF $ binopFold (strOp    (<>)) (String ""))
-            , ("-"    , mkF $ binop $    numOp    (-))
-            , ("<"    , mkF $ binop $    numCmp   (<))
-            , ("<="   , mkF $ binop $    numCmp   (<=))
-            , (">"    , mkF $ binop $    numCmp   (>))
-            , (">="   , mkF $ binop $    numCmp   (>=))
-            , ("=="   , mkF $ binop $    numCmp   (==))
-            , ("even?", mkF $ unop $     numBool   even)
-            , ("odd?" , mkF $ unop $     numBool   odd)
-            , ("pos?" , mkF $ unop $     numBool (< 0))
-            , ("neg?" , mkF $ unop $     numBool (> 0))
-            , ("eq?"  , mkF $ binop  eqCmd )
-            , ("bl-eq?",mkF $ binop $ eqOp     (==))
-            , ("and"  , mkF $ binopFold (eqOp     (&&)) (Bool True))
-            , ("or"   , mkF $ binopFold (eqOp     (||)) (Bool False))
-            , ("cons" , mkF  Prim.cons)
-            , ("cdr"  , mkF  Prim.cdr)
-            , ("car"  , mkF  Prim.car)
-            , ("quote", mkF  quote)
-            , ("file?" , mkF $ unop  fileExists)
-            , ("slurp" , mkF $ unop  slurp)
-            ]
+primEnv = [
+    ("+"     , mkF $ binopFold (numOp    (+))  (Number 0) )
+  , ("*"     , mkF $ binopFold (numOp    (*))  (Number 1) )
+  , ("++"    , mkF $ binopFold (strOp    (<>)) (String "") )
+  , ("-"     , mkF $ binop $    numOp    (-))
+  , ("<"     , mkF $ binop $    numCmp   (<))
+  , ("<="    , mkF $ binop $    numCmp   (<=))
+  , (">"     , mkF $ binop $    numCmp   (>))
+  , (">="    , mkF $ binop $    numCmp   (>=))
+  , ("=="    , mkF $ binop $    numCmp   (==))
+  , ("even?" , mkF $ unop $     numBool   even)
+  , ("odd?"  , mkF $ unop $     numBool   odd)
+  , ("pos?"  , mkF $ unop $     numBool (< 0))
+  , ("neg?"  , mkF $ unop $     numBool (> 0))
+  , ("eq?"   , mkF $ binop eqCmd )
+  , ("bl-eq?", mkF $ binop $ eqOp (==))
+  , ("and"   , mkF $ binopFold (eqOp (&&)) (Bool True))
+  , ("or"    , mkF $ binopFold (eqOp (||)) (Bool False))
+  , ("cons"  , mkF $ Prim.cons)
+  , ("cdr"   , mkF $ Prim.cdr)
+  , ("car"   , mkF $ Prim.car)
+  , ("quote" , mkF $ quote)
+  , ("file?" , mkF $ unop fileExists)
+  , ("slurp" , mkF $ unop slurp)
+  ]
 
 unop :: Unary -> [LispVal] -> Eval LispVal
 unop op [x]    = op x
@@ -141,3 +139,4 @@ cdr x             = throw $ ExpectedList "cdr"
 quote :: [LispVal] -> Eval LispVal
 quote [List xs]   = return $ List $ Atom "quote" : xs
 quote [exp]       = return $ List $ Atom "quote" : [exp]
+quote args        = throw $ NumArgs 1 args

@@ -1,6 +1,5 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Eval (
   evalText,
@@ -9,13 +8,14 @@ module Eval (
   safeExec,
 ) where
 
+import Prim
 import Parser
 import LispVal
-import Prim
 
-import Data.Text as T
 import Data.Map as Map
 import Data.Monoid
+import qualified Data.Text as T
+
 import Control.Monad.Reader
 import Control.Exception
 
@@ -74,6 +74,7 @@ ensureAtom n = throw $ TypeMismatch "expected an atomic value" n
 
 extractVar :: LispVal -> T.Text
 extractVar (Atom atom) = atom
+extractVar n = throw $ Default n
 
 getEven :: [t] -> [t]
 getEven [] = []
@@ -87,7 +88,7 @@ applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal
 applyLambda expr params args = do
   env <- ask
   argEval <- mapM eval args
-  local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a,b)) params argEval) <> env)) $ eval expr
+  local (const (Map.fromList (zipWith (\a b -> (extractVar a,b)) params argEval) <> env)) $ eval expr
 
 eval :: LispVal -> Eval LispVal
 eval (Number i) = return $ Number i
@@ -123,7 +124,7 @@ eval (List [Atom "let", List pairs, expr]) = do
   env   <- ask
   atoms <- mapM ensureAtom $ getEven pairs
   vals  <- mapM eval       $ getOdd  pairs
-  local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a, b)) atoms vals) <> env))  $ evalBody expr
+  local (const (Map.fromList (zipWith (\a b -> (extractVar a, b)) atoms vals) <> env))  $ evalBody expr
 eval (List (Atom "let":_) ) = throw $ BadSpecialForm "lambda funciton expects list of parameters and S-Expression body\n(let <pairs> <s-expr>)" 
 
 eval (List [Atom "lambda", List params, expr]) = do

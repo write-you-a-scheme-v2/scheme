@@ -9,7 +9,6 @@ library
     Repl
     Parser
     LispVal
-    Pretty
     Eval
     Cli
     Prim
@@ -26,10 +25,10 @@ library
     optparse-applicative >= 0.12 && <0.13,
     parsec               >= 3.1 && <3.2,
     text                 >= 1.2 && <1.3,
-    transformers         >= 0.4 && <0.6,
-    wl-pprint-text       >= 1.1 && <1.2
+    transformers         >= 0.4 && <0.6
 
   ghc-options:
+    -Werror
     -fno-warn-unused-do-bind
     -fno-warn-unused-binds
     -fno-warn-type-defaults

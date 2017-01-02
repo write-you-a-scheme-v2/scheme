@@ -30,7 +30,7 @@ style = Lang.emptyDef {
   , Tok.opStart = Tok.opLetter style
   , Tok.opLetter = oneOf ":!#$%%&*+./<=>?@\\^|-~"
   , Tok.identStart = letter <|>  oneOf "-+/*=|&><"
-  , Tok.identLetter = letter <|> oneOf "?+=|&-/"
+  , Tok.identLetter = digit <|> letter <|> oneOf "?+=|&-/"
   , Tok.reservedOpNames = [ "'", "\""]
   }
 

@@ -40,6 +40,7 @@ primEnv = [   ("+"    , mkF $ binopFold (numOp    (+))  (Number 0) )
             , ("pos?" , mkF $ unop $     numBool (< 0))
             , ("neg?" , mkF $ unop $     numBool (> 0))
             , ("eq?"  , mkF $ binop  eqCmd )
+            , ("null?"  , mkF $ unop  (eqCmd Nil) )
             , ("bl-eq?",mkF $ binop $ eqOp     (==))
             , ("and"  , mkF $ binopFold (eqOp     (&&)) (Bool True))
             , ("or"   , mkF $ binopFold (eqOp     (||)) (Bool False))
@@ -122,11 +123,16 @@ eqCmd (Bool   x) (Bool   y) = return . Bool $ x == y
 eqCmd  Nil        Nil       = return $ Bool True
 eqCmd  _          _         = return $ Bool False
 
+
+--isNull :: LispVal -> Eval LispVal
+--isNull x  = return $
+
 cons :: [LispVal] -> Eval LispVal
 cons [x,y@(List yList)] = return $ List $ x:yList
 cons [c]                = return $ List [c]
 cons []                 = return $ List []
 cons _  = throw $ ExpectedList "cons, in second argumnet"
+
 
 car :: [LispVal] -> Eval LispVal
 car [List []    ] = return Nil

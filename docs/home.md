@@ -1,14 +1,9 @@
 ---
-<<<<<<< HEAD
 title: Write You A Scheme, Version 2
 date: November 28, 2016
 author: Adam Wespiser
 ---
-=======
-title: Write You A Scheme, Version 2.0
-date: November 28, 2016
-author: Adam Wespiser
----
+
 
 >>>>>>> 7aac0f572453f4ffda3fac0eea27a048a2bca983
 
@@ -24,4 +19,5 @@ author: Adam Wespiser
   test out our Scheme.    
 * (Input/Output) Reading and writing to files for both Scheme commands and the reading of program files.    
 * (Standard Library) Creation of Scheme standard library from primitive functions.    
+* (Test) Confirm Scheme syntax and semantics.    
 * (Conclusion: Where We Go From Here) We conclude the project.  

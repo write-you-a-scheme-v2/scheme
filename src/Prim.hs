@@ -120,9 +120,11 @@ eqCmd  _          _         = return $ Bool False
 
 cons :: [LispVal] -> Eval LispVal
 cons [x,y@(List yList)] = return $ List $ x:yList
+cons [x,y]              = return $ List [x,y]
 cons [c]                = return $ List [c]
 cons []                 = return $ List []
 cons _  = throw $ ExpectedList "cons, in second argumnet"
+
 
 car :: [LispVal] -> Eval LispVal
 car [List []    ] = return Nil

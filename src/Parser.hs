@@ -15,7 +15,6 @@ import qualified Text.Parsec.Language as Lang
 import Data.Functor.Identity (Identity)
 import qualified Data.Text as T
 
-
 lexer :: Tok.GenTokenParser T.Text () Identity
 lexer = Tok.makeTokenParser style
 
@@ -27,7 +26,7 @@ style = Lang.emptyDef {
   , Tok.opStart = Tok.opLetter style
   , Tok.opLetter = oneOf ":!#$%%&*+./<=>?@\\^|-~"
   , Tok.identStart = letter <|>  oneOf "-+/*=|&><"
-  , Tok.identLetter = letter <|> oneOf "?+=|&-/"
+  , Tok.identLetter = digit <|> letter <|> oneOf "?+=|&-/"
   , Tok.reservedOpNames = [ "'", "\""]
   }
 
@@ -73,6 +72,7 @@ parseQuote = do
 
 parseExpr :: Parser LispVal
 parseExpr = parseReserved <|> parseNumber
+  <|> try parseNegNum 
   <|> parseAtom
   <|> parseText
   <|> parseQuote
@@ -103,6 +103,7 @@ fileToEvalForm x = x
 
 parseFile :: T.Text -> Either ParseError LispVal
 parseFile = fileToEvalForm . readExprFile
+
 
 -- XXX: consider moving this to the independent test suite module in
 -- tests/Test.hs

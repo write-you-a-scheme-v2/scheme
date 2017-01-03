@@ -1,4 +1,15 @@
 ##TODO list
+
+1/3/2016 Goal: End game
+- [ ] Figure out recursive functions (evalArg? why isn't fold working")
+- [ ] Tests for lexical scoping 
+- [ ] Figure out stdlib integration into exec
+- [ ] Write standard library chapter
+- [ ] Write testing chapter 
+- [ ] Add functions for io manipulation (readFile, execute file, writeToFile,
+  etc)
+- [ ] Write IO chapter
+
 11/11/2016 (Goal: Write tutorial chapters 00 to 04)
 - [x] Make sure resources from ./sources/* are added to introduction
 - [x] Balance intro/overview material between chapters

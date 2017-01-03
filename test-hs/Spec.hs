@@ -52,6 +52,7 @@ main = do
   hspec $ describe "src/Eval.hs" $ do
     wStd "test/add.scm" $ Number 3
     runExpr Nothing "test/define.scm" $ Number 4
+    runExpr Nothing "test/define_order.scm" $ Number 42
     wStd "test/eval_boolean.scm" $ Bool True
     wStd "test/eval_lambda.scm" $ Number 5
     wStd "test/if_alt.scm" $ Number 2
@@ -61,6 +62,7 @@ main = do
     wStd "test/test_cadadr.scm" $ Number 42
     wStd "test/test_gt.scm" $ List [ Bool True, Bool False]
     wStd "test/test_quote.scm" $ List []
+    wStd "test/test_scope1.scm" $ Number 413281
 
   hspec $ describe "eval extra" $ do
     tExpr "fold"  "(fold '''(+) 1 '''(1 2 3))" $ Number 7

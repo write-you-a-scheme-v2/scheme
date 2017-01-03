@@ -76,6 +76,7 @@ parseQuote = do
 
 parseExpr :: Parser LispVal
 parseExpr = parseReserved <|> parseNumber
+  <|> try parseNegNum 
   <|> parseAtom
   <|> parseText
   <|> parseQuote

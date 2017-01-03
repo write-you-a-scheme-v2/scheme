@@ -29,13 +29,14 @@ data LispVal
   | Fun IFunc
   | Lambda IFunc EnvCtx
   | Nil
-  | Bool Bool deriving (Typeable)
+  | Bool Bool deriving (Typeable,Eq)
 
 instance Show LispVal where
   show = T.unpack . showVal
 
 data IFunc = IFunc { fn :: [LispVal] -> Eval LispVal } deriving (Typeable)
-
+instance Eq IFunc where
+ (==) a b = False
 
 showVal :: LispVal -> T.Text
 showVal val =

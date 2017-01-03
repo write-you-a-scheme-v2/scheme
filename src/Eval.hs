@@ -210,7 +210,7 @@ eval all@(List ((:) x xs)) = do
   case funVar of
       (Fun (IFunc internalFn)) -> do xVal <- mapM eval xs --evalutate values, then pass
                                      internalFn xVal
-      (Lambda (IFunc definedFn) boundenv) -> local (const boundenv) $ definedFn xVal
+      (Lambda (IFunc definedFn) boundenv) -> local (const boundenv) $ definedFn xs
       --(Lambda (IFunc internalfn) boundenv) -> local (const boundenv) $ internalfn xVal
 
       _                -> throw $ NotFunction funVar 
@@ -221,7 +221,6 @@ eval x = do
 
 evalBody :: LispVal -> Eval LispVal
 evalBody x@(List [List ((:) (Atom "define") [Atom var, defExpr]), rest]) = do
-  --liftIO $ print x
   evalVal <- eval defExpr
   env     <- ask
   --local (const $ Map.insert var evalVal env) $ eval rest
@@ -232,6 +231,6 @@ evalBody x@(List ((:) (List ((:) (Atom "define") [Atom var, defExpr])) rest)) = 
   evalVal <- eval defExpr
   env     <- ask
   --local (const $ Map.insert var evalVal env) $ evalBody $ List rest
-  local (const $ Map.insert var defExpr env) $ evalBody $ List rest
+  local (const $ Map.insert var evalVal env) $ evalBody $ List rest
 
 evalBody x = eval x

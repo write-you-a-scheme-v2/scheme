@@ -36,6 +36,7 @@ primEnv = [
   , ("pos?"  , mkF $ unop $     numBool (< 0))
   , ("neg?"  , mkF $ unop $     numBool (> 0))
   , ("eq?"   , mkF $ binop eqCmd )
+  , ("null?"   , mkF $ unop (eqCmd Nil) )
   , ("bl-eq?", mkF $ binop $ eqOp (==))
   , ("and"   , mkF $ binopFold (eqOp (&&)) (Bool True))
   , ("or"    , mkF $ binopFold (eqOp (||)) (Bool False))

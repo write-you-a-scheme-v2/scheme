@@ -65,17 +65,26 @@ main = do
     wStd "test/test_scope1.scm" $ Number 413281
 
   hspec $ describe "eval extra" $ do
-    tExpr "fold"  "(fold '''(+) 1 '''(1 2 3))" $ Number 7
+    tExpr "begin/define" "begin (define x 1) (define y (+ x 10)) (+ x y)" $ Number 12
+    tExpr "eval args" "(+  100 (+ 0  1) 10)" $ Number 11
+    tExpr "eval args" "(+ (+ 1 2) (let (x 222 y 333) (+ x y)) ((lambda (x) (+ 0 x)) 1000))" $ Number 1558
+    tExprStd "foldl evals to something "  "( (lambda (x y) y) foldl 1234 )" $ Number 1234
+    tExprStd "foldl call"  "(foldl + 1 '())" $ Number 7
+    tExprStd "fold"  "(fold '''(+) 1 '''(1 2 3))" $ Number 7
+    tExprStd "fold"  "(fold + 1 '(1 2 3))" $ Number 7
 
 -- helper functions
+-- run file w/ stdlib
 wStd :: T.Text -> LispVal -> SpecWith ()
 wStd = runExpr (Just "test/stdlib_mod.scm")
 
+-- run expr w/o stdLib 
 tExpr :: T.Text -> T.Text -> LispVal -> SpecWith ()
 tExpr note expr val = do
     it (T.unpack note) $ do
       (unsafePerformIO $ runASTinEnv basicEnv $ fileToEvalForm expr) `shouldBe` val
 
+-- run file w/o stdlib
 runExpr :: Maybe T.Text -> T.Text -> LispVal -> SpecWith ()
 runExpr  std file val = do
     it (T.unpack file) $ do
@@ -92,4 +101,13 @@ evalTextTest Nothing file = do
   runASTinEnv basicEnv $ fileToEvalForm f
 
 
+-- run text expr w/ file
+tExprStd :: T.Text -> T.Text -> LispVal -> SpecWith ()
+tExprStd note  expr  val = do
+    it (T.unpack note ) $ do
+      (unsafePerformIO $ evalExprTest expr) `shouldBe` val
+evalExprTest ::  T.Text -> IO LispVal --REPL
+evalExprTest expr = do
+  stdlib <- getFileContents $ T.unpack  "test/stdlib_mod.scm"
+  runASTinEnv basicEnv $ textToEvalForm stdlib  expr
 

@@ -6,11 +6,13 @@ import Parser
 import Eval
 
 import Test.Hspec
+import qualified Data.Text as T
 
+import System.IO.Unsafe
 
 main :: IO ()
 main = do
-  hspec $ describe "parse" $ do
+  hspec $ describe "src/Parser.hs" $ do
     it "Atom" $ do
       (readExpr "bb-8?") `shouldBe`  (Right $ Atom "bb-8?")
     it "Num Negative" $ do
@@ -44,3 +46,48 @@ main = do
 
     it "S-Expr: nested list" $ do
       (readExpr "(lambda (x x) (+ x x))") `shouldBe` (Right $ List [Atom "lambda", List[Atom "x", Atom "x"], List [Atom "+", Atom "x", Atom "x"]])
+
+
+
+  hspec $ describe "src/Eval.hs" $ do
+    wStd "test/add.scm" $ Number 3
+    runExpr Nothing "test/define.scm" $ Number 4
+    wStd "test/eval_boolean.scm" $ Bool True
+    wStd "test/eval_lambda.scm" $ Number 5
+    wStd "test/if_alt.scm" $ Number 2
+    wStd "test/let.scm" $ Number 321
+    wStd "test/test_car.scm" $ Number 1
+    wStd "test/test_cdr.scm" $ List [Number 2]
+    wStd "test/test_cadadr.scm" $ Number 42
+    wStd "test/test_gt.scm" $ List [ Bool True, Bool False]
+    wStd "test/test_quote.scm" $ List []
+
+  hspec $ describe "eval extra" $ do
+    tExpr "fold"  "(fold '''(+) 1 '''(1 2 3))" $ Number 7
+
+-- helper functions
+wStd :: T.Text -> LispVal -> SpecWith ()
+wStd = runExpr (Just "test/stdlib_mod.scm")
+
+tExpr :: T.Text -> T.Text -> LispVal -> SpecWith ()
+tExpr note expr val = do
+    it (T.unpack note) $ do
+      (unsafePerformIO $ runASTinEnv basicEnv $ fileToEvalForm expr) `shouldBe` val
+
+runExpr :: Maybe T.Text -> T.Text -> LispVal -> SpecWith ()
+runExpr  std file val = do
+    it (T.unpack file) $ do
+      (unsafePerformIO $ evalTextTest std file) `shouldBe` val
+
+evalTextTest :: Maybe T.Text -> T.Text -> IO LispVal --REPL
+evalTextTest (Just stdlib) file= do
+  stdlib <- getFileContents $ T.unpack  stdlib
+  f <- getFileContents $ T.unpack file 
+  runASTinEnv basicEnv $ textToEvalForm stdlib  f
+
+evalTextTest Nothing file = do
+  f <- getFileContents $ T.unpack file 
+  runASTinEnv basicEnv $ fileToEvalForm f
+
+
+

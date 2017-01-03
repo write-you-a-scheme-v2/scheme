@@ -15,7 +15,6 @@ import qualified Text.Parsec.Language as Lang
 import Data.Functor.Identity (Identity)
 import qualified Data.Text as T
 
-
 lexer :: Tok.GenTokenParser T.Text () Identity
 lexer = Tok.makeTokenParser style
 
@@ -104,6 +103,7 @@ fileToEvalForm x = x
 
 parseFile :: T.Text -> Either ParseError LispVal
 parseFile = fileToEvalForm . readExprFile
+
 
 -- XXX: consider moving this to the independent test suite module in
 -- tests/Test.hs

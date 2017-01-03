@@ -6,6 +6,13 @@ module Eval (
   evalFile,
   runParseTest,
   safeExec,
+  -- testing
+  runASTinEnv,
+  basicEnv,
+  fileToEvalForm,
+  textToEvalForm,
+  getFileContents,
+
 ) where
 
 import Prim
@@ -15,6 +22,10 @@ import LispVal
 import Data.Map as Map
 import Data.Monoid
 import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
+import System.Directory
+
+import Text.Parsec
 
 import Control.Monad.Reader
 import Control.Exception
@@ -27,7 +38,7 @@ readFn :: LispVal -> Eval LispVal
 readFn x = do
   val <- eval x
   case val of
-    (String txt) -> textToEvalForm txt
+    (String txt) -> lineToEvalForm txt
     _            -> throw $ TypeMismatch "read expects string, instead got: " val
 
 
@@ -46,8 +57,8 @@ runASTinEnv code action = runReaderT (unEval action) code
 
 
 
-textToEvalForm :: T.Text -> Eval LispVal
-textToEvalForm input = either (throw . PError . show  )  eval $ readExpr input
+lineToEvalForm :: T.Text -> Eval LispVal
+lineToEvalForm input = either (throw . PError . show  )  eval $ readExpr input
 
 
 evalFile :: T.Text -> IO () --program file
@@ -61,10 +72,10 @@ runParseTest input = either (T.pack . show) (T.pack . show) $ readExpr input
 
 sTDLIB :: T.Text
 sTDLIB = "test/stdlib_mod.scm"
---sTDLIB = "test/lib.scm"
 
 endOfList :: LispVal -> LispVal -> LispVal 
 endOfList (List x) expr = List $ x ++ [expr]
+endOfList n _  = throw $ TypeMismatch  "failure to get variable: " n
 
 parseWithLib :: T.Text -> T.Text -> Either ParseError LispVal
 parseWithLib std inp = do
@@ -72,21 +83,19 @@ parseWithLib std inp = do
   expr   <- readExpr inp
   return $ endOfList stdlib expr 
 
---readExprFile std >>= (\stdlib -> readExpr inp >>= (\expr -> return $ endOfList stdlib expr)
 
 getFileContents :: FilePath -> IO T.Text
 getFileContents fname = do
   exists <- doesFileExist fname
   if exists then TIO.readFile  fname else return "File does not exist."
 
-textToEvalForm1 :: T.Text -> T.Text -> Eval LispVal
-textToEvalForm1 std input = either (throw . PError . show )  evalBody $ parseWithLib std input
+textToEvalForm :: T.Text -> T.Text -> Eval LispVal
+textToEvalForm std input = either (throw . PError . show )  evalBody $ parseWithLib std input
 
 evalText :: T.Text -> IO () --REPL
 evalText textExpr = do 
   stdlib <- getFileContents $ T.unpack  sTDLIB
-  --print stdlib
-  res <- runASTinEnv basicEnv $ textToEvalForm1 stdlib textExpr
+  res <- runASTinEnv basicEnv $ textToEvalForm stdlib textExpr
   print res
 
 getVar :: LispVal ->  Eval LispVal
@@ -103,7 +112,7 @@ ensureAtom n = throw $ TypeMismatch "expected an atomic value" n
 
 extractVar :: LispVal -> T.Text
 extractVar (Atom atom) = atom
-extractVar n = throw $ Default n
+extractVar n = throw $ TypeMismatch "expected an atomic value" n
 
 getEven :: [t] -> [t]
 getEven [] = []
@@ -117,10 +126,8 @@ applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal
 applyLambda expr params args = do
   env <- ask
   argEval <- mapM eval args
-  local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a,b)) params argEval) <> env)) $ eval expr
+  local (const (Map.fromList (zipWith (\a b -> (extractVar a,b)) params argEval) <> env)) $ eval expr
 
-quoteL :: LispVal -> LispVal 
-quoteL x = List $ [Atom "quote",x]
 
 eval :: LispVal -> Eval LispVal
 eval (Number i) = return $ Number i
@@ -165,59 +172,49 @@ eval (List [Atom "lambda", List params, expr]) = do
   return  $ Lambda (IFunc $ applyLambda expr params) envLocal
 eval (List (Atom "lambda":_) ) = throw $ BadSpecialForm "lambda function expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)"
 
--- (a (quote (1 2 3)))
--- L ['a', L [q 1 2 3 4]]
--- car and cdr definitions to support (define cdar (lambda (x) (cdr (car x))))
--- and similar definitions
--- try alternative AST transform
-{-
+
+-- needed to get cadr, etc to work
 eval all@(List [Atom "cdr", List [Atom "quote", List (x:xs)]]) = 
-  return $ quoteL $ List xs
+  return $  List xs
 eval all@(List [Atom "cdr", arg@(List (x:xs))]) =  
   case x of
+      -- proxy for if the list can be evaluated
       Atom  _ -> do val <- eval arg
                     eval $ List [Atom "cdr", val]
-      _           -> return $ quoteL $ List xs
+      _           -> return $ List xs
 
 
 eval all@(List [Atom "car", List [Atom "quote", List (x:xs)]]) = 
-  return $ quoteL $ x
+  return $  x
 eval all@(List [Atom "car", arg@(List (x:xs))]) =  
   case x of
       Atom _       -> do val <- eval arg
                          eval $ List [Atom "car", val]
-      _            -> return $ quoteL $ x
--}
+      _            -> return $ x
+
 
 eval all@(List ((:) x xs)) = do
-  liftIO $ print  all
-  liftIO $ TIO.putStrLn "\n"
   funVar <- eval x
   xVal   <- mapM eval  xs
+  --liftIO $ TIO.putStr $ T.concat ["eval:\n  ", T.pack $ show all,"\n  * fnCall:  ", T.pack $ show x, "\n  * fnVar  ", T.pack $ show funVar,"\n  * args:  ",T.concat (T.pack . show <$> xVal)    ,T.pack "\n"]
   case funVar of
-      (Fun (IFunc internalFn)) -> do xVal <- mapM eval xs --evalutate values, then pass
-                                     internalFn xVal
+      (Fun (IFunc internalFn)) -> internalFn xVal
       (Lambda (IFunc definedFn) boundenv) -> local (const boundenv) $ definedFn xs
-      --(Lambda (IFunc internalfn) boundenv) -> local (const boundenv) $ internalfn xVal
 
       _                -> throw $ NotFunction funVar 
 
-eval x = do 
-  liftIO $ print x
-  throw $ Default  x --fall thru
+eval x = throw $ Default  x --fall thru
 
 evalBody :: LispVal -> Eval LispVal
 evalBody x@(List [List ((:) (Atom "define") [Atom var, defExpr]), rest]) = do
   evalVal <- eval defExpr
   env     <- ask
-  --local (const $ Map.insert var evalVal env) $ eval rest
   local (const $ Map.insert var evalVal env) $ eval rest
 
 evalBody x@(List ((:) (List ((:) (Atom "define") [Atom var, defExpr])) rest)) = do
   --liftIO $ print x
   evalVal <- eval defExpr
   env     <- ask
-  --local (const $ Map.insert var evalVal env) $ evalBody $ List rest
   local (const $ Map.insert var evalVal env) $ evalBody $ List rest
 
 evalBody x = eval x

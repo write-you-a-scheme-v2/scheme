@@ -4,9 +4,6 @@ date: November 28, 2016
 author: Adam Wespiser
 ---
 
-
->>>>>>> 7aac0f572453f4ffda3fac0eea27a048a2bca983
-
 * [Fork me on github](https://github.com/write-you-a-scheme-v2/scheme)    
 
 * [Overview](../wyas/00_overview.html) The view from above.     

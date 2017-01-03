@@ -18,11 +18,12 @@ We say an exception is checked when it after it is "thrown", another part of cod
 ## Exceptions Everywhere!
 Undefined, unexpected, and generally out of control situations are present in any kind of large system, especially one interacting with the outside world or dealing with use input as complex and complicated as a programming language.  Control is an illusion.  For our system, we must accept user input, determine that it is valid Scheme syntax, then compute that abstract syntax into a final value.  During this process we may interact with the file system or network.  It is especially important for programming languages to report and describe the nature of the irregularity.     
 Thus, there are three types of exceptions that exist in our implementations of Scheme: **Parsing, Evaluation, and IO**.  Each of these originate in a distinct type of activity the parser or interpreter is undergoing, but all of them are end up going through the `Eval` monad and are caught and displayed in the same place.  (see [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs))
+
 ```Haskell
 someFun :: GoodType -> Eval LispVal
 someFun (BadMatch x) = return $ throw $ LispExceptionConstructor "message we send"
-someOtherFun x = if (predicate on x) goodThing else throw $ badThingException
 
+someOtherFun x = if (predicate on x) goodThing else throw $ badThingException
 ```
 
 ```Haskell
@@ -39,6 +40,7 @@ safeExec m = do
 Above we have the code to catch an exception.  We use `Control.Exception.try`, then subsequently `fromException` and `case` to take an exception and unwrap it into a `LispException`.  For running programs, we might not need to catch an exception thrown in the code, displaying the exception is enough for the user to fix the problem.  However, for the REPL, it would be a major pain if we required our users to restart the REPL every time they made a mistake while prototyping a new idea.    
 
 ## Defining an Exception
+
 For our Scheme, an exception will be defined for a internal misuse of a function, a user deviation from accepted syntax or semantics, or the request of an unavailable external resource.  Exceptions are thrown in the monad transformer stack, `Eval`, and caught with the `safeExec` function, which is convenient for us, because we can throw exceptions from any function return `Eval LispVal`, which is most of our evaluation code!
 
 ```haskell
@@ -61,6 +63,7 @@ Each of these data constructors distinguish the source of their error.  Whenever
 ```haskell
 instance Show LispException where
   show = T.unpack . showError
+
 unwordsList :: [LispVal] -> T.Text
 unwordsList list = T.unwords $  showVal <$> list
 
@@ -77,7 +80,6 @@ showError err =
     (UnboundVar txt)       -> T.concat ["Error Unbound Variable: ", txt]
     (PError str)           -> T.concat ["Parser Error, expression cannot evaluate: ",T.pack str]
     (Default val)          -> T.concat ["Error, Danger Will Robinson! Evaluation could not proceed!  ", showVal val]
-
 ```
 
  Similar to our `showVal`, from [Chapter 1](01_introduction.html), we override the `show` Typeclass to give a custom message.  The showError has a special case for PError, which uses  `String` and just wraps the error message from the parser.  The next source `IO`, can also be tricky.  Although we have the ability to throw an `IOError`, if there is an unchecked exception during `IO` operations, it will fall through and not be handling via our `LispException` pathway.      
@@ -99,12 +101,14 @@ We are handling errors in a very basic way.  The use of `IO` causes some trickin
 * **ExceptT someErrorType IO a** considered bad [Exceptions Best Practices](https://www.schoolofhaskell.com/user/commercial/content/exceptions-best-practices). The authors list three reasons why this is considered an anti pattern:  1) Its noncomposable, we see this when we have to do add in the Parser error, and the information in the parser error is not completely congruent with the information we pass to other error messages.  2) It gives the implication that only `LispException` can be thrown.  This is true, during `slurp` or any `IO` operation, an error can be thrown that will not be caught.  3) We haven't limited the possible exceptions, we've just added `throwError` or `liftIO . throwIO`.
 * **enclosed exceptions**](https://github.com/jcristovao/enclosed-exceptions)  [FP complete's Catching All Exceptions. ](https://www.schoolofhaskell.com/user/snoyberg/general-haskell/exceptions/catching-all-exceptions).  The goal is to catch all exceptions that arise from code.
 * a plethora of options for error/exception handling in Haskell:    
-[Control-Monad-Trans-Except](https://hackage.haskell.org/package/transformers-0.5.0.0/docs/Control-Monad-Trans-Except.html)    
- [Control-Monad-Error](https://hackage.haskell.org/package/mtl-2.2.1/docs/Control-Monad-Error.html)    
-[Control-Monad-Catch](https://hackage.haskell.org/package/exceptions-0.8.0.2/docs/Control-Monad-Catch.html)    
-[Control-Monad-Except](https://hackage.haskell.org/package/mtl-2.2.1/docs/Control-Monad-Except.html)     
-[Control-Exception](https://hackage.haskell.org/package/base-4.8.1.0/docs/Control-Exception.html)   
-[UnexpectionIO](https://hackage.haskell.org/package/unexceptionalio)     
+
+  1. [Control-Monad-Trans-Except](https://hackage.haskell.org/package/transformers-0.5.0.0/docs/Control-Monad-Trans-Except.html)    
+  1. [Control-Monad-Error](https://hackage.haskell.org/package/mtl-2.2.1/docs/Control-Monad-Error.html)    
+  1. [Control-Monad-Catch](https://hackage.haskell.org/package/exceptions-0.8.0.2/docs/Control-Monad-Catch.html)    
+  1. [Control-Monad-Except](https://hackage.haskell.org/package/mtl-2.2.1/docs/Control-Monad-Except.html)     
+  1. [Control-Exception](https://hackage.haskell.org/package/base-4.8.1.0/docs/Control-Exception.html)   
+  1. [UnexpectionIO](https://hackage.haskell.org/package/unexceptionalio)     
+
 The list is pretty daunting, and building upon the approach taken here is a good path forward.  If conceptual simplicity is highly valued, biting the bullet and just using the anti-pattern ```ExceptT (LispException IO) a``` might not hurt too bad.  Its not super great code, but its pretty simple to understand, and forces the `either error value` logic to happen during monadic evaluation.  `IO` really seems to be tricky here, and if we were running multiple threads, we ought to be handling `async` exceptions.  There's no right answer, but a consensus has formed around the opinions exposed in [Exceptions Best Practices](https://www.schoolofhaskell.com/user/commercial/content/exceptions-best-practices).           
 
 #### Next, Let's make some functions!

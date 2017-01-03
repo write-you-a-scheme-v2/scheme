@@ -1,20 +1,21 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module LispVal where
 
+module LispVal (
+  LispVal(..),
+  Eval(..),
+  IFunc(..),
+  EnvCtx,
+  LispException(..),
+) where
+
+import Data.Typeable (Typeable)
 import qualified Data.Text as T
 import qualified Data.Map as Map
 
+import Control.Exception
 import Control.Monad.Except
-
 import Control.Monad.Reader
-import Control.Monad.Catch
-import Control.Monad.Trans.Resource
-
-
-import Data.Data
-import Data.Typeable
 
 type EnvCtx = Map.Map T.Text LispVal
 
@@ -29,12 +30,14 @@ data LispVal
   | Fun IFunc
   | Lambda IFunc EnvCtx
   | Nil
-  | Bool Bool deriving (Typeable)
+  | Bool Bool
+  deriving (Typeable)
 
 instance Show LispVal where
   show = T.unpack . showVal
 
-data IFunc = IFunc { fn :: [LispVal] -> Eval LispVal } deriving (Typeable)
+data IFunc = IFunc { fn :: [LispVal] -> Eval LispVal }
+  deriving (Typeable)
 
 
 showVal :: LispVal -> T.Text
@@ -65,7 +68,8 @@ data LispException
   | UnboundVar T.Text
   | Default LispVal
   | PError String -- from show anyway
-  | IOError T.Text deriving (Typeable)
+  | IOError T.Text
+  deriving (Typeable)
 
 instance Exception LispException
 

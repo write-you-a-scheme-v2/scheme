@@ -12,6 +12,13 @@ import Prim
 import Parser
 import LispVal
 
+<<<<<<< HEAD
+import Data.Text as T
+import Data.Text.IO as TIO
+||||||| merged common ancestors
+import Data.Text as T
+=======
+>>>>>>> master
 import Data.Map as Map
 import Data.Monoid
 import qualified Data.Text as T
@@ -102,8 +109,15 @@ ensureAtom n@(Atom txt) = return  n
 ensureAtom n = throw $ TypeMismatch "expected an atomic value" n
 
 extractVar :: LispVal -> T.Text
+<<<<<<< HEAD
+extractVar x@(Atom atom) = T.pack $ show x
+extractVar x = T.pack $ show x
+||||||| merged common ancestors
+extractVar (Atom atom) = atom
+=======
 extractVar (Atom atom) = atom
 extractVar n = throw $ Default n
+>>>>>>> master
 
 getEven :: [t] -> [t]
 getEven [] = []
@@ -117,7 +131,7 @@ applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal
 applyLambda expr params args = do
   env <- ask
   argEval <- mapM eval args
-  local (const (Map.fromList (Prelude.zipWith (\a b -> (extractVar a,b)) params argEval) <> env)) $ eval expr
+  local (const (Map.fromList (zipWith (\a b -> (extractVar a,b)) params argEval) <> env)) $ eval expr
 
 quoteL :: LispVal -> LispVal 
 quoteL x = List $ [Atom "quote",x]
@@ -146,6 +160,14 @@ eval args@(List ( (:) (Atom "if") _))  = throw $ BadSpecialForm "(if <bool> <s-e
 eval (List [Atom "begin", rest]) = evalBody rest
 eval (List ((:) (Atom "begin") rest )) = evalBody $ List rest
 
+
+-- define for scheme std lib
+{-
+eval (List [Atom "define", List ((:) (Atom funName) rest), expr]) = do
+  params <- mapM ensureAtom $ rest
+  envLocal <- ask
+  return  $ Lambda (IFunc $ applyLambda expr params) envLocal
+-}
 eval (List [Atom "define", varExpr, expr]) = do --top-level define
   varAtom <- ensureAtom varExpr
   evalVal <- eval expr

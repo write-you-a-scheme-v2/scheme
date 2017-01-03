@@ -1,20 +1,26 @@
 Write You a Scheme
 ==================
-[About this project](https://www.wespiser.com/writings/wyas/home.html)    
-==================
-Shortcut build
+
+[About this project](https://www.wespiser.com/writings/wyas/home.html)
+
+Shortcut build:
+
 ```bash
 $ ./build 
 ```
-Shortcut repl 
+
+Shortcut repl:
+
 ```bash 
 $ ./repl
 ```
+
 Shortcut run binary executable
 
 ```bash 
 $ ./run -r                 # Interactive shell
 $ ./run -s test/let.scheme # Run file
+$ ./run --help
 ```
 
 Building the reference implementation.
@@ -41,6 +47,7 @@ output.
 ```bash
 $ firefox output/scheme.html
 ```
+
 Contributing
 ------------
 

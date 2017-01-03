@@ -5,9 +5,6 @@ author: Adam Wespiser
 ---
 ------------
 
-> *And I say also unto thee, That thou art Peter, and upon this rock I will build my church; and the gates of hell shall not prevail against it.*  **Mathew 16:18**    
-
-
 ## Primitive Strategy
 The primitive environment is defined in
 [Prim.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Prim.hs)  
@@ -50,26 +47,34 @@ primEnv = [   ("+"     , mkF $ binopFold (numOp    (+))  (Number 0) )
 Lets go through an individual example to see how all the types mash!    
 
 #### Function Definition
+
 ```haskell
 type Binary = LispVal -> LispVal -> Eval LispVal
- ("+"    , mkF $ binopFold (numOp    (+)) (Number 0))
+
 (+) :: Num a => a -> a -> a
+
 numOp :: (Integer -> Integer -> Integer) -> LispVal -> LispVal -> Eval LispVal
+
 binopFold :: Binary -> LispVal -> [LispVal] -> Eval LispVal
 ```
 
 #### Function Reduction
+
 ```haskell
-numOp (+)             :: LispVal -> LispVal -> Eval LispVal
-numOp (+)             :: Binary
+numOp (+) :: LispVal -> LispVal -> Eval LispVal
+numOp (+) :: Binary
+
 binopFold (numOp (+)) :: LispVal -> [LispVal] -> Eval LispVal
-binopFold (numOp (+)) (Number 0)         :: [LispVal] -> Eval LispVal
+binopFold (numOp (+)) (Number 0) :: [LispVal] -> Eval LispVal
+
 IFunc $ binopFold (numOp (+)) (Number 0) :: IFunc
 mkF $ binopFold (numOp (+)) (Number 0) :: LispVal
 ```
+
 Alright, so it's a complicated transformation, but as you can see the types do work out.  The engineering principle at play here is the use of the function `numOp`, and similar functions, for as many operators as possible. This reduces the amount of code needed to be written.  Further, `binop` and `unop` can be re-used for most functions.  Varags would have to be handled differently, possibly by entering each pattern match individually.     
 
 ## Helper Functions
+
 ```Haskell
 type Prim   = [(T.Text, LispVal)]
 type Unary  = LispVal -> Eval LispVal

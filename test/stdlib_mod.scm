@@ -51,8 +51,8 @@
 (define positive?          (curry < 0))
 (define negative?          (curry > 0))
 -}
-(define odd? (lambda (num)         (= (mod num 2) 1)))
-(define even? (lambda (num)        (= (mod num 2) 0)))
+--(define odd? (lambda (num)         (= (mod num 2) 1)))
+--(define even? (lambda (num)        (= (mod num 2) 0)))
 (define max (lambda (x  num-list) (fold (lambda (y z) (if (> y z) y z)) x (cons 0 num-list))))
 (define min (lambda (x  num-list) (fold (lambda (y z) (if (< y z) y z)) x (cons 536870911 num-list))))
 --(define (list . objs)       objs)

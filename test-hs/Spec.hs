@@ -54,6 +54,7 @@ main = do
     runExpr Nothing "test/define.scm" $ Number 4
     runExpr Nothing "test/define_order.scm" $ Number 42
     wStd "test/eval_boolean.scm" $ Bool True
+    wStd "test/eval_boolean_ops.scm" $ Bool True
     wStd "test/eval_lambda.scm" $ Number 5
     wStd "test/if_alt.scm" $ Number 2
     wStd "test/let.scm" $ Number 321
@@ -61,13 +62,15 @@ main = do
     wStd "test/test_cdr.scm" $ List [Number 2]
     wStd "test/test_cadadr.scm" $ Number 42
     wStd "test/test_gt.scm" $ List [ Bool True, Bool False]
-    wStd "test/test_quote.scm" $ List []
+    wStd "test/test_quote.scm" $ List [Atom "xNotFound", Atom "yNotFound"]
     wStd "test/test_scope1.scm" $ Number 413281
+    wStd "test/test_args.scm" $ Number 105065
 
   hspec $ describe "eval extra" $ do
     tExpr "begin/define" "begin (define x 1) (define y (+ x 10)) (+ x y)" $ Number 12
-    tExpr "eval args" "(+  100 (+ 0  1) 10)" $ Number 11
-    tExpr "eval args" "(+ (+ 1 2) (let (x 222 y 333) (+ x y)) ((lambda (x) (+ 0 x)) 1000))" $ Number 1558
+    tExpr "eval args" "begin (+ 100 (+ 0 1) 10)" $ Number 111
+    runExpr Nothing "test/define_lambda.scm" $ String "smalltalk"
+    tExprStd "eval args" "(+ (+ 1 2) (let (x 222 y 333) (+ x y)) ((lambda (x) (+ 0 x)) 1000))" $ Number 1558
     tExprStd "foldl evals to something "  "( (lambda (x y) y) foldl 1234 )" $ Number 1234
     tExprStd "foldl call"  "(foldl + 1 '())" $ Number 7
     tExprStd "fold"  "(fold '''(+) 1 '''(1 2 3))" $ Number 7

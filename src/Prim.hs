@@ -33,13 +33,14 @@ primEnv = [
   , ("=="    , mkF $ binop $    numCmp   (==))
   , ("even?" , mkF $ unop $     numBool   even)
   , ("odd?"  , mkF $ unop $     numBool   odd)
-  , ("pos?"  , mkF $ unop $     numBool (< 0))
-  , ("neg?"  , mkF $ unop $     numBool (> 0))
+  , ("neg?"  , mkF $ unop $     numBool (< 0))
+  , ("pos?"  , mkF $ unop $     numBool (> 0))
   , ("eq?"   , mkF $ binop eqCmd )
   , ("null?"   , mkF $ unop (eqCmd Nil) )
   , ("bl-eq?", mkF $ binop $ eqOp (==))
   , ("and"   , mkF $ binopFold (eqOp (&&)) (Bool True))
   , ("or"    , mkF $ binopFold (eqOp (||)) (Bool False))
+  , ("not"    , mkF $ unop $ notOp)
   , ("cons"  , mkF $ Prim.cons)
   , ("cdr"   , mkF $ Prim.cdr)
   , ("car"   , mkF $ Prim.car)
@@ -110,6 +111,11 @@ numCmp op x          (Number y) = throw $ TypeMismatch "numeric op " x
 numCmp op (Number x)  y         = throw $ TypeMismatch "numeric op " y
 numCmp op x         y           = throw $ TypeMismatch "numeric op " x
 
+
+notOp :: LispVal -> Eval LispVal
+notOp (Bool True) = return $ Bool False
+notOp (Bool False) = return $ Bool True
+notOp x = throw $ TypeMismatch " not expects Bool" x
 
 eqCmd :: LispVal -> LispVal -> Eval LispVal
 eqCmd (Atom   x) (Atom   y) = return . Bool $ x == y

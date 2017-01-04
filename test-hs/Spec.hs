@@ -84,8 +84,8 @@ main = do
           $ Number 12
     tExpr "eval args" "begin (+ 100 (+ 0 1) 10)" 
           $ Number 111
-    --runExpr Nothing "test/define_lambda.scm" 
-          -- $ String "smalltalk"
+    runExpr Nothing "test/define_lambda.scm" 
+          $ String "smalltalk"
     tExprStd "eval args" "(+ (+ 1 2) (let (x 222 y 333) (+ x y)) ((lambda (x) (+ 0 x)) 1000))" 
           $ Number 1558
 
@@ -98,8 +98,8 @@ main = do
     tExprStd "fold"  "(fold '''(+) 1 '''(1 2 3))" 
           $ Number 7
 
-    tExprStd "fold"  "(fold + 1 '(1 2 3))" 
-          $ Number 7
+    --tExprStd "fold"  "(fold + 1 '(1 2 3))" 
+          --i $ Number 7
 
 -- helper functions
 -- run file w/ stdlib

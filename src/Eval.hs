@@ -126,10 +126,14 @@ applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal
 applyLambda expr params args = do
   env <- ask
   argEval <- mapM eval args
-  local (const (Map.fromList (zipWith (\a b -> (extractVar a,b)) params argEval) <> env)) $ eval expr
+  local (const (env <> Map.fromList (zipWith (\a b -> (extractVar a,b)) params argEval))) $ eval expr
 
 
 eval :: LispVal -> Eval LispVal
+eval (List [Atom "dumpEnv", x]) = do 
+  env <- ask 
+  liftIO $ print $  toList env
+  eval x 
 eval (Number i) = return $ Number i
 eval (String s) = return $ String s
 eval (Bool b)   = return $ Bool b
@@ -154,9 +158,9 @@ eval (List [Atom "begin", rest]) = evalBody rest
 eval (List ((:) (Atom "begin") rest )) = evalBody $ List rest
 
 eval (List [Atom "define", varExpr, expr]) = do --top-level define
+  env     <- ask
   varAtom <- ensureAtom varExpr
   evalVal <- eval expr
-  env     <- ask
   local (const $ Map.insert (extractVar varAtom) evalVal env) $ return varExpr
 
 eval (List [Atom "let", List pairs, expr]) = do
@@ -194,12 +198,13 @@ eval all@(List [Atom "car", arg@(List (x:xs))]) =
 
 
 eval all@(List ((:) x xs)) = do
+  env    <- ask
   funVar <- eval x
   xVal   <- mapM eval  xs
   --liftIO $ TIO.putStr $ T.concat ["eval:\n  ", T.pack $ show all,"\n  * fnCall:  ", T.pack $ show x, "\n  * fnVar  ", T.pack $ show funVar,"\n  * args:  ",T.concat (T.pack . show <$> xVal)    ,T.pack "\n"]
   case funVar of
       (Fun (IFunc internalFn)) -> internalFn xVal
-      (Lambda (IFunc definedFn) boundenv) -> local (const boundenv) $ definedFn xs
+      (Lambda (IFunc definedFn) boundenv) -> local (const (boundenv <> env)) $ definedFn xs
 
       _                -> throw $ NotFunction funVar 
 

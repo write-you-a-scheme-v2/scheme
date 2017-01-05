@@ -13,6 +13,7 @@ import System.IO.Unsafe
 main :: IO ()
 main = do
   hspec $ describe "src/Parser.hs" $ do
+
     it "Atom" $   
       readExpr "bb-8?" `shouldBe` (Right $ Atom "bb-8?")
 
@@ -55,12 +56,16 @@ main = do
       (Right $ List [Atom "-", Number (0 - 42), Number (0 - 42)])
 
     it "S-Expr: prim call: atoms" $ 
-      readExpr "(- you me)" `shouldBe`
-      (Right $ List [Atom "-", Atom "you", Atom "me"])
+      readExpr "(- rogue squadron)" `shouldBe`
+      (Right $ List [Atom "-", Atom "rogue", Atom "squadron"])
 
     it "S-Expr: nested list" $ 
       readExpr "(lambda (x x) (+ x x))" `shouldBe`
       (Right $ List [Atom "lambda", List [Atom "x", Atom "x"], List [Atom "+", Atom "x", Atom "x"]])
+    it "Comment: end-of/single line" $   
+      readExpr "--skip\nartoodetoo --extra will throw\n--skip" `shouldBe` (Right $ Atom "artoodetoo")
+    it "Comment: multi-line line" $   
+      readExpr "{-Han\nShot\nFirst\n-} (c3 {- these are not the droids you're looking for-} po)\n {-Jar Jar Binks =?= Sith Lord -}" `shouldBe` (Right $ List [Atom "c3",Atom "po"])
 
   hspec $ describe "src/Eval.hs" $ do
     wStd "test/add.scm"              $ Number 3
@@ -76,30 +81,20 @@ main = do
     wStd "test/test_gt.scm"          $ List [ Bool True, Bool False]
     wStd "test/test_scope1.scm"      $ Number 413281
     wStd "test/test_args.scm"        $ Number 105065
-    runExpr Nothing "test/define.scm"       $ Number 4
-    runExpr Nothing "test/define_order.scm" $ Number 42
+    wStd "test/test_fold.scm"        $ Number 42
+    runExpr Nothing "test/define.scm"        $ Number 4
+    runExpr Nothing "test/define_order.scm"  $ Number 42
+    runExpr Nothing "test/define_lambda.scm" $ String "smalltalk"
+    runExpr Nothing "test/test_evalargs.scm" $ Number 1558
+    runExpr Nothing "test/test_fix.scm"      $ Number 3628800
+    runExpr Nothing "test/test_fix2.scm"      $ Number 5040
 
-  hspec $ describe "eval extra -- sandboxing" $ do
-    tExpr "begin/define" "begin (define x 1) (define y (+ x 10)) (+ x y)" 
+  hspec $ describe "build can proceed w/o these passing" $ do
+    tExpr "(extra) begin/define" "begin (define x 1) (define y (+ x 10)) (+ x y)" 
           $ Number 12
-    tExpr "eval args" "begin (+ 100 (+ 0 1) 10)" 
-          $ Number 111
-    runExpr Nothing "test/define_lambda.scm" 
-          $ String "smalltalk"
-    tExprStd "eval args" "(+ (+ 1 2) (let (x 222 y 333) (+ x y)) ((lambda (x) (+ 0 x)) 1000))" 
-          $ Number 1558
+    tExprStd "(extra) fold call w/ append"  "(fold ++ \"Y\" '(\"com\" \"bin\" \"a\" \"tor\"))" 
+          $ String "Ycombinator"
 
-    tExprStd "foldl evals to something "  "( (lambda (x y) y) foldl 1234 )" 
-          $ Number 1234
-
-    tExprStd "foldl call"  "(foldl + 1 '())" 
-          $ Number 7
-
-    tExprStd "fold"  "(fold '''(+) 1 '''(1 2 3))" 
-          $ Number 7
-
-    --tExprStd "fold"  "(fold + 1 '(1 2 3))" 
-          --i $ Number 7
 
 -- helper functions
 -- run file w/ stdlib

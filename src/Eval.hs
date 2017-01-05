@@ -126,7 +126,7 @@ applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal
 applyLambda expr params args = do
   env <- ask
   argEval <- mapM eval args
-  local (const (env <> Map.fromList (zipWith (\a b -> (extractVar a,b)) params argEval))) $ eval expr
+  local (const ((Map.fromList (zipWith (\a b -> (extractVar a,b)) params argEval)) <> env)) $ eval expr
 
 
 eval :: LispVal -> Eval LispVal
@@ -168,7 +168,7 @@ eval (List [Atom "let", List pairs, expr]) = do
   atoms <- mapM ensureAtom $ getEven pairs
   vals  <- mapM eval       $ getOdd  pairs
   local (const (Map.fromList (zipWith (\a b -> (extractVar a, b)) atoms vals) <> env))  $ evalBody expr
-eval (List (Atom "let":_) ) = throw $ BadSpecialForm "lambda funciton expects list of parameters and S-Expression body\n(let <pairs> <s-expr>)" 
+eval (List (Atom "let":_) ) = throw $ BadSpecialForm "let funciton expects list of parameters and S-Expression body\n(let <pairs> <s-expr>)" 
 
 
 eval (List [Atom "lambda", List params, expr]) = do

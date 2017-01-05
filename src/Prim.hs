@@ -89,12 +89,16 @@ numBool op  x         = throw $ TypeMismatch "numeric op " x
 
 numOp :: (Integer -> Integer -> Integer) -> LispVal -> LispVal -> Eval LispVal
 numOp op (Number x) (Number y) = return $ Number $ op x  y
+numOp op Nil        (Number y) = return $ Number y
+numOp op (Number x) Nil        = return $ Number x
 numOp op x          (Number y) = throw $ TypeMismatch "numeric op " x
 numOp op (Number x)  y         = throw $ TypeMismatch "numeric op " y
 numOp op x           y         = throw $ TypeMismatch "numeric op " x
 
 strOp :: (T.Text -> T.Text -> T.Text) -> LispVal -> LispVal -> Eval LispVal
 strOp op (String x) (String y) = return $ String $ op x y
+strOp op Nil        (String y) = return $ String y
+strOp op (String x) Nil        = return $ String x
 strOp op x          (String y) = throw $ TypeMismatch "string op " x
 strOp op (String x)  y         = throw $ TypeMismatch "string op " y
 strOp op x           y         = throw $ TypeMismatch "string op " x

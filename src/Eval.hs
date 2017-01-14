@@ -43,10 +43,10 @@ readFn x = do
 
 
 safeExec :: IO a -> IO (Either String a)
-safeExec m = do 
+safeExec m = do
   result <- Control.Exception.try m
   case result of
-    Left (eTop :: SomeException) -> 
+    Left (eTop :: SomeException) ->
       case fromException eTop of
         Just (enclosed :: LispException) -> return $ Left (show enclosed)
         Nothing                -> return $ Left (show eTop)
@@ -71,9 +71,9 @@ runParseTest :: T.Text -> T.Text -- for view AST
 runParseTest input = either (T.pack . show) (T.pack . show) $ readExpr input
 
 sTDLIB :: T.Text
-sTDLIB = "test/stdlib_mod.scm"
+sTDLIB = "lib/stdlib.scm"
 
-endOfList :: LispVal -> LispVal -> LispVal 
+endOfList :: LispVal -> LispVal -> LispVal
 endOfList (List x) expr = List $ x ++ [expr]
 endOfList n _  = throw $ TypeMismatch  "failure to get variable: " n
 
@@ -81,7 +81,7 @@ parseWithLib :: T.Text -> T.Text -> Either ParseError LispVal
 parseWithLib std inp = do
   stdlib <- readExprFile std
   expr   <- readExpr inp
-  return $ endOfList stdlib expr 
+  return $ endOfList stdlib expr
 
 
 getFileContents :: FilePath -> IO T.Text
@@ -93,7 +93,7 @@ textToEvalForm :: T.Text -> T.Text -> Eval LispVal
 textToEvalForm std input = either (throw . PError . show )  evalBody $ parseWithLib std input
 
 evalText :: T.Text -> IO () --REPL
-evalText textExpr = do 
+evalText textExpr = do
   stdlib <- getFileContents $ T.unpack  sTDLIB
   res <- runASTinEnv basicEnv $ textToEvalForm stdlib textExpr
   print res
@@ -130,10 +130,10 @@ applyLambda expr params args = do
 
 
 eval :: LispVal -> Eval LispVal
-eval (List [Atom "dumpEnv", x]) = do 
-  env <- ask 
+eval (List [Atom "dumpEnv", x]) = do
+  env <- ask
   liftIO $ print $  toList env
-  eval x 
+  eval x
 eval (Number i) = return $ Number i
 eval (String s) = return $ String s
 eval (Bool b)   = return $ Bool b
@@ -168,7 +168,7 @@ eval (List [Atom "let", List pairs, expr]) = do
   atoms <- mapM ensureAtom $ getEven pairs
   vals  <- mapM eval       $ getOdd  pairs
   local (const (Map.fromList (zipWith (\a b -> (extractVar a, b)) atoms vals) <> env))  $ evalBody expr
-eval (List (Atom "let":_) ) = throw $ BadSpecialForm "let funciton expects list of parameters and S-Expression body\n(let <pairs> <s-expr>)" 
+eval (List (Atom "let":_) ) = throw $ BadSpecialForm "let funciton expects list of parameters and S-Expression body\n(let <pairs> <s-expr>)"
 
 
 eval (List [Atom "lambda", List params, expr]) = do
@@ -178,9 +178,9 @@ eval (List (Atom "lambda":_) ) = throw $ BadSpecialForm "lambda function expects
 
 
 -- needed to get cadr, etc to work
-eval all@(List [Atom "cdr", List [Atom "quote", List (x:xs)]]) = 
+eval all@(List [Atom "cdr", List [Atom "quote", List (x:xs)]]) =
   return $  List xs
-eval all@(List [Atom "cdr", arg@(List (x:xs))]) =  
+eval all@(List [Atom "cdr", arg@(List (x:xs))]) =
   case x of
       -- proxy for if the list can be evaluated
       Atom  _ -> do val <- eval arg
@@ -188,9 +188,9 @@ eval all@(List [Atom "cdr", arg@(List (x:xs))]) =
       _           -> return $ List xs
 
 
-eval all@(List [Atom "car", List [Atom "quote", List (x:xs)]]) = 
+eval all@(List [Atom "car", List [Atom "quote", List (x:xs)]]) =
   return $  x
-eval all@(List [Atom "car", arg@(List (x:xs))]) =  
+eval all@(List [Atom "car", arg@(List (x:xs))]) =
   case x of
       Atom _       -> do val <- eval arg
                          eval $ List [Atom "car", val]
@@ -206,7 +206,7 @@ eval all@(List ((:) x xs)) = do
       (Fun (IFunc internalFn)) -> internalFn xVal
       (Lambda (IFunc definedFn) boundenv) -> local (const (boundenv <> env)) $ definedFn xs
 
-      _                -> throw $ NotFunction funVar 
+      _                -> throw $ NotFunction funVar
 
 eval x = throw $ Default  x --fall thru
 

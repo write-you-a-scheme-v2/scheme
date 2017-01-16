@@ -32,14 +32,18 @@ import Control.Exception
 
 basicEnv :: Map.Map T.Text LispVal
 basicEnv = Map.fromList $ primEnv
-          <> [("read" , Fun $ IFunc $ unop readFn)]
+          <> [("read" , Fun $ IFunc $ unop readFn),
+             ("parse", Fun $ IFunc $ unop parseFn),
+             ("eval", Fun $ IFunc $ unop eval),
+             ("showe", Fun $ IFunc $ unop (return . String . T.pack . show))]
 
 readFn :: LispVal -> Eval LispVal
-readFn x = do
-  val <- eval x
-  case val of
-    (String txt) -> lineToEvalForm txt
-    _            -> throw $ TypeMismatch "read expects string, instead got: " val
+readFn (String txt) = lineToEvalForm txt
+readFn  val         = throw $ TypeMismatch "read expects string, instead got: " val
+
+parseFn :: LispVal -> Eval LispVal
+parseFn (String txt) = either (throw . PError . show) return $ readExpr txt
+parseFn val = throw $ TypeMismatch "parse expects string, instead got: " val
 
 
 safeExec :: IO a -> IO (Either String a)
@@ -54,8 +58,6 @@ safeExec m = do
 
 runASTinEnv :: EnvCtx -> Eval b -> IO b
 runASTinEnv code action = runReaderT (unEval action) code
-
-
 
 lineToEvalForm :: T.Text -> Eval LispVal
 lineToEvalForm input = either (throw . PError . show  )  eval $ readExpr input
@@ -141,8 +143,8 @@ eval (List [])  = return Nil
 eval Nil        = return Nil
 eval n@(Atom _) = getVar n
 
-eval (List [Atom "write", rest])      = return . String . T.pack $ show rest
-eval (List ((:) (Atom "write") rest)) = return . String . T.pack . show $ List rest
+eval (List [Atom "show", rest])      = return . String . T.pack $ show rest
+eval (List ((:) (Atom "show") rest)) = return . String . T.pack . show $ List rest
 
 eval (List [Atom "quote", val]) = return val
 

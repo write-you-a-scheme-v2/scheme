@@ -48,7 +48,7 @@
 (define min (lambda (x  num-list) (fold (lambda (y z) (if (< y z) y z)) x (cons 536870911 num-list))))
 (define length (lambda (lst)        (fold (lambda (x y) (+ x 1)) 0 lst)))
 (define append (lambda (lst  lsts)  (foldr (flip (curry foldr cons)) lst lsts)))
-(define reverse (lambda (lst)       (fold (flip cons) '() lst)))
+(define reverse (lambda (list) (cdr (foldl (flip cons) '() list))))
 (define mem-helper (lambda (pred op) (lambda (acc next) (if (and (not acc) (pred (op next))) next acc))))
 (define memq (lambda (obj lst)       (fold (mem-helper (curry eq? obj) id) #f lst)))
 (define memv (lambda (obj lst)       (fold (mem-helper (curry eqv? obj) id) #f lst)))

@@ -76,7 +76,7 @@ openURL :: T.Text -> IO LispVal
 openURL x = do
   req  <- simpleHTTP (getRequest $ T.unpack x)
   body <- getResponseBody req
-  return $ String . T.pack body
+  return $ String $ T.pack body
 
 wSlurp :: LispVal -> Eval LispVal
 wSlurp (String txt) =  liftIO  $  openURL txt
@@ -160,8 +160,6 @@ eqCmd  _          _         = return $ Bool False
 cons :: [LispVal] -> Eval LispVal
 cons [x,y@(List yList)] = return $ List $ x:yList
 cons [x,y]              = return $ List [x,y]
-cons [c]                = return $ List [c]
-cons []                 = return $ List []
 cons _  = throw $ ExpectedList "cons, in second argumnet"
 
 

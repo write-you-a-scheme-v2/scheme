@@ -14,7 +14,7 @@ author: Adam Wespiser
 * [The Primitive Environment](../wyas/05_primitives.html) Primitive functions that are loaded into the environment.    
 * [Read Eval Print Loop Repeat](../wyas/06_repl.html) Creating a REPL so we can
   test out our Scheme.    
-* (Input/Output) Reading and writing to files for both Scheme commands and the reading of program files.    
-* (Standard Library) Creation of Scheme standard library from primitive functions.    
-* (Test) Confirm Scheme syntax and semantics.    
+* [Input/Output](../wyas/07_io.html) Reading and writing to files for both Scheme commands and the reading of program files.    
+* [Standard Library](../wyas/08_stdlib.html) Creation of Scheme standard library from primitive functions.    
+* Test [(WIP)](../wyas/09_test.html) Confirm Scheme syntax and semantics.    
 * (Conclusion: Where We Go From Here) We conclude the project.  

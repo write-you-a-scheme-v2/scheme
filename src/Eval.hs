@@ -11,7 +11,6 @@ module Eval (
   basicEnv,
   fileToEvalForm,
   textToEvalForm,
-  getFileContents,
 
 ) where
 
@@ -35,7 +34,7 @@ basicEnv = Map.fromList $ primEnv
           <> [("read" , Fun $ IFunc $ unop readFn),
              ("parse", Fun $ IFunc $ unop parseFn),
              ("eval", Fun $ IFunc $ unop eval),
-             ("showe", Fun $ IFunc $ unop (return . String . T.pack . show))]
+             ("show", Fun $ IFunc $ unop (return . String . showVal))]
 
 readFn :: LispVal -> Eval LispVal
 readFn (String txt) = lineToEvalForm txt
@@ -143,8 +142,8 @@ eval (List [])  = return Nil
 eval Nil        = return Nil
 eval n@(Atom _) = getVar n
 
-eval (List [Atom "show", rest])      = return . String . T.pack $ show rest
-eval (List ((:) (Atom "show") rest)) = return . String . T.pack . show $ List rest
+eval (List [Atom "showSF", rest])      = return . String . T.pack $ show rest
+eval (List ((:) (Atom "showSF") rest)) = return . String . T.pack . show $ List rest
 
 eval (List [Atom "quote", val]) = return val
 

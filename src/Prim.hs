@@ -9,6 +9,7 @@ import Data.Text.IO as TIO
 import Data.Monoid
 import System.Directory
 import System.IO
+import Network.HTTP
 
 import Control.Monad.Except
 import Control.Exception hiding (handle)
@@ -47,6 +48,7 @@ primEnv = [
   , ("quote" , mkF $ quote)
   , ("file?" , mkF $ unop fileExists)
   , ("slurp" , mkF $ unop slurp)
+  , ("wslurp", mkF $ unop wSlurp)
   , ("put"   , mkF $ binop put)
   ]
 
@@ -59,7 +61,6 @@ binop op [x,y]  = op x y
 binop _  args   = throw $ NumArgs 2 args
 
 fileExists :: LispVal  -> Eval LispVal
-fileExists (Atom atom)  = fileExists $ String atom
 fileExists (String txt) = Bool <$> liftIO (doesFileExist $ T.unpack txt)
 fileExists val          = throw $ TypeMismatch "read expects string, instead got: " val
 
@@ -67,21 +68,30 @@ slurp :: LispVal  -> Eval LispVal
 slurp (String txt) = liftIO $ wFileSlurp txt
 slurp val          =  throw $ TypeMismatch "read expects string, instead got: " val
 
-
 wFileSlurp :: T.Text -> IO LispVal
 wFileSlurp fileName = withFile (T.unpack fileName) ReadMode go
   where go = readTextFile fileName
 
+openURL :: T.Text -> IO LispVal
+openURL x = do
+  req  <- simpleHTTP (getRequest $ T.unpack x)
+  body <- getResponseBody req
+  return $ String . T.pack body
+
+wSlurp :: LispVal -> Eval LispVal
+wSlurp (String txt) =  liftIO  $  openURL txt
+wSlurp val = throw $ TypeMismatch "wSlurp expects a string, instead got: " val
+
 readTextFile :: T.Text -> Handle -> IO LispVal
 readTextFile fileName handle = do
-  exists <- hIsEOF handle
+  exists <- doesFileExist $ T.unpack fileName
   if exists
   then (TIO.hGetContents handle) >>= (return . String)
   else throw $ IOError $ T.concat [" file does not exits: ", fileName]
 
 put :: LispVal -> LispVal -> Eval LispVal
 put (String file) (String msg) =  liftIO $ wFilePut file msg
-put (String _)  val = throw $ TypeMismatch "put expects string, instead got: " val
+put (String _)  val = throw $ TypeMismatch "put expects string in the second argument (try using show), instead got: " val
 put val  _ = throw $ TypeMismatch "put expects string, instead got: " val
 
 wFilePut :: T.Text -> T.Text -> IO LispVal
@@ -90,9 +100,9 @@ wFilePut fileName msg = withFile (T.unpack fileName) WriteMode go
 
 putTextFile :: T.Text -> T.Text -> Handle -> IO LispVal
 putTextFile fileName msg handle = do
-  exists <- hIsWritable handle
-  if exists
-     then (TIO.hPutStrLn handle msg) >> (return $ String msg)
+  canWrite <- hIsWritable handle
+  if canWrite
+  then (TIO.hPutStr handle msg) >> (return $ String msg)
   else throw $ IOError $ T.concat [" file does not exits: ", fileName]
 
 binopFold :: Binary -> LispVal -> [LispVal] -> Eval LispVal

@@ -7,6 +7,7 @@ module LispVal (
   IFunc(..),
   EnvCtx,
   LispException(..),
+  showVal,
 ) where
 
 import Data.Typeable (Typeable)
@@ -30,7 +31,7 @@ data LispVal
   | Fun IFunc
   | Lambda IFunc EnvCtx
   | Nil
-  | Bool Bool 
+  | Bool Bool
   deriving (Typeable,Eq)
 
 instance Show LispVal where

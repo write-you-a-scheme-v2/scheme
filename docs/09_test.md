@@ -5,7 +5,7 @@ author: Adam Wespiser
 ---
 
 ------------
-> *Testing shows the presence, not the absence of bugs **Dijkstra**
+> *Testing shows the presence, not the absence of bugs* **Dijkstra**
 
 #### WIP :: TODO
 - [x] try move to tasty?
@@ -19,7 +19,7 @@ author: Adam Wespiser
 
 ## Testing w/ HSpec
 By implementing a language like Scheme, we lose the safety of Haskell's type system and need an alternative guaranty of behavior.
-This chapter is not only about writing tests, ensuring our dynamically typed Scheme is behaving like we want.  
+Is about writing tests to ensure our dynamically typed Scheme is behaving as we expect.  
 Testing is easily integrated into a Stack project, and Haskell's many frameworks satisfy a multitude of testing requirements.  
 
 #### Testing Setup
@@ -38,17 +38,17 @@ test-Suite test
 ```
 This enables `stack test` and `stack build --test` to automatically run the tests found in  [test-hs/Spec.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test-hs/Spec.hs)
 Running one of these commands will build the project, run the tests, and show the output.
-Phew! All tests pass!
+Phew! All tests pass! (let me know if they don't)
 Let's look further into how testing is done, and the libraries used.    
 
 
 
 #### Haskell Testing Frameworks
 Haskell has a few good testing frameworks
-Here's a few differnt ones and what they do:    
+Here's a few different ones and what they do:    
 Quickcheck.    
-[Tasty](http://documentup.com/feuerbach/tasty)  Test framework that includes HSpec, Quickcheck,HUnit, and SmallChcek, as well as others.   
-[HSpec](https://wiki.haskell.org/HUnit_1.0_User's_Guide).
+[Tasty](http://documentup.com/feuerbach/tasty)  Test framework that includes HSpec, Quickcheck, HUnit, and SmallChcek, as well as others.   
+[HSpec](https://wiki.haskell.org/HUnit_1.0_User's_Guide). A Simple embedded DSL for unit testing.
 
 
 ##### Hspec
@@ -73,9 +73,39 @@ main = do
 [lifted functions  for HSpec](http://hackage.haskell.org/package/hspec-expectations-lifted-0.8.2/docs/Test-Hspec-Expectations-Lifted.html)
 
 #### Our Tests
-Two aspects of our Scheme will be tested: The parser, and evaluation.
-These two features lend themselves easily to testing, and together, cover most of the functionality needed to ensure the project is doing what we think it is.  
+ Two aspects of our Scheme will be tested in [test-hs/Spec.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test-hs/Spec.hs): The parser, and evaluation.
+These two features lend themselves easily to testing, and together, cover ensure functionality meets expectations.  
 Another view is that these tests allow us to modify the project without changing the features we worked so hard to implement, test driven development (tdd).
 The `./test` folder in our project contains the Scheme expressions run during the tests.
 Besides files containing expressions, we can also specify expressions as `T.Text`, and `define` blocks without loading the standard library.
-All of the parsing logic, and evaluation of simple expressions, special forms, and featurs like lexical scope are included in the scheme expressions found in the test folder.
+All of the parsing logic, and evaluation of simple expressions, special forms, and features like lexical scope are included in the scheme expressions found in the test folder.
+
+#### [Parser](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Parser.hs) Tests
+The first set of tests ensures text is properly parsed into `LispVal` using `readExpr`.
+To organize this set of tests, the `hspec` function is used, along with `describe` to give the set of tests an suitable description.
+Many constructions of `LispVal` are tested, and here were divide that list into S-Expression and non-S-Expression values for simpler testing.
+
+```Haskell
+hspec $ describe "src/Parser.hs" $ do
+  it "Atom" $
+    readExpr "bb-8?" `shouldBe` (Right $ Atom "bb-8?")
+
+  it "S-Expr: heterogenous list" $
+    readExpr "(stromTrooper \"Fn\" 2 1 87)" `shouldBe`
+      (Right $ List [Atom "stromTrooper", String "Fn", Number 2, Number 1,Number 87])
+
+```
+
+#### [Eval](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Parser.hs)  Tests
+Alright, on to evaluation.
+Our task here is ensuring there are no errors, bugs, or unspecified behavior in our Scheme...
+If there were only a way to incorporate a system that protects us from invalid programs...
+Type systems be damned! *We are all that is Scheme!*  
+To test evaluation, we are going to either: read and parse from a file or inline text, then run with or without loading the standard library.
+This way, we have flexibility over testing conditions, especially considering the standard library will be subject to the majority of iterative testing and revision efforts.
+We will
+** test / define evalargs fix  **  
+** operators / special forms **
+
+#### Let's Make Some Tests!
+[home](home.html)...[back](08_stdlib.html)...[next](10_conclusion.html)

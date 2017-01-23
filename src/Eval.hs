@@ -11,7 +11,7 @@ module Eval (
   basicEnv,
   fileToEvalForm,
   textToEvalForm,
-
+  getFileContents
 ) where
 
 import Prim

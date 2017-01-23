@@ -25,8 +25,13 @@ newtype Eval a = Eval { unEval :: ReaderT EnvCtx IO a }
 
 ```
 
-This code defines the data structure used to control evaluation.  Specifically, it allows for lexical scoping, user input, and will contain the return `LispVal` for any valid expression.  If your asking yourself how such a complex data structure is possible, then welcome to the world of monad transformers.  These wonderful abstractions allow programmers to combine monads and automatically generate the correctly lifted functions.  For instance, our `Eval`'s `IO` would need its functions to be lifted, but since we derived `MonadIO`, this happens automatically during compilation.     
-This 'magic' is made possible through `{-# LANGUAGE GeneralizedNewtypeDeriving #-}` pragma.  The big addition we get here is `liftIO`, which lets us operate `IO` actions within `Eval` context: `liftIO :: IO a -> m a`.  We will not be discussing this further, but its really a powerful technique that enables wonderfully powerful yet succinct abstractions to serve at the heart of our Lisp!    
+This code defines the data structure used to control evaluation.  Specifically, it allows for lexical scoping, user input, and will contain the return `LispVal` for any valid expression.
+If your asking yourself how such a complex data structure is possible, then welcome to the world of monad transformers.
+These wonderful abstractions allow programmers to combine monads and automatically generate the correctly lifted functions.
+For instance, our `Eval`'s `IO` would need its functions to be lifted, but since we derived `MonadIO`, this happens automatically during compilation.     
+This 'magic' is made possible through `{-# LANGUAGE GeneralizedNewtypeDeriving #-}` pragma.
+The big addition we get here is `liftIO`, which lets us operate `IO` actions within `Eval` context: `liftIO :: IO a -> m a`.
+We will be discussing this more in [Chapter 7](07_io.html) on input and output.  
 
 ## Running The Eval Monad
 Getting the `EnvCtx`    
@@ -37,12 +42,15 @@ basicEnv = Map.fromList $ primEnv
         <> [("read" , Fun $ IFunc $ unop $ readFn)]
 ```
 
-This is our primitive environment, which will be detailed in the next chapter on [Prim.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Prim.hs). Recall that we defined `EnvCtx` in [LispVal.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/LispVal.hs) as:
+This is our primitive environment, which will be detailed in the next chapter on [Prim.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Prim.hs).
+Recall that we defined `EnvCtx` in [LispVal.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/LispVal.hs) as:
 
 ```haskell
 type EnvCtx = Map.Map T.Text LispVal
 ```
-Our environment is a collection of bindings between names and entities, referenced name.  For now, we must only concern ourselves with the fact that the names in the environment comes from `LispVal's` `Atom` data constructor.  This data structure is going to be the basis of our lexically scoped variable look up.    
+Our environment is a collection of bindings between names and entities, referenced name.
+For now, we must only concern ourselves with the fact that the names in the environment comes from `LispVal's` `Atom` data constructor.
+This data structure is going to be the basis of our lexically scoped variable look up.    
 ```haskell
 evalFile :: T.Text -> IO () --program file
 evalFile fileExpr = (runASTinEnv basicEnv $ fileToEvalForm fileExpr)
@@ -85,21 +93,36 @@ eval :: LispVal -> Eval LispVal
 
 Given our type signature, we can think back to our Scheme semantics, and recall we need to handle a few special cases:       
 
-* **LispVal**    For primitive types, like Number or String, these values will evaluate to themselves.  This is known as the autoquote facility of Lisp.    
-* **begin**    The begin function takes a series (one or more) S-Expressions, starting with 0 or more `define` statements, and evaluates each form in order.  The argument to `begin` will be known ad a "body" or "body-expression".    
+* **LispVal**    For primitive types, like Number or String, these values will evaluate to themselves.
+This is known as the autoquote facility of Lisp.    
+* **begin**    The begin function takes a series (one or more) S-Expressions, starting with 0 or more `define` statements, and evaluates each form in order.
+The argument to `begin` will be known ad a "body" or "body-expression".    
 * **define**    Binds an evaluated `LispVal` to an `Atom`.    
 * **write**    Takes its argument, un-evaluated, and returns a `String` whose value is the result of running `showVal`.    
-* **if**    Evaluates its first form, if true, evaluates second, else, evaluates the third.  The same as every other language!    
-* **let**    Let takes a list of alternating atoms and S-Expressions and another S-Expression, which is a body expression.  The first argument of alternating values and S-Expressions is bound to a local environment which the body can access when evaluated. No order of evaluation on the first argument can be assumed, thus variables to be bound cannot appear in the S-Expression bound to another variable.    
-* **lambda**    This is how we will create anonymous functions.  Thinking back to our `LispVal`, recall the data constructor, `Lambda IFunc EnvCtx` where essentially `IFunc :: LispVal -> Eval LispVal`. Two arguments are accepted, a list of atomic values to serve as the function parameters, and a body-expression, which can be evaluated in an environment with the incoming arguments bound to the parameters from the first argument.  The `EnvCtx`, and thus the lexical scope, which can store the local environment via the `reader` monad function, `ask`.  Lambda is really powerful, so incredibly powerful, that we could use it with `Atom` to implement everything else. It's a neat idea called [Lambda Calculus](http://dev.stephendiehl.com/fun/lambda_calculus.html)!         
+* **if**    Evaluates its first form, if true, evaluates second, else, evaluates the third.
+The same as every other language!    
+* **let**    Let takes a list of alternating atoms and S-Expressions and another S-Expression, which is a body expression.
+The first argument of alternating values and S-Expressions is bound to a local environment which the body can access when evaluated.
+No order of evaluation on the first argument can be assumed, thus variables to be bound cannot appear in the S-Expression bound to another variable.    
+* **lambda**    This is how we will create anonymous functions.  Thinking back to our `LispVal`, recall the data constructor, `Lambda IFunc EnvCtx` where essentially `IFunc :: LispVal -> Eval LispVal`.
+Two arguments are accepted, a list of atomic values to serve as the function parameters, and a body-expression, which can be evaluated in an environment with the incoming arguments bound to the parameters from the first argument.  
+The `EnvCtx`, and thus the lexical scope, which can store the local environment via the `reader` monad function, `ask`.
+Lambda is really powerful, so incredibly powerful, that we could use it with `Atom` to implement everything else. It's a neat idea called [Lambda Calculus](http://dev.stephendiehl.com/fun/lambda_calculus.html)!         
 
-These will be known as our "Special Forms", different from functions defined in the primitive environment or standard library, as they are implemented via pattern matching on the argument (`LispVal`) of the `eval` function.  All other Scheme functions will either be primitives or from the standard library, and have their argument evaluated before being passed into the function.  Therefore, special forms will require non-standard evaluation of their arguments, sometimes having arguments not evaluated, or evaluated under special conditions.  This difference is what determines what must be implemented as an `eval` pattern match, and what can be done elsewhere.            
+These will be known as our "Special Forms", different from functions defined in the primitive environment or standard library, as they are implemented via pattern matching on the argument (`LispVal`) of the `eval` function.
+All other Scheme functions will either be primitives or from the standard library, and have their argument evaluated before being passed into the function.
+Therefore, special forms will require non-standard evaluation of their arguments, sometimes having arguments not evaluated, or evaluated under special conditions.
+This difference is what determines what must be implemented as an `eval` pattern match, and what can be done elsewhere.            
 
 ## Eval Function: implementation
 ```Haskell
 eval :: LispVal -> Eval LispVal
 ```
-The eval function is the heart of our interpreter, and must be able to pattern match every possible valid syntax, as well as the special forms.  This is a pretty tall order, so we are going to approach this by going through the eval function piece by piece along with the helper functions needed to run that code.  It's a little disjointed, but the simplest way to explain exactly how to implement the syntax and semantics of Scheme in Haskell.  As always, to see it all together, see [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs). As we go through the code you will see some `throw`, which are covered in the next chapter, for now, recognize that `throw $ LispExceptionConstructor "message-1"` returns `Eval LispVal`.          
+The eval function is the heart of our interpreter, and must be able to pattern match every possible valid syntax, as well as the special forms.
+This is a pretty tall order, so we are going to approach this by going through the eval function piece by piece along with the helper functions needed to run that code.
+It's a little disjointed, but the simplest way to explain exactly how to implement the syntax and semantics of Scheme in Haskell.
+As always, to view it all together, see [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs).
+As we go through the code you will see some `throw`, which are covered in the next chapter, for now, recognize that `throw $ LispExceptionConstructor "message-1"` returns `Eval LispVal`.          
 
 
 #### quote     
@@ -116,7 +139,9 @@ eval (Bool b)   = return $ Bool b
 eval (List [])  = return Nil
 eval Nil        = return Nil
 ```
-For Number, String, Bool, and Nil, when we evaluate, we simply return the value.  This is known as the autoquote facility, and makes it so we can pass these values into functions and evaluate them without consequence, or logic deferring evaluation of these types.  For `List`, we have made the evaluation of an empty list go to `Nil`. This will be useful for functions that consume the input of a list conditional on the list having items left.    
+For Number, String, Bool, and Nil, when we evaluate, we simply return the value.
+This is known as the autoquote facility, and makes it so we can pass these values into functions and evaluate them without consequence, or logic deferring evaluation of these types.
+For `List`, we have made the evaluation of an empty list go to `Nil`. This will be useful for functions that consume the input of a list conditional on the list having items left.    
 
 
 #### write     
@@ -127,7 +152,8 @@ eval (List [Atom "write", rest]) =
 eval (List ((:) (Atom "write") rest)) =
            return . String . T.pack . show $ List rest
 ```
-Write does not evaluate argument or arguments, and instead runs `show` on them before return that value in a `String`.  For the second version, we are taking the two or more arguments passed to write and simply converting them into a `List`.
+Write does not evaluate argument or arguments, and instead runs `show` on them before return that value in a `String`.
+For the second version, we are taking the two or more arguments passed to write and simply converting them into a `List`.
 
 #### Atom
 ```Haskell
@@ -151,7 +177,9 @@ eval (List [Atom "if", pred, truExpr, flsExpr]) = do
       (Bool False) -> eval flsExpr
       _            -> throw $ BadSpecialForm "if"
 ```
-Here we implement the familiar `if` special form. First, we evaluate the predicate by recursing on the `eval` function.  Given that value, we pass it to a case statement, for True, then we evaluate the third S-Expression, and for false, the fourth.  Thus, `if` only evaluates one of its third or fourth arguments, requiring it to be a special form.
+Here we implement the familiar `if` special form. First, we evaluate the predicate by recursing on the `eval` function.
+Given that value, we pass it to a case statement, for True, then we evaluate the third S-Expression, and for false, the fourth.
+Thus, `if` only evaluates one of its third or fourth arguments, requiring it to be a special form.
 
 #### let
 ```Haskell
@@ -177,7 +205,9 @@ ensureAtom n = throw $ TypeMismatch "atom" n
 extractVar :: LispVal -> T.Text
 extractVar (Atom atom) = atom
 ```
-The `let` special form takes two args, a list of pairs and an expression.  The list of pairs consists of an atom in the odd place, and an S-Expression in the even place.  For instance, `(let (x 1 y 2)(+ x y))` . From the current environment, a new environment is created with these bindings added, and the expression is evaluation as a body-expression in that environment.  This is possible with the `local` function, defined along with our monad transformer stack.        
+The `let` special form takes two args, a list of pairs and an expression.  The list of pairs consists of an atom in the odd place, and an S-Expression in the even place.
+For instance, `(let (x 1 y 2)(+ x y))` . From the current environment, a new environment is created with these bindings added, and the expression is evaluation as a body-expression in that environment.
+This is possible with the `local` function, defined along with our monad transformer stack.        
 
 
 #### begin, define & evalBody
@@ -204,8 +234,21 @@ evalBody (List ((:) (List ((:) (Atom "define") [Atom var, defExpr])) rest)) = do
   in local envFn $ evalBody $ List rest
 evalBody x = eval x
 ```
-The begin special form is designed to accept two types of inputs: one for each of the pattern matched `evals`.  In the first form, `eval` matches on `List[Atom "begin", rest]`, where rest is then passed to `evalBody`.  The second form, or expanded form, accepts `List ((:) (Atom "begin") rest)`, where rest is type `[LispVal]`. `rest` is then moved into a `LispVal` via the `List` data constructor, and then passed onto `evalBody`.  This allows us to either accept the arguments as a single list, or as individual arguments.  Further, this prevents us from wrapping an extra `List` around single values, since we make sure there are at least two or more values in `rest` when we pass it to `List`, before subsequently passing to `evalBody`.  There is one more pattern match, for define, but its real worth will only emerge after discussing `evalBody`.     
-`evalBody`  allows us to use the `define` statement, and evaluate body-expressions.  These body expressions are not only important to `lambda` and `let`, but absolutely essentially to the creation of a standard library.  The standard library consists of Scheme files with many defines used to bind library functions to the environment.  `evalBody` pattern matches on a list composed of either (a define expression, and one other expressions) or (a define expression, and two or more other expressions). For the first case, we bind the `define` forms variable and value to the environment, then run the second expression in this modified environment using `eval`.  In the case the the second expression is also a `define` special form, we a pattern match for `eval` that handles `define`. This will come up when loading in our standard library consisting of only `define` values.  For the second pattern match on `evalBody`, we do the binding to the environment for the define, then recurse on `evalBody` for the rest of the arguments in the modified environment.  The last S-Expression of the `evalBody` `List` will be passed to `eval`, and the result will be evaluated in an environment created by sequentially applying the defines, and the return value of `evalBody` will be the return value of the evaluated S-Expression.    
+The begin special form is designed to accept two types of inputs: one for each of the pattern matched `evals`.
+In the first form, `eval` matches on `List[Atom "begin", rest]`, where rest is then passed to `evalBody`.
+The second form, or expanded form, accepts `List ((:) (Atom "begin") rest)`, where rest is type `[LispVal]`. `rest` is then moved into a `LispVal` via the `List` data constructor, and then passed onto `evalBody`.
+This allows us to either accept the arguments as a single list, or as individual arguments.
+Further, this prevents us from wrapping an extra `List` around single values, since we make sure there are at least two or more values in `rest` when we pass it to `List`, before subsequently passing to `evalBody`.
+There is one more pattern match, for define, but its real worth will only emerge after discussing `evalBody`.    
+
+`evalBody`  allows us to use the `define` statement, and evaluate body-expressions.
+These body expressions are not only important to `lambda` and `let`, but absolutely essentially to the creation of a standard library.
+The standard library consists of Scheme files with many defines used to bind library functions to the environment.
+`evalBody` pattern matches on a list composed of either (a define expression, and one other expressions) or (a define expression, and two or more other expressions).   
+For the first definition of `evalBody`, we pattern match the `define`, insert the matched variable and value to the environment, then run the second expression, `rest`, in this modified environment using `eval` all within a `local` function.
+This is our base case.   
+In the case of the second expression, `rest` is not a single expression, but a list of expressions. We handle this by doing the same pattern match and environment update on define, but instead of calling `eval` we wrap `rest` in a `List` and recurse on `evalBody`.
+Thus, we can subsequently consume define statements.   
 
 #### lambda & applyLambda
 ```Haskell
@@ -226,7 +269,13 @@ data IFunc = IFunc { fn :: [LispVal] -> Eval LispVal }
 
 ```
 
-The lambda special form gives our users the ability to create and define functions.  Variables within those functions, will be lexically scoped, which means they will always have the value they had when they were enclosed within the lambda.  We will achieve lexically scoped variables by bringing a copy of the `EnvCtx` with us into the `Lambda` data constructor, `Lambda IFunc EnvCtx`.  When we encounter the lambda special form in eval, we grab the environment, then return the data constructor for `Lambda` along an `IFunc $ applyLambda expr params` and the grabbed environment.  Looking at `applyLambda`, what we are doing is partially applying the parameters of a function, to return a function that accepts arguments `[LispVal]`, binds them to the atomic values in the parameters, then evaluates the expression passed into `applyLambda` as `expr`.  Thus, we go from `applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal` to `applyLambda expr params :: [LispVal] -> Eval LispVal` which is the correct type for the type `IFunc`.  Thus, we can achieve lexical scoping using the `ReaderT` monad.    
+The lambda special form gives our users the ability to create and define functions.
+Variables within those functions will be lexically scoped, which means they will always have the value they had when they were enclosed within the lambda.
+We will achieve lexically scoped variables by bringing a copy of the `EnvCtx` with us into the `Lambda` data constructor, `Lambda IFunc EnvCtx`.
+When we encounter the lambda special form in eval, we grab the environment, then return the data constructor for `Lambda` along an `IFunc $ applyLambda expr params` and the grabbed environment.
+Looking at `applyLambda`, what we are doing is partially applying the parameters of a function, to return a function that accepts arguments `[LispVal]`, binds them to the atomic values in the parameters, then evaluates the expression passed into `applyLambda` as `expr`.
+Thus, we go from `applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal` to `applyLambda expr params :: [LispVal] -> Eval LispVal` which is the correct type for the type `IFunc`.
+Thus, we can achieve lexical scoping using the `ReaderT` monad.    
 
 
 #### application
@@ -240,13 +289,26 @@ eval (List ((:) x xs)) = do
                                                    $ internalfn xVal
       _                -> throw $ NotFunction funVar
 ```
-The final form is application, we've made it!  If you are familiar with lambda calculus, this is one of the three forms, along with variables and lambdas.  The way we perform application is to pattern match on the head, then tail of `List`.  Next, we evaluate both of these values.  We run `case` on `funVar`, the head of the list, which should be either a `Fun` (internal function), or `Lambda`, a user-defined or library function.  If internal, we simply extract the function of type `[LispVal] -> Eval LispVal` and apply the arguments.  For `Lambda`, we must evaluate the function within the environment provided by the `Lambda` to ensure lexical scope is maintained.     
-* note // is Lambda defining the lexical scope twice? Once in the partial function and once via the EnvCtx ??    
+The final form is application, we've made it!
+If you are familiar with lambda calculus, this is one of the three forms, along with variables and lambdas.
+The way we perform application is to pattern match on the head, then tail of `List`.
+Next, we evaluate both of these values.
+We run `case` on `funVar`, the head of the list, which should be either a `Fun` (internal function), or `Lambda`, a user-defined or library function.  If internal, we simply extract the function of type `[LispVal] -> Eval LispVal` and apply the arguments.
+For `Lambda`, we must evaluate the function within the environment provided by the `Lambda` to ensure lexical scope is maintained.     
+
 
 
 ## Conclusion
-That was a lot! If `LispVal` defines the syntax, then `Eval` defines the semantics.  Now is a good time to read [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs) and see it work all together, since that's all that defines the mechanism of evaluation.  Our implementation is made possible by monad transformers, specifically the integration of `ReaderT`, which we use to implement lexical scope.  Without monads, we would have to pass in an extra argument to every `eval`, as well as some of the helper functions, not to mention the complication of handling the other functionality of monads composed within our `Eval`.  For a simple interpreter, its hard to do much better.  For a faster interpreter, we would need to compile.      
-Anyway, we have the the basis for our language and could start work on proving theoretical properties.  We won't do this, and instead move towards gaining the next thing needed to be practical, a collection of basic operations to manipulate data.  But before moving on to primitives, we quickly cover errors, which show up all over `eval` function.  If you just can't wait to define some functions and get the REPL up and running, the basic message is, when bad things happen, throw an error that gives the user enough information to fix the problem.        
+That was a lot! If `LispVal` defines the syntax, then `Eval` defines the semantics.
+Now is a good time to read [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs) and see it work all together, since that's all that defines the mechanism of evaluation.
+Our implementation is made possible by monad transformers, specifically the integration of `ReaderT`, which we use to implement lexical scope.
+Without monads, we would have to pass in an extra argument to every `eval`, as well as some of the helper functions, not to mention the complication of handling the other functionality of monads composed within our `Eval`.
+For a simple interpreter, its hard to do much better.
+For a faster interpreter, we would need to compile.      
+Anyway, we have the the basis for our language and could start work on proving theoretical properties.
+We won't do this, and instead move towards gaining the next thing needed to be practical, a collection of basic operations to manipulate data.
+But before moving on to primitives, we quickly cover errors, which show up all over `eval` function.
+If you just can't wait to define some functions and get the REPL up and running, the basic message is, when bad things happen, throw an error that gives the user enough information to fix the problem.        
 
 ## [Understanding Check]
 Implement a delay function as a special form that returns its argument as the body of a lambda expression that accepts no arguments. `(delay x) => (lambda () x)`    

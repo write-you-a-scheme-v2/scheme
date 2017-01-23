@@ -9,15 +9,27 @@ author: Adam Wespiser
 
 
 ## Error Exceptions and All That!
-When the user enters incorrect input, we can say they have made an error, and people understand this statement as a general term. However, we are in the business of engineering, and there is a technical distinction between errors and exceptions.  Errors, refer to situations where our project cannot handle itself, and we must change the source code to remedy the situation.  These are unexpected situations.  Exceptions, on the other hand, represent expected, but still irregular situations that we can control.  Exceptions can represent problems with a potential Scheme program, like an error parsing, or a bad special form.  [Haskell Wiki](https://wiki.haskell.org/Error_vs._Exception).     
+When the user enters incorrect input, we can say they have made an error, and people understand this statement as a general term.
+However, we are in the business of engineering, and there is a technical distinction between errors and exceptions.
+Errors, refer to situations where our project cannot handle itself, and we must change the source code to remedy the situation.
+These are unexpected situations.
+Exceptions, on the other hand, represent expected, but still irregular situations that we can control.
+Exceptions can represent problems with a potential Scheme program, like an error parsing, or a bad special form.
+[Haskell Wiki](https://wiki.haskell.org/Error_vs._Exception).     
 The sources for errors and exceptions in Haskell are as follows:    
 [Exceptions](https://wiki.haskell.org/Exception): `Prelude.catch`, `Control.Exception.catch`, `Control.Exception.try`, `IOError`, `Control.Monad.Error`    
 [Errors](https://wiki.haskell.org/Error): `error`, `assert`, `Control.Exception.catch`, `Debug.Trace.trace`. `error` is syntactical sugar for undefined.         
 Try to keep these in mind, but expect to see only exceptions, unless I've made an error in my assertion, in which case I'll have to trace through and catch my mistake.    
-We say an exception is checked when it after it is "thrown", another part of code "handles" or "catches" it.  This is how our exception system in Haskell will work.   
+We say an exception is checked when it after it is "thrown", another part of code "handles" or "catches" it.
+This is how our exception system in Haskell will work.   
 ## Exceptions Everywhere!
-Undefined, unexpected, and generally out of control situations are present in any kind of large system, especially one interacting with the outside world or dealing with use input as complex and complicated as a programming language.  Control is an illusion.  For our system, we must accept user input, determine that it is valid Scheme syntax, then compute that abstract syntax into a final value.  During this process we may interact with the file system or network.  It is especially important for programming languages to report and describe the nature of the irregularity.     
-Thus, there are three types of exceptions that exist in our implementations of Scheme: **Parsing, Evaluation, and IO**.  Each of these originate in a distinct type of activity the parser or interpreter is undergoing, but all of them are end up going through the `Eval` monad and are caught and displayed in the same place.  (see [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs))
+Undefined, unexpected, and generally out of control situations are present in any kind of large system, especially one interacting with the outside world or dealing with use input as complex and complicated as a programming language.
+Control is an illusion.
+For our system, we must accept user input, determine that it is valid Scheme syntax, then compute that abstract syntax into a final value.
+During this process we may interact with the file system or network.
+It is especially important for programming languages to report and describe the nature of the irregularity.     
+Thus, there are three types of exceptions that exist in our implementations of Scheme: **Parsing, Evaluation, and IO**.
+Each of these originate in a distinct type of activity the parser or interpreter is undergoing, but all of them are end up going through the `Eval` monad and are caught and displayed in the same place.  (see [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs))
 
 ```Haskell
 someFun :: GoodType -> Eval LispVal
@@ -37,11 +49,14 @@ safeExec m = do
         Nothing                -> return $ Left (show eTop)
     Right val -> return $ Right val
 ```
-Above we have the code to catch an exception.  We use `Control.Exception.try`, then subsequently `fromException` and `case` to take an exception and unwrap it into a `LispException`.  For running programs, we might not need to catch an exception thrown in the code, displaying the exception is enough for the user to fix the problem.  However, for the REPL, it would be a major pain if we required our users to restart the REPL every time they made a mistake while prototyping a new idea.    
+Above we have the code to catch an exception.  We use `Control.Exception.try`, then subsequently `fromException` and `case` to take an exception and unwrap it into a `LispException`.
+For running programs, we might not need to catch an exception thrown in the code, displaying the exception is enough for the user to fix the problem.
+However, for the REPL, it would be a major pain if we required our users to restart the REPL every time they made a mistake while prototyping a new idea.    
 
 ## Defining an Exception
 
-For our Scheme, an exception will be defined for a internal misuse of a function, a user deviation from accepted syntax or semantics, or the request of an unavailable external resource.  Exceptions are thrown in the monad transformer stack, `Eval`, and caught with the `safeExec` function, which is convenient for us, because we can throw exceptions from any function return `Eval LispVal`, which is most of our evaluation code!
+For our Scheme, an exception will be defined for a internal misuse of a function, a user deviation from accepted syntax or semantics, or the request of an unavailable external resource.
+Exceptions are thrown in the monad transformer stack, `Eval`, and caught with the `safeExec` function, which is convenient for us, because we can throw exceptions from any function return `Eval LispVal`, which is most of our evaluation code!
 
 ```haskell
 data LispException
@@ -58,7 +73,9 @@ data LispException
 
 ```
 
-Each of these data constructors distinguish the source of their error.  Whenever a `LispException` is created, it is then immediately thrown.  Ideally, they provide useful information to the user on how to debug their program after a `LispException` is returned.  Though not as descriptive as a fully featured language, we do have the capacity to provide a fair amount of information, including the a custom message and `LispVal` that are not compatible.  The key to improvement here is keeping track and passing more information to `LispException` when it is created then thrown.
+Each of these data constructors distinguish the source of their error.  Whenever a `LispException` is created, it is then immediately thrown.  Ideally, they provide useful information to the user on how to debug their program after a `LispException` is returned.
+Though not as descriptive as a fully featured language, we do have the capacity to provide a fair amount of information, including the a custom message and `LispVal` that are not compatible.
+The key to improvement here is keeping track and passing more information to `LispException` when it is created then thrown.
 
 ```haskell
 instance Show LispException where
@@ -87,7 +104,12 @@ showError err =
 
 
 ## Conclusion
-Accidents will happen, and so we have exception handling for IO, parsing, and evaluation exceptions via our `LispException` type and our handy `Eval` monad transformer stack.  Exceptions are realized everywhere we have functions that evaluate Scheme code, so handling them is composed into our `Eval` monad.  Verbose exception messages are vital to usability, and we must report enough information to pinpoint the user's misuse of proper syntax, semantics, or resource request.  Our main liability with the current monad transformer stack, is that `IO` can throw an error that is not caught, an unchecked exception.  However, we are only using `IO` to read files, not maintaining open connections for long periods of time, or dispatching concurrent operations on shared resources, so our exposure is minimal.  If this is a major concern for you, read the section on "Alternative Exceptions", which discusses other ways to handle exceptions in Haskell.             
+Accidents will happen, and so we have exception handling for IO, parsing, and evaluation exceptions via our `LispException` type and our handy `Eval` monad transformer stack.
+Exceptions are realized everywhere we have functions that evaluate Scheme code, so handling them is composed into our `Eval` monad.
+Verbose exception messages are vital to usability, and we must report enough information to pinpoint the user's misuse of proper syntax, semantics, or resource request.
+Our main liability with the current monad transformer stack, is that `IO` can throw an error that is not caught, an unchecked exception.
+However, we are only using `IO` to read files, not maintaining open connections for long periods of time, or dispatching concurrent operations on shared resources, so our exposure is minimal.
+If this is a major concern for you, read the section on "Alternative Exceptions", which discusses other ways to handle exceptions in Haskell.             
 
 ## [ Understanding Check ]       
 Go through Eval.hs, find an `LispException` used in a few places and replace it with a new error that is more specific, or merge two `LispException` that are better served by a single constructor. Include support for `showError`.     

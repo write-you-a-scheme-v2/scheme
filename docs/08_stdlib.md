@@ -18,7 +18,8 @@ When we write the library, we are not only providing the user with convenient sh
 
 
 #### Our Standard Library
-We define the standard library,  [`test/stdlib_mod.scm`](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test/stdlib_mod.scm)with a multitude of functions. Importantly, we allow recursive functions, like `fold` and `reduce` which enable efficient functional programming.
+We build the standard library, [`test/stdlib_mod.scm`](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test/stdlib_mod.scm) with a multitude of functions. 
+Importantly, we allow recursive functions, like `fold` and `reduce` which enable efficient functional programming.
 
 #### Composing `car` and `cdr` into `c({ad}^n)r`
 Our standard library defines functions that are combinations of `car` and `cdr`, for example `cdar` is `define cdar (lambda (pair) (cdr (car pair))))`.
@@ -27,7 +28,7 @@ For this to work, `car` and `cdr` must accept both quoted and unquoted lists.
 In other words, to chain these functions, they must accept S-Expressions without evaluating the arguments.
 This makes these functions specials forms.     
 In [`Eval.hs`](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs) we add the special forms:       
-```Haskell
+```haskell
 eval all@(List [Atom "cdr", List [Atom "quote", List (x:xs)]]) =
   return $  List xs
 eval all@(List [Atom "cdr", arg@(List (x:xs))]) =  
@@ -43,17 +44,18 @@ eval all@(List [Atom "car", arg@(List (x:xs))]) =
       Atom _       -> do val <- eval arg
                          eval $ List [Atom "car", val]
       _            -> return $ x
-      ```
-#### Running Standard Library
+``` 
+This feels like a hack, and if the `cadr` family of functions wasn't so essential, we could drop `car` and `cdr` as special forms.    
+#### Running Standard Library 
 [`Eval.hs`](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs) contains the functions that run text within the context of the standard library.
 Because the reader monad does not return the input context, we must wrap the expression and the standard library together as `LispVals`, then evaluate.
-This is done with the `endOfList` function
+This is done with the `endOfList` function. 
 
-
-Define the standard library file.
-```Haskell
+Define the standard library file. 
+```haskell
 sTDLIB :: T.Text
-sTDLIB = "lib/stdlib.scm" ```
+sTDLIB = "lib/stdlib.scm" 
+```
 
 Parse the input function as an S-Expression, then the  library file as a list of S-Expressions. Append the parsed input expression to the end of the  list.
 ```Haskell
@@ -76,7 +78,7 @@ getFileContents fname = do
 
 Final monadic evaluation of both standard library and expression.
 The key here is the `evalBody`, which accepts an S-Expression consisting of a series of `define` statements to be sequentially evaluated.
-This is the same evaluation strategy used in both `let` and `lambda` expressions.
+This is the same evaluation strategy used in both `let` and `lambda` expressions. 
 
 ```Haskell
 textToEvalForm :: T.Text -> T.Text -> Eval LispVal
@@ -90,10 +92,11 @@ evalText textExpr = do
 
 #### Conclusion
 The standard library is the third and final place we define capability in our Scheme, after special forms and the primitive environment.
-The idea behind the standard library is that we have a relatively easy to write collection of utility and helper functions needed to get things done.
+The idea behind the standard library is that we have a relatively easy to write collection of utility and helper functions needed to get things done. 
+If you look into the library, functions like `reduce`, `fold` and the `cadr` family are pretty useful. 
 
 However the `e -> a` functionality of `ReaderT` monadic action limits our approach.
-We cannot evaluation the file containing the library and get the modified environment back again.
+We cannot evaluate the file containing the library and get the modified environment back again.
 This somewhat complicates things, and requires us to take our approach via syntax manipulation.
 Although its not ideal, its also not very complex and lets us keep the simplistic lexical scoping via reader monad function `local` we established earlier.
 Alternatively, we can approach evaluation with `StateT` to run the monad, and get a modified `state`.

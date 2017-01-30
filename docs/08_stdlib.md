@@ -46,6 +46,7 @@ eval all@(List [Atom "car", arg@(List (x:xs))]) =
       _            -> return $ x
 ``` 
 This feels like a hack, and if the `cadr` family of functions wasn't so essential, we could drop `car` and `cdr` as special forms.    
+
 #### Running Standard Library 
 [`Eval.hs`](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs) contains the functions that run text within the context of the standard library.
 Because the reader monad does not return the input context, we must wrap the expression and the standard library together as `LispVals`, then evaluate.
@@ -90,7 +91,7 @@ evalText textExpr = do
   res <- runASTinEnv basicEnv $ textToEvalForm stdlib textExpr
 ```
 
-#### Conclusion
+## Conclusion
 The standard library is the third and final place we define capability in our Scheme, after special forms and the primitive environment.
 The idea behind the standard library is that we have a relatively easy to write collection of utility and helper functions needed to get things done. 
 If you look into the library, functions like `reduce`, `fold` and the `cadr` family are pretty useful. 
@@ -101,7 +102,7 @@ This somewhat complicates things, and requires us to take our approach via synta
 Although its not ideal, its also not very complex and lets us keep the simplistic lexical scoping via reader monad function `local` we established earlier.
 Alternatively, we can approach evaluation with `StateT` to run the monad, and get a modified `state`.
 
-## [ Understanding Check ]
+#### [ Understanding Check ]
 Add a new standard library function to generate the first 'n' Fibonacci numberers using a recursive function.     
 Define a pair of co-recursive functions, `even-co` and `odd-co`, that determine if a number is even or odd, in the standard library.
 [`test/test_fix2.scm`](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test/test_fix2.scm) contains a standard library that defines a Y-combinator.

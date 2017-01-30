@@ -58,6 +58,7 @@ While on the topic of Lisp, Clojure Programming Language is a modern, functional
 If you are interested in designing your own Lisp, Clojure is a great example of how you can take adopt Lisp to the modern programming environment.
 It is probably the most supported modern Lisp community,  and is a great source of information and ideas.
 The other industry relevant Lisp is EmacsLisp, which is a domain specific language for programmers that don't know vim!  
+Finally, [Read Eval Print Love](https://leanpub.com/readevalprintlove001/read) contains a wonderful and insightful discussion of the Lisp family, and is a great source of additional information for the interested reader!    
 
 ## Why Haskell ?
 First off, why not? I love Haskell!

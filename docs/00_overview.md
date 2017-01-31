@@ -142,7 +142,7 @@ Steele cited issues with the complexity of the type system when winding down dev
 Although type systems are complex, its theoretical possible to create a type system so advanced that programs can have provable properties and abstractions as powerful as those in mathematics.
 This is far beyond the scope of this tutorial, and the majority of production code written is done in a dynamic language. However, If your are a novice, then this tutorial is a great way to get involved in a very exciting movement that will shape the way of things to come for industry programming.  
 For now, the best we get is an industrial language that if it compiles, it runs, and this language is Haskell.
-Finally, [Types and Programming Languages](https://www.cis.upenn.edu/~bcpierce/tapl/) by Brian Pierce is the place to learn the theory and implementation of type systems.   
+Finally, [Types and Programming Languages](https://www.cis.upenn.edu/~bcpierce/tapl/) by Benjamin C. Pierce is the place to learn the theory and implementation of type systems.   
 
 ## Scheme Examples, Operational Semantics
 To get a feel for our Scheme, here is the evaluation of some functions and their arguments.

@@ -119,7 +119,7 @@ For evaluation, we need to handle the context of a couple of things: the environ
 In Haskell, IO and exception handling are already done with monads.
 Using [monad transformers](http://dev.stephendiehl.com/hask/#mtl-transformers) we can incorporate IO, and Reader (to handle lexical scope) together in a single monad.
 Using `deriving`, the functions available to each of the constituent monads will be available to the transformed monad without having to define them using `lift`.
-A great guide about using monad transformers to implement interpreters is [Monad Transformer Step by Step](../sources/Transformers.pdf).
+A great guide about using monad transformers to implement interpreters is [Monad Transformer Step by Step](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.71.596&rep=rep1&type=pdf).
 It will start with a simple example and increase complexity.  
 Its important to keep in mind that evaluation is done for `LispVal` that are wrapped within the `Eval` monad, which will provide the context of evaluation.
 The process of `LispVal -> Eval LispVal` is handled by the `eval` function, and this will be discussed a few chapter ahead.    

@@ -323,7 +323,7 @@ Implement one of (`case`, `letrec`, `let*`, `sequence`, `do`, `loop`) as a speci
 
 #### Additional Resources:
 
-* http://catamorph.de/documents/Transformers.pdf    
+* http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.71.596&rep=rep1&type=pdf
 * https://github.com/justinethier/husk-scheme/tree/master/hs-src/Language/Scheme  
 
 

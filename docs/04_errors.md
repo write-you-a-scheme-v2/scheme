@@ -22,6 +22,7 @@ The sources for errors and exceptions in Haskell are as follows:
 Try to keep these in mind, but expect to see only exceptions, unless I've made an error in my assertion, in which case I'll have to trace through and catch my mistake.    
 We say an exception is checked when it after it is "thrown", another part of code "handles" or "catches" it.
 This is how our exception system in Haskell will work.   
+
 ## Exceptions Everywhere!
 Undefined, unexpected, and generally out of control situations are present in any kind of large system, especially one interacting with the outside world or dealing with use input as complex and complicated as a programming language.
 Control is an illusion.

@@ -51,4 +51,4 @@ REPL keywords like ":quit" ":help" ":clear" or ":ast" can be entered to allow fo
 
 
 #### Next?
-[home](home.html)...[back](05_primitives.html)
+[home](home.html)...[back](05_primitives.html)...[next](07_io.html)

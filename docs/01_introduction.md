@@ -135,7 +135,7 @@ There is example code on the way!
 
 
 ## Show LispVal
-While on the topic of `LispVal`, we can add some code to nicely print out values in [LispVal.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/LispVal.hs
+While on the topic of `LispVal`, we can add some code to nicely print out values in [LispVal.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/LispVal.hs) 
 Ideally, we will have a functions for both `LispVal -> T.Text` and `T.Text -> LispVal`.
 The latter will be covered in the next section on parsing.
 

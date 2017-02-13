@@ -319,7 +319,7 @@ Implement one of (`case`, `letrec`, `let*`, `sequence`, `do`, `loop`) as a speci
 
 
 #### Danger Will Robinson, on to Errors!
-[home](home.html)...[back](03_evaluation.html)...[next](04_errors.html)
+[home](home.html)...[back](02_parsing.html)...[next](04_errors.html)
 
 #### Additional Resources:
 

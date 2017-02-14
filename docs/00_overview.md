@@ -116,21 +116,20 @@ The environment to find and store variables is the same to find primitive functi
 This approach is a system called Lisp-1, contrasted to Common Lisp's Lisp-2 system, where functions and variables have different environments.
 
 ## Scheme Type System
-Scheme is a dynamic language, like Python, Ruby, Perl, or [as contrasted with a static language](https://pythonconquerstheuniverse.wordpress.com/2009/10/03/static-vs-dynamic-typing-of-programming-languages/) like C++ or Java.
-Dynamic languages are easy to use and simple to implement, but allow for some preventable errors that would be impossible in a static language.
-For an example from our Scheme, `(+ 'a' 1)` is valid syntax wildly open to interpretation at runtime.
-(Try it on the REPL!)
+Scheme is a dynamic language, like Python, Ruby, Perl, or [as contrasted with a static language](https://pythonconquerstheuniverse.wordpress.com/2009/10/03/static-vs-dynamic-typing-of-programming-languages/) like C++ or Java.  Dynamic languages are easy to use and simple to implement, but allow for some preventable errors that would be impossible in a static language.
+For an example from our Scheme, `(+ 'a' 1)` is valid syntax wildly open to interpretation at runtime. (Try it on the REPL!)
+
 If you are interested in building a typed language in Haskell, [this](http://okmij.org/ftp/Haskell/AlgorithmsH.html#teval) guide shows how type inference makes language engineering significantly more complex.
-Dynamic languages are not all doom and gloom: they give the user tremendous flexibility.
-The R Programming Language is an excellent example of a dynamic language that excels at statistical computing by giving the user incredible flexibility and choice over how to implement ideas.
+Dynamic languages are not all doom and gloom: they give the user tremendous flexibility.  The R Programming Language is an excellent example of a dynamic language that excels at statistical computing by giving the user incredible flexibility and choice over how to implement ideas.
+
 A concept called Dynamic Dispatch allows functions to be determined, at runtime, by the types of the arguments passed in, so `(+ 1 1)` and `(+ "a" "b")` could use different versions of the `+` function.
 This is a key feature is dynamically typed programming languages, and we will be implementing this feature in our Scheme.
-
 
 ## Interpreted
 We are building an interpreted language, an alternative to compiling to assembly language, LLVM or using a virtual machine like Java's JVM.
 This means that we have a program that actively runs to evaluate a program written in our Scheme.
 This approach yields slower performance due to the higher memory and processor overhead, but we will be able to finish the project in a single weekend.
+
 For the motivated, Lisp In Small Pieces walks you through over 30 interpreted and  2 compiled versions of Scheme, written in Scheme.
 You can find the program code  [here](https://pages.lip6.fr/Christian.Queinnec/WWW/LiSP.html). If you want to write a language with performance in mind, you'll want to use an [LLVM backend](http://stephendiehl.com/llvm).
 I warn you: there be dragons!
@@ -139,6 +138,7 @@ I warn you: there be dragons!
 Type systems are extremely complex to build, and balancing programming productivity versus performance gains is difficult.
 For instance, Guy Steele has worked on successful languages like Common Lisp and Java, but spent most of the 8 years building Fortress getting the type system right.
 Steele cited issues with the complexity of the type system when winding down development on Fortress.
+
 Although type systems are complex, it's theoretically possible to create a type system so advanced that programs can have provable properties and abstractions as powerful as those in mathematics.
 This is far beyond the scope of this tutorial, and the majority of production code written is done in a dynamic language. However, If you're a novice, then this tutorial is a great way to get involved in a very exciting movement that will shape the way of things to come for industry programming.
 For now, the best we get is an industrial language that, if it compiles, it runs, and this language is Haskell.
@@ -150,56 +150,54 @@ Keep in mind that we must build the abstractions that are capable of evaluating 
 Both the right and left hand side of the form are represented with `LispVal`.
 
 **List Processing**
-
 There are three primitive functions for manipulating lists in our Scheme.
-We will implement them later as part of the standard library and discuss the tradeoffs.
-`car`  ... `(car '(1 2 3))`  => `(1)`
-`cadr` ... `(cadr '(1 2 3))` => `(2 3)`
-`cons` ... `(cons 1 '(2 3))` => `(1 2 3)`
+We will implement them later as part of the standard library and discuss the tradeoffs.  
+`car`  ... `(car '(1 2 3))`  => `(1)`  
+`cadr` ... `(cadr '(1 2 3))` => `(2 3)`  
+`cons` ... `(cons 1 '(2 3))` => `(1 2 3)`  
 
 **Mathematics**
-Mathematical functions can take 2 or more arguments.
-`(* 60 9)` => `69`
-`(+ 10 30 2))` => `42`
+Mathematical functions can take 2 or more arguments.  
+`(* 60 9)` => `69`  
+`(+ 10 30 2))` => `42`  
 
 **Quote**
-`quote` is a special form that delays evaluation on its argument.
-`(quote (1 2 3 4))` => `(1 2 3 4)`
-`'(1 2 3 4)` => `(1 2 3 4)`
+`quote` is a special form that delays evaluation on its argument.  
+`(quote (1 2 3 4))` => `(1 2 3 4)`  
+`'(1 2 3 4)` => `(1 2 3 4)`  
 
 **Conditional Statements**
-The `if` statement acts like it does in any language.
-`(if (< 4 5) #f 42)` => `#f`
+The `if` statement acts like it does in any language.  
+`(if (< 4 5) #f 42)` => `#f`  
 
 **Lambdas & Anonymous functions**
-`lambda` is used to create an anonymous function.
-`((lambda (y) (+ y 2)) 40)` => `42`
+`lambda` is used to create an anonymous function.  
+`((lambda (y) (+ y 2)) 40)` => `42`  
 
 **Let Statements**
 `let` takes two arguments. Its first is a paired list of variables and values.
-These variables are set to corresponding values, which are then in scope for the evaluation of the second argument.
-`(let (x 42) x)` => `42`
-`(let (x 2 y 40) (+ x y))` => `42`
+These variables are set to corresponding values, which are then in scope for the evaluation of the second argument.  
+`(let (x 42) x)` => `42`  
+`(let (x 2 y 40) (+ x y))` => `42`  
 
 **Begin**
 `begin` evaluates a series of one or more S-Expressions in order.  S-Expressions can modify the environment using `define`, then subsequent expressions may access the modified environment.
 Further, when running a Scheme program, its S-Expressions are essentially wrapped in a single begin function.
-More on this when we go over [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs).
+More on this when we go over [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs).  
 `(begin (define x 413000) (define y (+ x 281)) (+ x y))` => `826281`
 
 **The Rest**
-
 Although Scheme is a minimal language, this list of functions is not complete.
 There are two files that contain the rest of the internally defined functions: special forms in [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs), and the primitives in [Prim.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Prim.hs).
 For a full Scheme specification, see [The R5RS Specification](https://github.com/write-you-a-scheme-v2/scheme/tree/master/sources/r5rs.pdf).
 It's not the most modern, but its complete enough to work.
 
 #### [Understanding Check]
-What form does Scheme use to represent data? what about code?
-How would you create a function in Scheme? How about set a variable?
-If Scheme is a Dynamically-Typed Interpreted Functional Language? What does this make C, or your favorite programming language?
-Can you rearrange `let` expressions into `lambda`? What about `lambda` into `let`?
-Write out an explanation and example that demonstrates lexical scope using a `lambda` expression.
+* What form does Scheme use to represent data? what about code?
+* How would you create a function in Scheme? How about set a variable?
+* If Scheme is a Dynamically-Typed Interpreted Functional Language? What does this make C, or your favorite programming language?
+* Can you rearrange `let` expressions into `lambda`? What about `lambda` into `let`?
+* Write out an explanation and example that demonstrates lexical scope using a `lambda` expression.
 
 #### Next: Introduction to our implementing Scheme
 [home](home.html)...[next](01_introduction.html)

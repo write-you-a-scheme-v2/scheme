@@ -20,26 +20,24 @@ runScript fname = do
   then TIO.readFile fname >>= evalFile
   else TIO.putStrLn "File does not exist."
 
-data LineOpts = LineOpts
-  { script :: String
-  , useRepl :: Bool }
+data LineOpts = UseReplLineOpts | RunScriptLineOpts String
 
 parseLineOpts :: Parser LineOpts
-parseLineOpts = LineOpts
-    <$> strOption
-        ( long "script"
-       <> short 's'
-       <> value ""
-       <> metavar "SCRIPT"
-       <> help "File containing the script you want to run")
-    <*> switch
-        ( long "repl"
-       <> short 'r'
-       <> help "Run as interavtive read/evaluate/print/loop")
+parseLineOpts = runScriptOpt <|> runReplOpt
+  where
+    runScriptOpt =
+      RunScriptLineOpts <$> strOption (long "script"
+                                       <> short 's'
+                                       <> metavar "SCRIPT"
+                                       <> help "File containing the script you want to run")
+    runReplOpt =
+      UseReplLineOpts <$ flag' () (long "repl"
+                                   <> short 'r'
+                                   <> help "Run as interavtive read/evaluate/print/loop")
 
 schemeEntryPoint :: LineOpts -> IO ()
-schemeEntryPoint (LineOpts _ True) = Repl.mainLoop --repl
-schemeEntryPoint (LineOpts script False) = runScript script
+schemeEntryPoint UseReplLineOpts = Repl.mainLoop --repl
+schemeEntryPoint (RunScriptLineOpts script) = runScript script
 
 cliIface :: IO ()
 cliIface = execParser opts >>= schemeEntryPoint

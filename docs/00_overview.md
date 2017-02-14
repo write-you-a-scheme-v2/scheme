@@ -149,44 +149,44 @@ To get a feel for our Scheme, here is the evaluation of some functions and their
 Keep in mind that we must build the abstractions that are capable of evaluating these forms.
 Both the right and left hand side of the form are represented with `LispVal`.
 
-**List Processing**
+### List Processing
 There are three primitive functions for manipulating lists in our Scheme.
 We will implement them later as part of the standard library and discuss the tradeoffs.  
 `car`  ... `(car '(1 2 3))`  => `(1)`  
 `cadr` ... `(cadr '(1 2 3))` => `(2 3)`  
 `cons` ... `(cons 1 '(2 3))` => `(1 2 3)`  
 
-**Mathematics**
+### Mathematics
 Mathematical functions can take 2 or more arguments.  
 `(* 60 9)` => `69`  
 `(+ 10 30 2))` => `42`  
 
-**Quote**
+### Quote
 `quote` is a special form that delays evaluation on its argument.  
 `(quote (1 2 3 4))` => `(1 2 3 4)`  
 `'(1 2 3 4)` => `(1 2 3 4)`  
 
-**Conditional Statements**
+### Conditional Statements
 The `if` statement acts like it does in any language.  
 `(if (< 4 5) #f 42)` => `#f`  
 
-**Lambdas & Anonymous functions**
+### Lambdas & Anonymous functions
 `lambda` is used to create an anonymous function.  
 `((lambda (y) (+ y 2)) 40)` => `42`  
 
-**Let Statements**
+### Let Statements
 `let` takes two arguments. Its first is a paired list of variables and values.
 These variables are set to corresponding values, which are then in scope for the evaluation of the second argument.  
 `(let (x 42) x)` => `42`  
 `(let (x 2 y 40) (+ x y))` => `42`  
 
-**Begin**
+### Begin
 `begin` evaluates a series of one or more S-Expressions in order.  S-Expressions can modify the environment using `define`, then subsequent expressions may access the modified environment.
 Further, when running a Scheme program, its S-Expressions are essentially wrapped in a single begin function.
 More on this when we go over [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs).  
 `(begin (define x 413000) (define y (+ x 281)) (+ x y))` => `826281`
 
-**The Rest**
+### The Rest
 Although Scheme is a minimal language, this list of functions is not complete.
 There are two files that contain the rest of the internally defined functions: special forms in [Eval.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs), and the primitives in [Prim.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Prim.hs).
 For a full Scheme specification, see [The R5RS Specification](https://github.com/write-you-a-scheme-v2/scheme/tree/master/sources/r5rs.pdf).

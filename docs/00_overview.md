@@ -43,28 +43,28 @@ Here's the overview of what we will be doing and where we will go:
   thoughts on the project.        
 
 ## Why Lisp ?
-Although the majority of modern programming follows C/Algo style, Lisp syntax is simple, using the same syntax to represent code and data, the list.
+Although the majority of modern programming follows C/Algo style, Lisp syntax is simple, using the same syntax to represent code and data: the list.
 This is called homoiconicity, a feature which makes both parsing and evaluation much simpler compared to other languages.
 Scheme, a dialect of Lisp, is a particularly straight-forward.
 We won't strictly follow the Scheme standard for the sake of brevity, but aim to include many useful features.
-If you are interested in what a fully fledged Scheme looks like, [Haskell-Scheme](https://hackage.haskell.org/package/husk-scheme) is a fully featured language, in Haskell, and [Chicken-Scheme implements in C](https://code.call-cc.org/).
+If you are interested in what a fully fledged Scheme looks like, [Haskell-Scheme](https://hackage.haskell.org/package/husk-scheme) is a fully featured language, in Haskell, and [Chicken-Scheme implemented in C](https://code.call-cc.org/).
 Our Scheme contains the basic elements of these more featured languages.  
 
 [The Scheme Programming Language](http://www.scheme.com/tspl4/) is a great book to teach the function of an industrial strength Scheme, and reference to explain language features.
 Another great book to learn Scheme and interpretation theory is [Structure and Interpretation of Computer Programs (SICP)](https://mitpress.mit.edu/sicp/full-text/book/book.html), which discusses how to build a meta-circular evaluator in Lisp.
 Lisp has a history as an educational language, and its simplicity is mostly why we will be continuing the tradition here.    
 
-While on the topic of Lisp, Clojure Programming Language is a modern, functional approach to Lisp targeting the JVM.
-If you are interested in designing your own Lisp, Clojure is a great example of how you can take adopt Lisp to the modern programming environment.
+While on the topic of Lisp, the Clojure Programming Language is a modern, functional approach to Lisp targeting the JVM.
+If you are interested in designing your own Lisp, Clojure is a great example of how you can take Lisp to a modern programming environment.
 It is probably the most supported modern Lisp community,  and is a great source of information and ideas.
-The other industry relevant Lisp is EmacsLisp, which is a domain specific language for programmers that don't know vim!  
+The other industry relevant to Lisp is EmacsLisp, which is a domain specific language for programmers that don't know vim!
 Finally, [Read Eval Print Love](https://leanpub.com/readevalprintlove001/read) contains a wonderful and insightful discussion of the Lisp family, and is a great source of additional information for the interested reader!    
 
 ## Why Haskell ?
 First off, why not? I love Haskell!
 Haskell is a purely functional, typed, compiled, and lazy language with many sophisticated and advanced features.
 With over two decades of research level and industrial development, Haskell is the focus of numerous computer science research projects and implements these ideas with a production worthy compiler.
-Who cares? Well, these features give the programmer expressive power above and beyond todays status quo.
+Who cares? Well, these features give the programmer expressive power above and beyond today's status quo.
 A set of very powerful and safe abstractions has emerged from its test bed.
 With great power, comes great responsibility, and there are many complex and under-adopted features that take a while to learn.
 Fortunately, if you only use a subset of advanced features, Haskell can be an effective production language.  
@@ -75,7 +75,7 @@ If you are trying to hire developers to
 work on your project with you, finding people who can be trained with less cost than the performance gains will be a serious hinderance when proposing your project to weary business type folks.
 For this reason, we take a conservative approach on what features and abstract concepts are used in this Scheme.
 When in doubt, we pick the simplest possible abstraction that is needed for functionality, and avoid extra language pragma and type theory extensions at all cost.
-If you use Haskell for work, your colleagues job will go a lot easier and less technical debt will emerge.  
+If you use Haskell for work, your colleague's job will go a lot easier and less technical debt will emerge.  
 
 ## Project Tool Chain
 
@@ -97,7 +97,7 @@ Language development is really a "killer app" for Haskell, and the approach we t
 
 ## Scheme Syntax
 Lisp is a list processing language, and is old enough to join the AARP with a very storied history.
-Scheme is a fully specified Lisp implementation, although we will take many liberties for the sake of simplicity.
+Scheme is a fully specified Lisp implementation, though we will take many liberties for the sake of simplicity.
 For Scheme, this means every expression is a list with a prefix operator. This is known as an S-Expression.
 Whenever a S-Expression is encountered, it is evaluated in the same way, minus a handful of special forms.
 Data is also represented as an S-Expression, and there is no syntactical difference between code and data.
@@ -105,7 +105,7 @@ This minimalism is what Scheme is well known for!
 
 ## Scheme semantics
 Similar to Haskell, Scheme is a functional programming language.
-Everything in our Scheme in an object, for instance numbers, strings, functions, variables, and booleans.
+Everything in our Scheme is an object, for instance numbers, strings, functions, variables, and booleans.
 This is our Haskell type, `LispVal`.  These objects are stored in a single environment, `EnvCtx` which is queried to resolve the value of an evaluated variable.
 In Scheme, no object is ever destroyed, and we won't need garbage collection.
 However, the scope of a variable is limited to its lexical context.
@@ -116,12 +116,12 @@ The environment to find and store variables is the same to find primitive functi
 This approach is a system called Lisp-1, contrasted to Common Lisp's Lisp-2 system, where functions and variables have different environments.
 
 ## Scheme Type System   
-Scheme is a dynamic language, like Python, Ruby, Perl, or [as compared to a static language](https://pythonconquerstheuniverse.wordpress.com/2009/10/03/static-vs-dynamic-typing-of-programming-languages/) like C++ or Java.
+Scheme is a dynamic language, like Python, Ruby, Perl, or [as contrasted with a static language](https://pythonconquerstheuniverse.wordpress.com/2009/10/03/static-vs-dynamic-typing-of-programming-languages/) like C++ or Java.
 Dynamic languages are easy to use and simple to implement, but allow for some preventable errors that would be impossible in a static language.
 For an example from our Scheme, `(+ 'a' 1)` is valid syntax wildly open to interpretation at runtime.  
 (Try it on the REPL!)  
 If you are interested in building a typed language in Haskell, [this](http://okmij.org/ftp/Haskell/AlgorithmsH.html#teval) guide shows how type inference makes language engineering significantly more complex.
-Dynamic languages are not all doom and gloom, they give the user tremendous flexibility.
+Dynamic languages are not all doom and gloom: they give the user tremendous flexibility.
 The R Programming Language is an excellent example of a dynamic language that excels at statistical computing by giving the user incredible flexibility and choice over how to implement ideas.  
 A concept called Dynamic Dispatch allows functions to be determined, at runtime, by the types of the arguments passed in, so `(+ 1 1)` and `(+ "a" "b")` could use different versions of the `+` function.
 This is a key feature is dynamically typed programming languages, and we will be implementing this feature in our Scheme.    
@@ -130,35 +130,35 @@ This is a key feature is dynamically typed programming languages, and we will be
 ## Interpreted
 We are building an interpreted language, an alternative to compiling to assembly language, LLVM or using a virtual machine like Java's JVM.
 This means that we have a program that actively runs to evaluate a program written in our Scheme.
-This approach yields slower performance due to the higher memory and processor overhead, but we will be able to finish in the project in a single weekend.  
+This approach yields slower performance due to the higher memory and processor overhead, but we will be able to finish the project in a single weekend.  
 For the motivated, Lisp In Small Pieces walks you through over 30 interpreted and  2 compiled versions of Scheme, written in Scheme.
 You can find the program code  [here](https://pages.lip6.fr/Christian.Queinnec/WWW/LiSP.html). If you want to write a language with performance in mind, you'll want to use an [LLVM backend](http://stephendiehl.com/llvm).
-I warn you, there be dragons!    
+I warn you: there be dragons!    
 
 #### On Type System Complexity, Cautionary Tail
-Type systems are extremely complex to build, and balancing programming productivity versus performance gains is a difficult balance.
+Type systems are extremely complex to build, and balancing programming productivity versus performance gains is difficult.
 For instance, Guy Steele has worked on successful languages like Common Lisp and Java, but spent most of the 8 years building Fortress getting the type system right.
 Steele cited issues with the complexity of the type system when winding down development on Fortress.  
-Although type systems are complex, its theoretical possible to create a type system so advanced that programs can have provable properties and abstractions as powerful as those in mathematics.
-This is far beyond the scope of this tutorial, and the majority of production code written is done in a dynamic language. However, If your are a novice, then this tutorial is a great way to get involved in a very exciting movement that will shape the way of things to come for industry programming.  
-For now, the best we get is an industrial language that if it compiles, it runs, and this language is Haskell.
+Although type systems are complex, it's theoretically possible to create a type system so advanced that programs can have provable properties and abstractions as powerful as those in mathematics.
+This is far beyond the scope of this tutorial, and the majority of production code written is done in a dynamic language. However, If you're a novice, then this tutorial is a great way to get involved in a very exciting movement that will shape the way of things to come for industry programming.  
+For now, the best we get is an industrial language that, if it compiles, it runs, and this language is Haskell.
 Finally, [Types and Programming Languages](https://www.cis.upenn.edu/~bcpierce/tapl/) by Benjamin C. Pierce is the place to learn the theory and implementation of type systems.   
 
 ## Scheme Examples, Operational Semantics
 To get a feel for our Scheme, here is the evaluation of some functions and their arguments.
-Keep in mind that we must build the abstracts that are capable of evaluating these forms.
+Keep in mind that we must build the abstractions that are capable of evaluating these forms.
 Both the right and left hand side of the form are represented with `LispVal`.    
 
 **List Processing**    
 
-There are three primitive functions for manipulating these structures in our Scheme.
-We will implement them later as part of the standard library and discussing the tradeoffs.    
+There are three primitive functions for manipulating lists in our Scheme.
+We will implement them later as part of the standard library and discuss the tradeoffs.    
 `car`  ... `(car '(1 2 3))`  => `(1)`    
 `cadr` ... `(cadr '(1 2 3))` => `(2 3)`     
 `cons` ... `(cons 1 '(2 3))` => `(1 2 3)`    
 
 **Mathematics**     
-Mathematical functions can take 2 or more functions.    
+Mathematical functions can take 2 or more arguments.    
 `(* 60 9)` => `69`    
 `(+ 10 30 2))` => `42`    
 
@@ -177,7 +177,7 @@ The `if` statement acts like it does in any language.
 
 **Let Statements**    
 `let` takes two arguments. Its first is a paired list of variables and values.
-These variables are set the to corresponding values, which are then in scope for the evaluation of the second argument.    
+These variables are set to corresponding values, which are then in scope for the evaluation of the second argument.    
 `(let (x 42) x)` => `42`    
 `(let (x 2 y 40) (+ x y))` => `42`    
 
@@ -201,5 +201,5 @@ If Scheme is a Dynamically-Typed Interpreted Functional Language? What does this
 Can you rearrange `let` expressions into `lambda`? What about `lambda` into `let`?    
 Write out an explanation and example that demonstrates lexical scope using a `lambda` expression.
 
-#### Next, Introduction to our implementing Scheme
+#### Next: Introduction to our implementing Scheme
 [home](home.html)...[next](01_introduction.html)

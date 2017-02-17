@@ -96,7 +96,7 @@ main = do
   hspec $ describe "build can proceed w/o these passing" $ do
     tExpr "(extra) begin/define" "begin (define x 1) (define y (+ x 10)) (+ x y)"
           $ Number 12
-    tExprStd "(extra) fold call w/ append"  "(fold append \"Y\" '(\"com\" \"bin\" \"a\" \"tor\"))"
+    tExprStd "(extra) fold call w/ append"  "(fold string-append \"Y\" '(\"com\" \"bin\" \"a\" \"tor\"))"
           $ String "Ycombinator"
 
 

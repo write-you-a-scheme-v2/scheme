@@ -25,7 +25,7 @@ primEnv :: Prim
 primEnv = [
     ("+"     , mkF $ binopFold (numOp    (+))  (Number 0) )
   , ("*"     , mkF $ binopFold (numOp    (*))  (Number 1) )
-  , ("append", mkF $ binopFold (strOp    (<>)) (String "") )
+  , ("string-append", mkF $ binopFold (strOp    (<>)) (String "") )
   , ("-"     , mkF $ binop $    numOp    (-))
   , ("<"     , mkF $ binop $    numCmp   (<))
   , ("<="    , mkF $ binop $    numCmp   (<=))

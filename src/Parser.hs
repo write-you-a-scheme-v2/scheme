@@ -3,10 +3,6 @@
 module Parser (
   readExpr,
   readExprFile,
-  parseNumber,
-  parseSpecialAtom,
-  parseExpr,
-  parseList
 ) where
 
 import LispVal

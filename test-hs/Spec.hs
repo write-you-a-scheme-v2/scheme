@@ -51,6 +51,10 @@ main = do
       readExpr "'(stromTrooper \"Fn\" 2 1 87)" `shouldBe`
       (Right $ List [Atom "quote", List [Atom "stromTrooper", String "Fn", Number 2, Number 1,Number 87]])
 
+    it "S-Expr: prim call: numbers" $
+      readExpr "(+ 1 2)" `shouldBe`
+      (Right $ List [Atom "+", Number 1, Number 2])
+
     it "S-Expr: prim call: neg nums" $
       readExpr "(- -42 -42)" `shouldBe`
       (Right $ List [Atom "-", Number (0 - 42), Number (0 - 42)])
@@ -63,7 +67,7 @@ main = do
       readExpr "(lambda (x x) (+ x x))" `shouldBe`
       (Right $ List [Atom "lambda", List [Atom "x", Atom "x"], List [Atom "+", Atom "x", Atom "x"]])
     it "Comment: end-of/single line" $
-      readExpr "--skip\nartoodetoo --extra will throw\n--skip" `shouldBe` (Right $ Atom "artoodetoo")
+      readExpr ";skip\nartoodetoo ;extra will throw\n;skip" `shouldBe` (Right $ Atom "artoodetoo")
     it "Comment: multi-line line" $
       readExpr "{-Han\nShot\nFirst\n-} (c3 {- these are not the droids you're looking for-} po)\n {-Jar Jar Binks =?= Sith Lord -}" `shouldBe` (Right $ List [Atom "c3",Atom "po"])
 
@@ -92,7 +96,7 @@ main = do
   hspec $ describe "build can proceed w/o these passing" $ do
     tExpr "(extra) begin/define" "begin (define x 1) (define y (+ x 10)) (+ x y)"
           $ Number 12
-    tExprStd "(extra) fold call w/ append"  "(fold ++ \"Y\" '(\"com\" \"bin\" \"a\" \"tor\"))"
+    tExprStd "(extra) fold call w/ append"  "(fold append \"Y\" '(\"com\" \"bin\" \"a\" \"tor\"))"
           $ String "Ycombinator"
 
 

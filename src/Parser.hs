@@ -3,6 +3,10 @@
 module Parser (
   readExpr,
   readExprFile,
+  parseNumber,
+  parseSpecialAtom,
+  parseExpr,
+  parseList
 ) where
 
 import LispVal
@@ -22,41 +26,41 @@ style :: Tok.GenLanguageDef T.Text () Identity
 style = Lang.emptyDef {
   Tok.commentStart = "{-"
   , Tok.commentEnd = "-}"
-  , Tok.commentLine = "--"
-  , Tok.opStart = Tok.opLetter style
-  , Tok.opLetter = oneOf ":!#$%%&*+./<=>?@\\^|-~"
-  , Tok.identStart = letter <|>  oneOf "-+/*=|&><"
-  , Tok.identLetter = digit <|> letter <|> oneOf "?+=|&-/"
-  , Tok.reservedOpNames = [ "'", "\""]
+  , Tok.commentLine = ";"
+  , Tok.opStart = oneOf "'@#+"
+  , Tok.opLetter = oneOf "'@#"
+  , Tok.identStart = letter <|>  oneOf "!$%&*/:<=>?^_~"
+  , Tok.identLetter = digit <|> letter <|> oneOf "!$%&*/:<=>?^_~+-.@"
+  , Tok.reservedOpNames = ["'", "+"]
   }
 
--- pattern binding using record destructing !
-Tok.TokenParser { Tok.parens = m_parens
-           , Tok.identifier = m_identifier } = Tok.makeTokenParser style
-
-reservedOp :: T.Text -> Parser ()
-reservedOp op = Tok.reservedOp lexer $ T.unpack op
+m_parens = Tok.parens lexer
+m_identifier = Tok.identifier lexer
 
 parseAtom :: Parser LispVal
 parseAtom = do
   p <- m_identifier
   return $ Atom $ T.pack p
 
+parseSpecialAtom :: Parser LispVal
+parseSpecialAtom = do
+  p <- lexeme (string "-") <|> lexeme (string "+") <|> lexeme (string "...")
+  return $ Atom $ T.pack p
+    where lexeme = Tok.lexeme lexer
+
 parseText :: Parser LispVal
-parseText = do
-  reservedOp "\""
-  p <- many1 $ noneOf "\""
-  reservedOp "\""
-  return $ String . T.pack $  p
+parseText = String . T.pack <$> Tok.stringLiteral lexer
 
 parseNumber :: Parser LispVal
-parseNumber = Number . read <$> many1 digit
-
-parseNegNum :: Parser LispVal
-parseNegNum = do
-  char '-'
-  d <- many1 digit
-  return $ Number . negate . read $ d
+parseNumber = do
+  f <- sign
+  n <- decimal
+  return $ Number (f n)
+    where
+    sign = (char '-' >> return negate) <|> (char '+' >> return id) <|> return id
+    symbol = Tok.symbol lexer
+    decimal = Tok.decimal lexer
+        
 
 parseList :: Parser LispVal
 parseList = List . concat <$> Text.Parsec.many parseExpr `sepBy` (char ' ' <|> char '\n')
@@ -66,13 +70,14 @@ parseSExp = List . concat <$> m_parens (Text.Parsec.many parseExpr `sepBy` (char
 
 parseQuote :: Parser LispVal
 parseQuote = do
-  reservedOp "\'"
+  Tok.reservedOp lexer "\'"
   x <- parseExpr
   return $ List [Atom "quote", x]
 
 parseExpr :: Parser LispVal
-parseExpr = parseReserved <|> parseNumber
-  <|> try parseNegNum
+parseExpr = parseReserved
+  <|> try parseNumber
+  <|> parseSpecialAtom
   <|> parseAtom
   <|> parseText
   <|> parseQuote
@@ -80,9 +85,9 @@ parseExpr = parseReserved <|> parseNumber
 
 parseReserved :: Parser LispVal
 parseReserved =
-      (reservedOp "Nil" >> return Nil)
-  <|> (reservedOp "#t" >> return (Bool True))
-  <|> (reservedOp "#f" >> return (Bool False))
+      (Tok.reservedOp lexer "Nil" >> return Nil)
+  <|> (Tok.reservedOp lexer "#t" >> return (Bool True))
+  <|> (Tok.reservedOp lexer "#f" >> return (Bool False))
 
 contents :: Parser a -> Parser a
 contents p = do

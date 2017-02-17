@@ -37,6 +37,9 @@ parens = Tok.parens lexer
 whitespace :: Parser ()
 whitespace = Tok.whiteSpace lexer
 
+lexeme :: Parser a -> Parser a
+lexeme = Tok.lexeme lexer
+
 quoted :: Parser a -> Parser a
 quoted p = try (char '\'') *> p
 
@@ -44,27 +47,23 @@ identifier :: Parser T.Text
 identifier = T.pack <$> (Tok.identifier lexer <|> specialIdentifier) <?> "identifier"
   where
   specialIdentifier :: Parser String
-  specialIdentifier = Tok.lexeme lexer $ try $
+  specialIdentifier = lexeme $ try $
     string "-" <|> string "+" <|> string "..."
 
--- | Parse a radix, returns the pair (base, parser for digits in base)
-radix :: Parser (Integer, Parser Char)
-radix =
-  try (string "#b") *> return (2,bit) <|>
-  try (string "#o") *> return (8,octDigit) <|>
-  try (string "#d") *> return (10,digit) <|>
-  try (string "#x") *> return (16,hexDigit) <|>
-  return (10, digit)
-  where
-    bit = oneOf "01"
+-- | The @Radix@ type consists of a base integer (e.g. @10@) and a parser for
+-- digits in that base (e.g. @digit@).
+type Radix = (Integer, Parser Char)
 
 -- | Parse an integer, given a radix as output by @radix@.
 -- Copied from Text.Parsec.Token
-numberWithRadix :: (Integer, Parser Char) -> Parser Integer
+numberWithRadix :: Radix -> Parser Integer
 numberWithRadix (base, baseDigit) = do
   digits <- many1 baseDigit
   let n = foldl (\x d -> base*x + toInteger (digitToInt d)) 0 digits
   seq n (return n)
+
+decimal :: Parser Integer
+decimal = Tok.decimal lexer
 
 -- | Parse a sign, return either @id@ or @negate@ based on the sign parsed.
 -- Copied from Text.Parsec.Token
@@ -73,41 +72,32 @@ sign = char '-' *> return negate
    <|> char '+' *> return id
    <|> return id
 
--- | Parses a scheme integer with arbitrary radix and sign
--- @Text.Parsec.Token.integer@ is insufficient for our purposes, for the
--- following reasons:
--- - Parsec puts sign before radix, Scheme puts radix before sign
--- - Parsec doesn't support binary integers
--- - Scheme uses #o, #x, ... instead of 0o, 0x, and Parsec's 0-prefix is
--- embedded in @integer@
-integer :: Parser Integer
-integer = Tok.lexeme lexer int <?> "integer"
-  where
-    int = do
-      r <- radix
-      f <- sign
-      n <- numberWithRadix r
-      return (f n)
+intRadix :: Radix -> Parser Integer
+intRadix r = sign <*> numberWithRadix r
 
 textLiteral :: Parser T.Text
 textLiteral = T.pack <$> Tok.stringLiteral lexer
 
-boolean :: Parser Bool
-boolean = try (string "#t") *> return True
-  <|> try (string "#f") *> return False
-  <?> "boolean"
-
 nil :: Parser ()
 nil = try (optional (char '\'') *> string "()") *> return () <?> "nil"
 
--- TODO: It would be nice to gather all the cases that begin with '#' together
--- and fork based on that, rather than having the cases split up in multiple
--- locations and having to `try` all over the place.
+hashVal :: Parser LispVal
+hashVal = lexeme $ char '#'
+  *> (char 't' *> return (Bool True)
+  <|> char 'f' *> return (Bool False)
+  <|> char 'b' *> (Number <$> intRadix (2, oneOf "01"))
+  <|> char 'o' *> (Number <$> intRadix (8, octDigit))
+  <|> char 'd' *> (Number <$> intRadix (10, digit))
+  <|> char 'x' *> (Number <$> intRadix (16, hexDigit))
+  <|> oneOf "ei" *> fail "Unsupported: exactness"
+  <|> char '(' *> fail "Unsupported: vector"
+  <|> char '\\' *> fail "Unsupported: char")
+
 
 lispVal :: Parser LispVal
-lispVal = Nil <$ nil
-  <|> Bool <$> boolean
-  <|> Number <$> try integer
+lispVal = hashVal
+  <|> Nil <$ nil
+  <|> Number <$> try (sign <*> decimal)
   <|> Atom <$> identifier
   <|> String <$> textLiteral
   <|> _Quote <$> quoted lispVal
@@ -119,7 +109,7 @@ manyLispVal = lispVal `sepBy` whitespace
 _Quote :: LispVal -> LispVal
 _Quote x = List [Atom "quote", x]
 
-contents p = whitespace *> p <* whitespace <* eof
+contents p = whitespace *> lexeme p <* eof
 
 readExpr :: T.Text -> Either ParseError LispVal
 readExpr = parse (contents lispVal) "<stdin>"

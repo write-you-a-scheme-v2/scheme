@@ -18,7 +18,7 @@ main = do
       readExpr "bb-8?" `shouldBe` (Right $ Atom "bb-8?")
 
     it "Num Negative" $
-      readExpr "-2187" `shouldBe` (Right $ Number $ 0 - 2187)
+      readExpr "-2187" `shouldBe` (Right $ Number (-2187))
 
     it "Num Positive" $
       readExpr "112233" `shouldBe` (Right $ Number 112233)
@@ -54,13 +54,19 @@ main = do
       readExpr "'(stromTrooper \"Fn\" 2 1 87)" `shouldBe`
       (Right $ List [Atom "quote", List [Atom "stromTrooper", String "Fn", Number 2, Number 1,Number 87]])
 
+    it "S-Expr: single negative" $
+      readExpr "(-42)" `shouldBe` (Right $ List [Number (-42)])
+
+    it "S-Expr: (- num)" $
+      readExpr "(- 42)" `shouldBe` (Right $ List [Atom "-", Number 42])
+
     it "S-Expr: prim call: numbers" $
       readExpr "(+ 1 2)" `shouldBe`
       (Right $ List [Atom "+", Number 1, Number 2])
 
     it "S-Expr: prim call: neg nums" $
       readExpr "(- -42 -42)" `shouldBe`
-      (Right $ List [Atom "-", Number (0 - 42), Number (0 - 42)])
+      (Right $ List [Atom "-", Number (-42), Number (-42)])
 
     it "S-Expr: prim call: atoms" $
       readExpr "(- rogue squadron)" `shouldBe`

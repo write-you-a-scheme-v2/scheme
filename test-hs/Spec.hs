@@ -36,7 +36,7 @@ main = do
       readExpr "#f" `shouldBe` (Right $ Bool False)
 
     it "Nil" $
-      readExpr "Nil" `shouldBe` (Right $ Nil)
+      readExpr "()" `shouldBe` (Right $ Nil)
 
     it "S-Expr: homogenous list" $
       readExpr "(2 1 87)" `shouldBe`
@@ -112,7 +112,7 @@ wStd = runExpr (Just "test/stdlib_mod.scm")
 tExpr :: T.Text -> T.Text -> LispVal -> SpecWith ()
 tExpr note expr val =
     it (T.unpack note) $ evalVal `shouldBe` val
-    where evalVal = (unsafePerformIO $ runASTinEnv basicEnv $ fileToEvalForm expr)
+    where evalVal = (unsafePerformIO $ runASTinEnv basicEnv $ fileToEvalForm "" expr)
 
 
 runExpr :: Maybe T.Text -> T.Text -> LispVal -> SpecWith ()
@@ -128,7 +128,7 @@ evalTextTest (Just stdlib) file= do
 
 evalTextTest Nothing file = do
   f <- getFileContents $ T.unpack file
-  runASTinEnv basicEnv $ fileToEvalForm f
+  runASTinEnv basicEnv $ fileToEvalForm (T.unpack file) f
 
 -- run text expr w/ file
 tExprStd :: T.Text -> T.Text -> LispVal -> SpecWith ()

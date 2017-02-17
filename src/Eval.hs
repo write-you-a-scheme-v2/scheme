@@ -62,16 +62,16 @@ lineToEvalForm :: T.Text -> Eval LispVal
 lineToEvalForm input = either (throw . PError . show  )  eval $ readExpr input
 
 
-evalFile :: T.Text -> IO () --program file
-evalFile fileExpr = (runASTinEnv basicEnv $ fileToEvalForm fileExpr) >>= print
+evalFile :: FilePath -> T.Text -> IO () --program file
+evalFile filePath fileExpr = (runASTinEnv basicEnv $ fileToEvalForm filePath fileExpr) >>= print
 
-fileToEvalForm :: T.Text -> Eval LispVal
-fileToEvalForm input = either (throw . PError . show )  evalBody $ readExprFile input
+fileToEvalForm :: FilePath -> T.Text -> Eval LispVal
+fileToEvalForm filePath input = either (throw . PError . show )  evalBody $ readExprFile filePath input
 
 runParseTest :: T.Text -> T.Text -- for view AST
 runParseTest input = either (T.pack . show) (T.pack . show) $ readExpr input
 
-sTDLIB :: T.Text
+sTDLIB :: FilePath
 sTDLIB = "lib/stdlib.scm"
 
 endOfList :: LispVal -> LispVal -> LispVal
@@ -80,7 +80,7 @@ endOfList n _  = throw $ TypeMismatch  "failure to get variable: " n
 
 parseWithLib :: T.Text -> T.Text -> Either ParseError LispVal
 parseWithLib std inp = do
-  stdlib <- readExprFile std
+  stdlib <- readExprFile sTDLIB std
   expr   <- readExpr inp
   return $ endOfList stdlib expr
 
@@ -95,7 +95,7 @@ textToEvalForm std input = either (throw . PError . show )  evalBody $ parseWith
 
 evalText :: T.Text -> IO () --REPL
 evalText textExpr = do
-  stdlib <- getFileContents $ T.unpack  sTDLIB
+  stdlib <- getFileContents sTDLIB
   res <- runASTinEnv basicEnv $ textToEvalForm stdlib textExpr
   print res
 

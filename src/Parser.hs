@@ -79,7 +79,7 @@ textLiteral :: Parser T.Text
 textLiteral = T.pack <$> Tok.stringLiteral lexer
 
 nil :: Parser ()
-nil = try (optional (char '\'') *> string "()") *> return () <?> "nil"
+nil = try ((char '\'') *> string "()") *> return () <?> "nil"
 
 hashVal :: Parser LispVal
 hashVal = lexeme $ char '#'

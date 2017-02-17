@@ -36,7 +36,7 @@ main = do
       readExpr "#f" `shouldBe` (Right $ Bool False)
 
     it "Nil" $
-      readExpr "()" `shouldBe` (Right $ Nil)
+      readExpr "'()" `shouldBe` (Right $ Nil)
 
     it "S-Expr: homogenous list" $
       readExpr "(2 1 87)" `shouldBe`

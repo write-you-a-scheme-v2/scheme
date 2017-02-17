@@ -23,6 +23,9 @@ main = do
     it "Num Positive" $
       readExpr "112233" `shouldBe` (Right $ Number 112233)
 
+    it "Num Positive with Sign" $
+      readExpr "+12345" `shouldBe` (Right $ Number 12345)
+
     it "String" $
       readExpr "\"Gen L Organa\"" `shouldBe` (Right $ String "Gen L Organa")
 

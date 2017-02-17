@@ -201,10 +201,9 @@ eval all@(List [Atom "car", arg@(List (x:xs))]) =
 eval all@(List ((:) x xs)) = do
   env    <- ask
   funVar <- eval x
-  xVal   <- mapM eval  xs
   --liftIO $ TIO.putStr $ T.concat ["eval:\n  ", T.pack $ show all,"\n  * fnCall:  ", T.pack $ show x, "\n  * fnVar  ", T.pack $ show funVar,"\n  * args:  ",T.concat (T.pack . show <$> xVal)    ,T.pack "\n"]
   case funVar of
-      (Fun (IFunc internalFn)) -> internalFn xVal
+      (Fun (IFunc internalFn)) -> mapM eval xs >>= internalFn xVal
       (Lambda (IFunc definedFn) boundenv) -> local (const (boundenv <> env)) $ definedFn xs
 
       _                -> throw $ NotFunction funVar

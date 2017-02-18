@@ -2,7 +2,7 @@
 
 module Parser (
   readExpr,
-  readExprFile,
+  readExprFile
 ) where
 
 import LispVal
@@ -14,6 +14,8 @@ import qualified Text.Parsec.Language as Lang
 
 import Data.Functor.Identity (Identity)
 import qualified Data.Text as T
+import Data.Char (digitToInt)
+import Control.Monad (mzero)
 
 lexer :: Tok.GenTokenParser T.Text () Identity
 lexer = Tok.makeTokenParser style
@@ -22,84 +24,95 @@ style :: Tok.GenLanguageDef T.Text () Identity
 style = Lang.emptyDef {
   Tok.commentStart = "{-"
   , Tok.commentEnd = "-}"
-  , Tok.commentLine = "--"
-  , Tok.opStart = Tok.opLetter style
-  , Tok.opLetter = oneOf ":!#$%%&*+./<=>?@\\^|-~"
-  , Tok.identStart = letter <|>  oneOf "-+/*=|&><"
-  , Tok.identLetter = digit <|> letter <|> oneOf "?+=|&-/"
-  , Tok.reservedOpNames = [ "'", "\""]
+  , Tok.commentLine = ";"
+  , Tok.opStart = mzero
+  , Tok.opLetter = mzero
+  , Tok.identStart = letter <|> oneOf "!$%&*/:<=>?^_~"
+  , Tok.identLetter = digit <|> letter <|> oneOf "!$%&*/:<=>?^_~+-.@"
   }
 
--- pattern binding using record destructing !
-Tok.TokenParser { Tok.parens = m_parens
-           , Tok.identifier = m_identifier } = Tok.makeTokenParser style
+parens :: Parser a -> Parser a
+parens = Tok.parens lexer
 
-reservedOp :: T.Text -> Parser ()
-reservedOp op = Tok.reservedOp lexer $ T.unpack op
+whitespace :: Parser ()
+whitespace = Tok.whiteSpace lexer
 
-parseAtom :: Parser LispVal
-parseAtom = do
-  p <- m_identifier
-  return $ Atom $ T.pack p
+lexeme :: Parser a -> Parser a
+lexeme = Tok.lexeme lexer
 
-parseText :: Parser LispVal
-parseText = do
-  reservedOp "\""
-  p <- many1 $ noneOf "\""
-  reservedOp "\""
-  return $ String . T.pack $  p
+quoted :: Parser a -> Parser a
+quoted p = try (char '\'') *> p
 
-parseNumber :: Parser LispVal
-parseNumber = Number . read <$> many1 digit
+identifier :: Parser T.Text
+identifier = T.pack <$> (Tok.identifier lexer <|> specialIdentifier) <?> "identifier"
+  where
+  specialIdentifier :: Parser String
+  specialIdentifier = lexeme $ try $
+    string "-" <|> string "+" <|> string "..."
 
-parseNegNum :: Parser LispVal
-parseNegNum = do
-  char '-'
-  d <- many1 digit
-  return $ Number . negate . read $ d
+-- | The @Radix@ type consists of a base integer (e.g. @10@) and a parser for
+-- digits in that base (e.g. @digit@).
+type Radix = (Integer, Parser Char)
 
-parseList :: Parser LispVal
-parseList = List . concat <$> Text.Parsec.many parseExpr `sepBy` (char ' ' <|> char '\n')
+-- | Parse an integer, given a radix as output by @radix@.
+-- Copied from Text.Parsec.Token
+numberWithRadix :: Radix -> Parser Integer
+numberWithRadix (base, baseDigit) = do
+  digits <- many1 baseDigit
+  let n = foldl (\x d -> base*x + toInteger (digitToInt d)) 0 digits
+  seq n (return n)
 
-parseSExp :: Parser LispVal
-parseSExp = List . concat <$> m_parens (Text.Parsec.many parseExpr `sepBy` (char ' ' <|> char '\n'))
+decimal :: Parser Integer
+decimal = Tok.decimal lexer
 
-parseQuote :: Parser LispVal
-parseQuote = do
-  reservedOp "\'"
-  x <- parseExpr
-  return $ List [Atom "quote", x]
+-- | Parse a sign, return either @id@ or @negate@ based on the sign parsed.
+-- Copied from Text.Parsec.Token
+sign :: Parser (Integer -> Integer)
+sign = char '-' *> return negate
+   <|> char '+' *> return id
+   <|> return id
 
-parseExpr :: Parser LispVal
-parseExpr = parseReserved <|> parseNumber
-  <|> try parseNegNum
-  <|> parseAtom
-  <|> parseText
-  <|> parseQuote
-  <|> parseSExp
+intRadix :: Radix -> Parser Integer
+intRadix r = sign <*> numberWithRadix r
 
-parseReserved :: Parser LispVal
-parseReserved =
-      (reservedOp "Nil" >> return Nil)
-  <|> (reservedOp "#t" >> return (Bool True))
-  <|> (reservedOp "#f" >> return (Bool False))
+textLiteral :: Parser T.Text
+textLiteral = T.pack <$> Tok.stringLiteral lexer
 
-contents :: Parser a -> Parser a
-contents p = do
-  Tok.whiteSpace lexer
-  r <- p
-  eof
-  return r
+nil :: Parser ()
+nil = try ((char '\'') *> string "()") *> return () <?> "nil"
+
+hashVal :: Parser LispVal
+hashVal = lexeme $ char '#'
+  *> (char 't' *> return (Bool True)
+  <|> char 'f' *> return (Bool False)
+  <|> char 'b' *> (Number <$> intRadix (2, oneOf "01"))
+  <|> char 'o' *> (Number <$> intRadix (8, octDigit))
+  <|> char 'd' *> (Number <$> intRadix (10, digit))
+  <|> char 'x' *> (Number <$> intRadix (16, hexDigit))
+  <|> oneOf "ei" *> fail "Unsupported: exactness"
+  <|> char '(' *> fail "Unsupported: vector"
+  <|> char '\\' *> fail "Unsupported: char")
+
+
+lispVal :: Parser LispVal
+lispVal = hashVal
+  <|> Nil <$ nil
+  <|> Number <$> try (sign <*> decimal)
+  <|> Atom <$> identifier
+  <|> String <$> textLiteral
+  <|> _Quote <$> quoted lispVal
+  <|> List <$> parens manyLispVal
+
+manyLispVal :: Parser [LispVal]
+manyLispVal = lispVal `sepBy` whitespace
+
+_Quote :: LispVal -> LispVal
+_Quote x = List [Atom "quote", x]
+
+contents p = whitespace *> lexeme p <* eof
 
 readExpr :: T.Text -> Either ParseError LispVal
-readExpr = parse (contents parseExpr) "<stdin>"
+readExpr = parse (contents lispVal) "<stdin>"
 
-readExprFile :: T.Text -> Either ParseError LispVal
-readExprFile = parse (contents parseList) "<file>"
-
-fileToEvalForm :: Either ParseError LispVal -> Either ParseError LispVal
-fileToEvalForm (Right (List list)) = Right (List (Atom "begin" : list ))
-fileToEvalForm x = x
-
-parseFile :: T.Text -> Either ParseError LispVal
-parseFile = fileToEvalForm . readExprFile
+readExprFile :: SourceName -> T.Text -> Either ParseError LispVal
+readExprFile = parse (contents (List <$> manyLispVal))

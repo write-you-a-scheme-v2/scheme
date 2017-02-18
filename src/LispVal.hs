@@ -51,7 +51,7 @@ showVal val =
     (Number num)    -> T.pack $ show num
     (Bool True)     -> "#t"
     (Bool False)    -> "#f"
-    Nil             -> "Nil"
+    Nil             -> "'()"
     (List contents) -> T.concat ["(", unwordsList contents, ")"]
     (Fun _ )        -> "(internal function)"
     (Lambda _ _)    -> "(lambda function)"

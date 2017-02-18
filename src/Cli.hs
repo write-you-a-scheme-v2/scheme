@@ -17,7 +17,7 @@ runScript ::  FilePath -> IO ()
 runScript fname = do
   exists <- doesFileExist fname
   if exists
-  then TIO.readFile fname >>= evalFile
+  then TIO.readFile fname >>= evalFile fname
   else TIO.putStrLn "File does not exist."
 
 data LineOpts = UseReplLineOpts | RunScriptLineOpts String

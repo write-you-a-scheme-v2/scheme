@@ -28,6 +28,11 @@ Building the reference implementation.
 ```bash
 $ stack exec scheme
 ```
+Testing the reference implementation. (see test-hs/Spec.hs)
+
+```bash
+$ stack test
+```
 
 Debugging the reference implementation in GHCI.
 

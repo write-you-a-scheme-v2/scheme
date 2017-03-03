@@ -203,7 +203,7 @@ eval all@(List ((:) x xs)) = do
   funVar <- eval x
   --liftIO $ TIO.putStr $ T.concat ["eval:\n  ", T.pack $ show all,"\n  * fnCall:  ", T.pack $ show x, "\n  * fnVar  ", T.pack $ show funVar,"\n  * args:  ",T.concat (T.pack . show <$> xVal)    ,T.pack "\n"]
   case funVar of
-      (Fun (IFunc internalFn)) -> mapM eval xs >>= internalFn xVal
+      (Fun (IFunc internalFn)) -> mapM eval xs >>= internalFn 
       (Lambda (IFunc definedFn) boundenv) -> local (const (boundenv <> env)) $ definedFn xs
 
       _                -> throw $ NotFunction funVar

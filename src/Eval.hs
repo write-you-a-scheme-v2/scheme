@@ -126,8 +126,7 @@ getOdd (x:xs) = getEven xs
 applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal
 applyLambda expr params args = do
   env <- ask
-  argEval <- mapM eval args
-  local (const ((Map.fromList (zipWith (\a b -> (extractVar a,b)) params argEval)) <> env)) $ eval expr
+  local (const ((Map.fromList (zipWith (\a b -> (extractVar a,b)) params args)) <> env)) $ eval expr
 
 
 eval :: LispVal -> Eval LispVal
@@ -201,10 +200,11 @@ eval all@(List [Atom "car", arg@(List (x:xs))]) =
 eval all@(List ((:) x xs)) = do
   env    <- ask
   funVar <- eval x
+  xVal <- mapM eval xs
   --liftIO $ TIO.putStr $ T.concat ["eval:\n  ", T.pack $ show all,"\n  * fnCall:  ", T.pack $ show x, "\n  * fnVar  ", T.pack $ show funVar,"\n  * args:  ",T.concat (T.pack . show <$> xVal)    ,T.pack "\n"]
   case funVar of
-      (Fun (IFunc internalFn)) -> mapM eval xs >>= internalFn xVal
-      (Lambda (IFunc definedFn) boundenv) -> local (const (boundenv <> env)) $ definedFn xs
+      (Fun (IFunc internalFn)) -> internalFn xVal
+      (Lambda (IFunc definedFn) boundenv) -> local (const (boundenv <> env)) $ definedFn xVal
 
       _                -> throw $ NotFunction funVar
 

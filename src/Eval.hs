@@ -169,7 +169,7 @@ eval (List [Atom "let", List pairs, expr]) = do
   atoms <- mapM ensureAtom $ getEven pairs
   vals  <- mapM eval       $ getOdd  pairs
   local (const (Map.fromList (zipWith (\a b -> (extractVar a, b)) atoms vals) <> env))  $ evalBody expr
-eval (List (Atom "let":_) ) = throw $ BadSpecialForm "let funciton expects list of parameters and S-Expression body\n(let <pairs> <s-expr>)"
+eval (List (Atom "let":_) ) = throw $ BadSpecialForm "let function expects list of parameters and S-Expression body\n(let <pairs> <s-expr>)"
 
 
 eval (List [Atom "lambda", List params, expr]) = do

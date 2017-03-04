@@ -93,6 +93,7 @@ main = do
     wStd "test/test_cadadr.scm"      $ Number 42
     wStd "test/test_gt.scm"          $ List [ Bool True, Bool False]
     wStd "test/test_scope1.scm"      $ Number 413281
+    wStd "test/test_scope2.scm"      $ Number 11
     wStd "test/test_args.scm"        $ Number 105065
     wStd "test/test_fold.scm"        $ Number 42
     runExpr Nothing "test/define.scm"        $ Number 4

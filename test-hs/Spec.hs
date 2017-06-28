@@ -5,10 +5,11 @@ import LispVal
 import Parser
 import Eval
 
-import Test.Hspec
 import qualified Data.Text as T
 
+import Test.Hspec
 import System.IO.Unsafe
+
 
 main :: IO ()
 main = do
@@ -108,6 +109,7 @@ main = do
           $ Number 12
     tExprStd "(extra) fold call w/ append"  "(fold string-append \"Y\" '(\"com\" \"bin\" \"a\" \"tor\"))"
           $ String "Ycombinator"
+
 
 
 -- helper functions

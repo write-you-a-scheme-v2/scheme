@@ -1,26 +1,18 @@
 ---
 title: Testing our work
-date: November 28, 2016
+date: June 28, 2017
 author: Adam Wespiser
 ---
 
 ------------
 > *Testing shows the presence, not the absence of bugs* **Dijkstra**
 
-#### WIP :: TODO
-- [x] try move to tasty?
-- [ ] add survey of Haskell testing frameworks
-- [ ] talk about unsafePerformIO / use Test.HSpec.Lifted
-- [ ] write tests for Exceptions for LispException
-- [ ] include tests that what use on quickcheck
-- [ ] walk through code, give explanation
-- [ ] think about reorganizing code to show automatic spec finding?
-
 
 ## Testing w/ HSpec
 By implementing a language like Scheme, we lose the safety of Haskell's type system and need an alternative guaranty of behavior.
-Is about writing tests to ensure our dynamically typed Scheme is behaving as we expect.  
-Testing is easily integrated into a Stack project, and Haskell's many frameworks satisfy a multitude of testing requirements.  
+This chapter is about writing tests to ensure our dynamically typed Scheme is behaving as we expect. 
+Testing can be easily integrated into a Stack project, and Haskell's many frameworks satisfy a multitude of testing requirements. 
+We will be looking at a few testing options, `HSpec`, and `Tasty.Golden`, for "golden", or file based tests. 
 
 #### Testing Setup
 To setup testing, the following is added to `scheme.cabal`
@@ -38,15 +30,30 @@ test-Suite test
 ```
 This enables `stack test` and `stack build --test` to automatically run the tests found in  [test-hs/Spec.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test-hs/Spec.hs)
 Running one of these commands will build the project, run the tests, and show the output.
-Phew! All tests pass! (let me know if they don't)
+Phew! All tests pass! (let me know if they don't)    
+
+```
+test-Suite test-golden
+  type: exitcode-stdio-1.0
+  main-is: Golden.hs
+  hs-source-dirs: test-hs
+  default-language: Haskell2010
+  build-depends:
+    base         >= 4.8 && < 5.0,
+    text         >= 1.2 && <1.3,
+    tasty        >= 0.11 && <0.12,
+    tasty-golden >= 2.3 && <2.5,
+    bytestring   >= 0.10.8 && <0.11,
+    scheme == 0.1
+```
+Now we can run `stack test --test-golden` to run the tests from [test-hs/Golden.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test-hs/Golden.hs)
+Running `stack test` will perform both test suites. 
 Let's look further into how testing is done, and the libraries used.    
 
 
 
 #### Haskell Testing Frameworks
-Haskell has a few good testing frameworks
-Here's a few different ones and what they do:    
-Quickcheck.    
+Haskell has a few good testing frameworks, here are two of them we will use, and what they do:    
 [Tasty](http://documentup.com/feuerbach/tasty)  Test framework that includes HSpec, Quickcheck, HUnit, and SmallChcek, as well as others.   
 [HSpec](https://wiki.haskell.org/HUnit_1.0_User's_Guide). A Simple embedded DSL for unit testing.
 

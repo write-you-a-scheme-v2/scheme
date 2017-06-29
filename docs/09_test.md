@@ -8,13 +8,22 @@ author: Adam Wespiser
 > *Testing shows the presence, not the absence of bugs* **Dijkstra**
 
 
-## Testing w/ HSpec
-By implementing a language like Scheme, we lose the safety of Haskell's type system and need an alternative guaranty of behavior.
-This chapter is about writing tests to ensure our dynamically typed Scheme is behaving as we expect. 
-Testing can be easily integrated into a Stack project, and Haskell's many frameworks satisfy a multitude of testing requirements. 
-We will be looking at a few testing options, `HSpec`, and `Tasty.Golden`, for "golden", or file based tests. 
+## Testing w/ Haskell
+Within dynamically typed language like Scheme, we lose the safety of Haskell's type system and need an alternative guaranty of behavior.
+This chapter is about writing tests to ensure our Scheme is behaving as we expect.
+Fortunately, testing can be easily integrated into a Stack project, and Haskell's many frameworks satisfy a multitude of testing requirements.
+We will be looking at a few testing options, and implementing both `HSpec`, and `Tasty.Golden`.
+There are two files for testing, [test-hs/Spec.hs](https://github.com/write-you-a-scheme-v2/scheme/blob/master/test-hs/Spec.hs) which contains the parser tests and golden file tests, and [test-hs/Golden.hs](https://github.com/write-you-a-scheme-v2/scheme/blob/master/test-hs/Golden.hs), that contains just the golden file tests.
 
-#### Testing Setup
+#### Haskell Testing Frameworks
+Haskell has a few good testing frameworks, here are a few of them, and what they do:    
+[HUnit](https://wiki.haskell.org/HUnit_1.0_User's_Guide). A Simple embedded DSL for unit testing.    
+[HSpec](http://hspec.github.io/) is a straightfoward testing framework, and gives great mileage for its complexity.
+HSpec is inspired by [RSpec](http://rspec.info/) a testing library for Ruby, and the two show remarkable similarity.    
+[QuickCheck](http://hspec.github.io/quickcheck.html). Tests properties of a program using randomly generated values.   
+[Tasty](http://documentup.com/feuerbach/tasty)  Test framework that includes `HSpec`, `Quickcheck`, `HUnit`, and `SmallChcek`, as well as others, including `Golden`, which we will use for testing against a value within a file.   
+
+#### Testing Setup within Stack
 To setup testing, the following is added to `scheme.cabal`
 ```haskell
 
@@ -28,7 +37,7 @@ test-Suite test
     text         >= 1.2 && <1.3,
     hspec        >= 2.2 && < 2.3,
 ```
-This enables `stack test` and `stack build --test` to automatically run the tests found in  [test-hs/Spec.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test-hs/Spec.hs)
+This enables `stack test` and `stack build --test` to automatically run the `HSpec` tests found in  [test-hs/Spec.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test-hs/Spec.hs)
 Running one of these commands will build the project, run the tests, and show the output.
 Phew! All tests pass! (let me know if they don't)    
 
@@ -47,23 +56,15 @@ test-Suite test-golden
     scheme == 0.1
 ```
 Now we can run `stack test --test-golden` to run the tests from [test-hs/Golden.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test-hs/Golden.hs)
-Running `stack test` will perform both test suites. 
+Running `stack test` will perform both test suites.
 Let's look further into how testing is done, and the libraries used.    
 
 
-
-#### Haskell Testing Frameworks
-Haskell has a few good testing frameworks, here are two of them we will use, and what they do:    
-[Tasty](http://documentup.com/feuerbach/tasty)  Test framework that includes HSpec, Quickcheck, HUnit, and SmallChcek, as well as others.   
-[HSpec](https://wiki.haskell.org/HUnit_1.0_User's_Guide). A Simple embedded DSL for unit testing.
-
-
-##### Hspec
-[HSpec](http://hspec.github.io/) is a straightfoward testing framework, and gives great mileage for its complexity.
-HSpec is inspired by [RSpec](http://rspec.info/) a testing library for Ruby, and the two show remarkable similarity.
-However, Hspec also includes the ability to include to test properties using [QuickCheck](http://hspec.github.io/quickcheck.html).
-To describe tests, we denote a block of tests, then the testing expression along with the expected output.
-```Haskell
+#### HSpec Setup
+`HSpec`'s strength is its simplicity, and ability to compare the results of arbitrary functions against a known output.
+We will use it to test internal components of our Scheme, particularly the parser, which contains a depth of logic orthogonal to the rest of the code base.    
+ First, let's take a look at the general form of an `HSpec` test.    
+ ```Haskell
 main :: IO ()
 main = do
   hspec $ describe "This is a block of tests" $ do
@@ -77,12 +78,10 @@ main = do
 `shouldBe`  states that a specific expression matches the
 
 
-[lifted functions  for HSpec](http://hackage.haskell.org/package/hspec-expectations-lifted-0.8.2/docs/Test-Hspec-Expectations-Lifted.html)
-
-#### Our Tests
- Two aspects of our Scheme will be tested in [test-hs/Spec.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test-hs/Spec.hs): The parser, and evaluation.
+#### HSpec Tests
+ Two internal aspects of our Scheme will be tested in [test-hs/Spec.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test-hs/Spec.hs): The parser, and evaluation.
 These two features lend themselves easily to testing, and together, cover ensure functionality meets expectations.  
-Another view is that these tests allow us to modify the project without changing the features we worked so hard to implement, test driven development (tdd).
+Another view is that these tests allow us to modify the project without changing the features we worked so hard to implement, test driven development (TDD).
 The `./test` folder in our project contains the Scheme expressions run during the tests.
 Besides files containing expressions, we can also specify expressions as `T.Text`, and `define` blocks without loading the standard library.
 All of the parsing logic, and evaluation of simple expressions, special forms, and features like lexical scope are included in the scheme expressions found in the test folder.
@@ -103,16 +102,86 @@ hspec $ describe "src/Parser.hs" $ do
 
 ```
 
-#### [Eval](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Parser.hs)  Tests
+#### [Eval](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs)  Tests
 Alright, on to evaluation.
 Our task here is ensuring there are no errors, bugs, or unspecified behavior in our Scheme...
 If there were only a way to incorporate a system that protects us from invalid programs...
 Type systems be damned! *We are all that is Scheme!*  
 To test evaluation, we are going to either: read and parse from a file or inline text, then run with or without loading the standard library.
 This way, we have flexibility over testing conditions, especially considering the standard library will be subject to the majority of iterative testing and revision efforts.
-We will
-** test / define evalargs fix  **  
-** operators / special forms **
 
-#### Let's Make Some Tests!
+```Haskell
+hspec $ describe "src/Eval.hs" $ do
+   wStd "test/add.scm"              $ Number 3
+   wStd "test/if_alt.scm"           $ Number 2
+   runExpr Nothing "test/define.scm"        $ Number 4
+   runExpr Nothing "test/define_order.scm"  $ Number 42
+```
+This is all fine, but requires a lot of helper functions to work, specifically the following:
+```Haskell
+wStd :: T.Text -> LispVal -> SpecWith ()
+wStd = runExpr (Just "test/stdlib_mod.scm")
+
+-- run expr w/o stdLib
+tExpr :: T.Text -> T.Text -> LispVal -> SpecWith ()
+tExpr note expr val =
+    it (T.unpack note) $ evalVal `shouldBe` val
+    where evalVal = (unsafePerformIO $ runASTinEnv basicEnv $ fileToEvalForm "" expr)
+
+
+runExpr :: Maybe T.Text -> T.Text -> LispVal -> SpecWith ()
+runExpr  std file val =
+    it (T.unpack file) $ evalVal  `shouldBe` val
+    where evalVal = unsafePerformIO $ evalTextTest std file
+
+evalTextTest :: Maybe T.Text -> T.Text -> IO LispVal --REPL
+evalTextTest (Just stdlib) file= do
+  stdlib <- getFileContents $ T.unpack  stdlib
+  f      <- getFileContents $ T.unpack file
+  runASTinEnv basicEnv $ textToEvalForm stdlib  f
+
+evalTextTest Nothing file = do
+  f <- getFileContents $ T.unpack file
+  runASTinEnv basicEnv $ fileToEvalForm (T.unpack file) f
+  ```
+What's troublesome here is the use of `unsafePerformIO` to read file contents and shed the `IO` monad.
+Stepping back, we are coding a test within a specific file, evaluating it with or without the standard library, then comparing it to a value compiled into the testing file.
+If we can admit `HSpec` is good at testing internals like the parser, its also fair to say its not great at this process of "golden tests" for our Scheme language.
+Fortunately there is a better way that allows us to run a test Scheme file and compare the result against a 'golden' value in a stored file!
+
+#### Tasty Golden Tests
+The package [Tasty.Golden](https://hackage.haskell.org/package/tasty-golden-2.3.1.1/docs/Test-Tasty-Golden.html) gives us a function:
+```Haskell
+goldenVsString :: TestName -- ^ test name
+  -> FilePath -- ^ path to the «golden» file (the file that contains correct output)
+  -> IO LBS.ByteString -- ^ action that returns a string
+  -> TestTree -- ^ the test verifies that the returned string is the same as the golden file contents
+  ```
+This allows us to run the tests located in [./test](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test) and compare the results to the likewise named files in [./test/ans](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test/ans).    
+
+Looking in [test-hs/Golden.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test-hs/Golden.hs), we can see a drastic simplification compared to `HSpec`!
+```Haskell
+import Test.Tasty
+import Test.Tasty.Golden
+import qualified Data.ByteString.Lazy.Char8 as C
+
+main :: IO ()
+main = defaultMain tests
+
+tests :: TestTree
+tests = testGroup "Golden Tests"
+  [   tastyGoldenRun "add"           "test/add.scm"              "test/ans/add.txt"
+    , tastyGoldenRun "if/then"       "test/if_alt.scm"           "test/ans/if_alt.txt"
+    , tastyGoldenRun "let"           "test/let.scm"              "test/ans/let.txt"
+    ...
+  ]
+
+tastyGoldenRun :: TestName -> T.Text -> FilePath -> TestTree
+tastyGoldenRun testName testFile correct = goldenVsString testName correct  (evalTextTest (Just "lib/stdlib.scm") (testFile) >>= (return . C.pack .  show))
+
+```
+Where the `evalTextTest` function from `HSpec` is used again.
+
+
+#### Let's Wrap Things Up !
 [home](home.html)...[back](08_stdlib.html)...[next](10_conclusion.html)

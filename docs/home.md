@@ -16,5 +16,5 @@ author: Adam Wespiser
   test out our Scheme.    
 * [Input/Output](../wyas/07_io.html) Reading and writing to files for both Scheme commands and the reading of program files.    
 * [Standard Library](../wyas/08_stdlib.html) Creation of Scheme standard library from primitive functions.    
-* Test [(WIP)](../wyas/09_test.html) Confirm Scheme syntax and semantics.    
-* (Conclusion: Where We Go From Here) We conclude the project.  
+* [Test](../wyas/09_test.html) Confirm Scheme syntax and semantics.    
+* [Conclusion](../wyas/10_conclusion.html) We conclude the project.  

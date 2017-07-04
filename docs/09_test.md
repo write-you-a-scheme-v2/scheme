@@ -41,7 +41,7 @@ This enables `stack test` and `stack build --test` to automatically run the `HSp
 Running one of these commands will build the project, run the tests, and show the output.
 Phew! All tests pass! (let me know if they don't)    
 
-```
+```haskell
 test-Suite test-golden
   type: exitcode-stdio-1.0
   main-is: Golden.hs
@@ -64,7 +64,8 @@ Let's look further into how testing is done, and the libraries used.
 `HSpec`'s strength is its simplicity, and ability to compare the results of arbitrary functions against a known output.
 We will use it to test internal components of our Scheme, particularly the parser, which contains a depth of logic orthogonal to the rest of the code base.    
  First, let's take a look at the general form of an `HSpec` test.    
- ```Haskell
+
+```haskell
 main :: IO ()
 main = do
   hspec $ describe "This is a block of tests" $ do
@@ -72,10 +73,11 @@ main = do
       textExpr input1 `shouldBe` "result of test 1"
     it "Test 2" $
       textExpr input2 `shouldBe` "result of test 1"
-```   
-`describe` gives a name to the block of tests, which is printed out when the tests are run.           
-`it`  sets a specific test.    
-`shouldBe`  states that a specific expression matches the
+```
+
+ * `describe` gives a name to the block of tests, which is printed out when the tests are run.           
+ * `it`  sets a specific test.    
+ * `shouldBe`  states that a specific expression matches the test expression.    
 
 
 #### HSpec Tests
@@ -89,7 +91,7 @@ All of the parsing logic, and evaluation of simple expressions, special forms, a
 #### [Parser](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Parser.hs) Tests
 The first set of tests ensures text is properly parsed into `LispVal` using `readExpr`.
 To organize this set of tests, the `hspec` function is used, along with `describe` to give the set of tests an suitable description.
-Many constructions of `LispVal` are tested, and here were divide that list into S-Expression and non-S-Expression values for simpler testing.
+Many constructions of `LispVal` are tested, and here were divide that list into S-Expression and non-S-Expression values for simpler testing.    
 
 ```Haskell
 hspec $ describe "src/Parser.hs" $ do
@@ -99,7 +101,6 @@ hspec $ describe "src/Parser.hs" $ do
   it "S-Expr: heterogenous list" $
     readExpr "(stromTrooper \"Fn\" 2 1 87)" `shouldBe`
       (Right $ List [Atom "stromTrooper", String "Fn", Number 2, Number 1,Number 87])
-
 ```
 
 #### [Eval](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/Eval.hs)  Tests
@@ -118,6 +119,7 @@ hspec $ describe "src/Eval.hs" $ do
    runExpr Nothing "test/define_order.scm"  $ Number 42
 ```
 This is all fine, but requires a lot of helper functions to work, specifically the following:
+
 ```Haskell
 wStd :: T.Text -> LispVal -> SpecWith ()
 wStd = runExpr (Just "test/stdlib_mod.scm")
@@ -143,7 +145,8 @@ evalTextTest (Just stdlib) file= do
 evalTextTest Nothing file = do
   f <- getFileContents $ T.unpack file
   runASTinEnv basicEnv $ fileToEvalForm (T.unpack file) f
-  ```
+```
+
 What's troublesome here is the use of `unsafePerformIO` to read file contents and shed the `IO` monad.
 Stepping back, we are coding a test within a specific file, evaluating it with or without the standard library, then comparing it to a value compiled into the testing file.
 If we can admit `HSpec` is good at testing internals like the parser, its also fair to say its not great at this process of "golden tests" for our Scheme language.
@@ -151,15 +154,18 @@ Fortunately there is a better way that allows us to run a test Scheme file and c
 
 #### Tasty Golden Tests
 The package [Tasty.Golden](https://hackage.haskell.org/package/tasty-golden-2.3.1.1/docs/Test-Tasty-Golden.html) gives us a function:
+
 ```Haskell
 goldenVsString :: TestName -- ^ test name
   -> FilePath -- ^ path to the «golden» file (the file that contains correct output)
   -> IO LBS.ByteString -- ^ action that returns a string
   -> TestTree -- ^ the test verifies that the returned string is the same as the golden file contents
-  ```
+```
+
 This allows us to run the tests located in [./test](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test) and compare the results to the likewise named files in [./test/ans](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test/ans).    
 
 Looking in [test-hs/Golden.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/test-hs/Golden.hs), we can see a drastic simplification compared to `HSpec`!
+
 ```Haskell
 import Test.Tasty
 import Test.Tasty.Golden
@@ -180,6 +186,7 @@ tastyGoldenRun :: TestName -> T.Text -> FilePath -> TestTree
 tastyGoldenRun testName testFile correct = goldenVsString testName correct  (evalTextTest (Just "lib/stdlib.scm") (testFile) >>= (return . C.pack .  show))
 
 ```
+
 Where the `evalTextTest` function from `HSpec` is used again.
 
 

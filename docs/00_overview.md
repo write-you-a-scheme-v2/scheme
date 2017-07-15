@@ -159,7 +159,7 @@ We will implement them later as part of the standard library and discuss the tra
 ### Mathematics
 Mathematical functions can take 2 or more arguments.  
 `(* 60 9)` => `69`  
-`(+ 10 30 2))` => `42`  
+`(+ 10 30 2)` => `42`  
 
 ### Quote
 `quote` is a special form that delays evaluation on its argument.  

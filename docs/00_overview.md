@@ -158,7 +158,7 @@ We will implement them later as part of the standard library and discuss the tra
 
 ### Mathematics
 Mathematical functions can take 2 or more arguments.  
-`(* 60 9)` => `69`  
+`(* 60 9)` => `540`  
 `(+ 10 30 2)` => `42`  
 
 ### Quote

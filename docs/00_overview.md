@@ -195,7 +195,7 @@ It's not the most modern, but its complete enough to work.
 #### [Understanding Check]
 * What form does Scheme use to represent data? what about code?
 * How would you create a function in Scheme? How about set a variable?
-* If Scheme is a Dynamically-Typed Interpreted Functional Language? What does this make C, or your favorite programming language?
+* If Scheme is a Dynamically-Typed Interpreted Functional Language, what does this make C, or your favorite programming language?
 * Can you rearrange `let` expressions into `lambda`? What about `lambda` into `let`?
 * Write out an explanation and example that demonstrates lexical scope using a `lambda` expression.
 

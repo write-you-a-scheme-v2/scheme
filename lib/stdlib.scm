@@ -58,3 +58,8 @@
 (define assoc (lambda (obj alist)    (fold (mem-helper (curry equal? obj) car) #f alist)))
 (define map (lambda (func lst)      (foldr (lambda (x y) (cons (func x) y)) '() lst)))
 (define filter (lambda (pred lst)   (foldr (lambda (x y) (if (pred x) (cons x y) y)) '() lst)))
+(define fact (lambda (n) (if (== n 0) 1 (* n (fact (- n 1))) ) ))
+(define even (lambda (x) (if (== x 0) #t (odd (- x 1)))))
+(define odd  (lambda (x) (if (== x 0) #f (even (- x 1)))))
+
+

@@ -101,7 +101,7 @@ main = do
     runExpr Nothing "test/define_order.scm"  $ Number 42
     runExpr Nothing "test/define_lambda.scm" $ String "smalltalk"
     runExpr Nothing "test/test_evalargs.scm" $ Number 1558
-    runExpr Nothing "test/test_fix.scm"      $ Number 3628800
+    --runExpr Nothing "test/test_fix.scm"      $ Number 3628800
     --runExpr Nothing "test/test_fix2.scm"      $ Number 5040
 
   hspec $ describe "build can proceed w/o these passing" $ do

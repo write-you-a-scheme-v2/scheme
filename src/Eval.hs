@@ -29,12 +29,15 @@ import Text.Parsec
 import Control.Monad.Reader
 import Control.Exception
 
-basicEnv :: Map.Map T.Text LispVal
-basicEnv = Map.fromList $ primEnv
+funcEnv :: Map.Map T.Text LispVal
+funcEnv = Map.fromList $ primEnv
           <> [("read" , Fun $ IFunc $ unop readFn),
              ("parse", Fun $ IFunc $ unop parseFn),
              ("eval", Fun $ IFunc $ unop eval),
              ("show", Fun $ IFunc $ unop (return . String . showVal))]
+
+basicEnv :: EnvCtx
+basicEnv = (Map.empty, funcEnv)
 
 readFn :: LispVal -> Eval LispVal
 readFn (String txt) = lineToEvalForm txt
@@ -101,8 +104,8 @@ evalText textExpr = do
 
 getVar :: LispVal ->  Eval LispVal
 getVar (Atom atom) = do
-  env <- ask
-  case Map.lookup atom env of
+  (env,fenv) <- ask
+  case Map.lookup atom (Map.union fenv env) of -- lookup, but prefer functions
       Just x  -> return x
       Nothing -> throw $ UnboundVar atom
 getVar n = throw $ TypeMismatch  "failure to get variable: " n
@@ -123,16 +126,25 @@ getOdd :: [t] -> [t]
 getOdd [] = []
 getOdd (x:xs) = getEven xs
 
+
+-- params, args,
 applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal
 applyLambda expr params args = do
-  env <- ask
-  local (const ((Map.fromList (zipWith (\a b -> (extractVar a,b)) params args)) <> env)) $ eval expr
+  (env, fenv) <- ask
+  let newEnv = Map.fromList $ Prelude.filter (not . isLambda . snd) (zipWith (\a b -> (extractVar a,b)) params args)
+  let newFenv = Map.fromList $ Prelude.filter (isLambda . snd) (zipWith (\a b -> (extractVar a,b)) params args)
+  local (const (newEnv <> env, newFenv <> fenv)) $ eval expr
+
+isLambda :: LispVal -> Bool
+isLambda (List ((Atom "lambda"):_)) = True
+isLambda _  = False
 
 
 eval :: LispVal -> Eval LispVal
 eval (List [Atom "dumpEnv", x]) = do
-  env <- ask
+  (env, fenv) <- ask
   liftIO $ print $  toList env
+  liftIO $ print $  toList fenv
   eval x
 eval (Number i) = return $ Number i
 eval (String s) = return $ String s
@@ -157,23 +169,29 @@ eval args@(List ( (:) (Atom "if") _))  = throw $ BadSpecialForm "(if <bool> <s-e
 eval (List [Atom "begin", rest]) = evalBody rest
 eval (List ((:) (Atom "begin") rest )) = evalBody $ List rest
 
-eval (List [Atom "define", varExpr, expr]) = do --top-level define
-  env     <- ask
+eval (List [Atom "define", varExpr, defExpr]) = do --top-level define
+  (env, fenv)     <- ask
   varAtom <- ensureAtom varExpr
-  evalVal <- eval expr
-  local (const $ Map.insert (extractVar varAtom) evalVal env) $ return varExpr
+  evalVal <- eval defExpr
+  --local (const $ Map.insert (extractVar varAtom) evalVal env) $ return varExpr
+  case isLambda defExpr of
+    False ->  local (const $ (Map.insert (extractVar varAtom) evalVal env, fenv)) $ return varExpr
+    True ->  local (const $ (env, Map.insert (extractVar varAtom) evalVal fenv)) $ return varExpr
 
 eval (List [Atom "let", List pairs, expr]) = do
-  env   <- ask
+  (env, fenv)   <- ask
   atoms <- mapM ensureAtom $ getEven pairs
   vals  <- mapM eval       $ getOdd  pairs
-  local (const (Map.fromList (zipWith (\a b -> (extractVar a, b)) atoms vals) <> env))  $ evalBody expr
+  let newEnv = Map.fromList $ Prelude.filter (not . isLambda . snd) (zipWith (\a b -> (extractVar a,b)) atoms vals)
+  let newFenv = Map.fromList $ Prelude.filter (isLambda . snd) (zipWith (\a b -> (extractVar a,b)) atoms vals)
+  local (const (newEnv <> env, newFenv <> fenv))  $ evalBody expr
 eval (List (Atom "let":_) ) = throw $ BadSpecialForm "let function expects list of parameters and S-Expression body\n(let <pairs> <s-expr>)"
 
 
 eval (List [Atom "lambda", List params, expr]) = do
-  envLocal <- ask
-  return  $ Lambda (IFunc $ applyLambda expr params) envLocal
+  (env, fenv) <- ask
+  -- return  $ Lambda (IFunc $ applyLambda expr params) envLocal
+  return $ LambdaOpen expr params (env, fenv)
 eval (List (Atom "lambda":_) ) = throw $ BadSpecialForm "lambda function expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)"
 
 
@@ -198,13 +216,14 @@ eval all@(List [Atom "car", arg@(List (x:xs))]) =
 
 
 eval all@(List ((:) x xs)) = do
-  env    <- ask
+  (env, fenv)   <- ask
   funVar <- eval x
   xVal <- mapM eval xs
   --liftIO $ TIO.putStr $ T.concat ["eval:\n  ", T.pack $ show all,"\n  * fnCall:  ", T.pack $ show x, "\n  * fnVar  ", T.pack $ show funVar,"\n  * args:  ",T.concat (T.pack . show <$> xVal)    ,T.pack "\n"]
   case funVar of
       (Fun (IFunc internalFn)) -> internalFn xVal
-      (Lambda (IFunc definedFn) boundenv) -> local (const (boundenv <> env)) $ definedFn xVal
+      --(Lambda (IFunc definedFn) boundenv) -> local (const (boundenv)) $ definedFn xVal
+      (LambdaOpen expr params (benv, bfenv)) -> local (const (benv,fenv)) $ (applyLambda expr params) xVal
 
       _                -> throw $ NotFunction funVar
 
@@ -213,13 +232,19 @@ eval x = throw $ Default  x --fall thru
 evalBody :: LispVal -> Eval LispVal
 evalBody x@(List [List ((:) (Atom "define") [Atom var, defExpr]), rest]) = do
   evalVal <- eval defExpr
-  env     <- ask
-  local (const $ Map.insert var evalVal env) $ eval rest
+  liftIO $ TIO.putStr $ T.concat ["eval:\n  ", T.pack $ show evalVal,"\n  * fnCall:  ", T.pack $ show var, "\n  * fnVar  ", T.pack $ show defExpr, "\n"]
+  (env, fenv)     <- ask
+  -- local (const $ Map.insert var evalVal env) $ eval rest
+  case isLambda defExpr of
+    False ->  local (const $ (Map.insert var evalVal env, fenv)) $ eval rest
+    True ->  local (const $ (env, Map.insert var evalVal fenv)) $ eval rest
 
 evalBody x@(List ((:) (List ((:) (Atom "define") [Atom var, defExpr])) rest)) = do
   --liftIO $ print x
   evalVal <- eval defExpr
-  env     <- ask
-  local (const $ Map.insert var evalVal env) $ evalBody $ List rest
+  (env, fenv)     <- ask
+  case isLambda defExpr of
+    False ->  local (const $ (Map.insert var evalVal env, fenv)) $ evalBody $ List rest
+    True ->  local (const $ (env, Map.insert var evalVal fenv)) $ evalBody $ List rest
 
 evalBody x = eval x

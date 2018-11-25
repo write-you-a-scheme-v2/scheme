@@ -30,12 +30,12 @@ import Text.Parsec
 import Control.Monad.Reader
 import Control.Exception
 
-funcEnv :: Map.Map T.Text LispVal
+funcEnv :: Map.Map T.Text IFunc
 funcEnv = Map.fromList $ primEnv
-          <> [("read" , Fun $ IFunc $ unop readFn),
-             ("parse", Fun $ IFunc $ unop parseFn),
-             ("eval", Fun $ IFunc $ unop eval),
-             ("show", Fun $ IFunc $ unop (return . String . showVal))]
+          <> [("read" ,  IFunc $ unop readFn),
+             ("parse",  IFunc $ unop parseFn),
+             ("eval",  IFunc $ unop eval),
+             ("show",  IFunc $ unop (return . String . showVal))]
 
 basicEnv :: EnvCtx
 basicEnv = EnvCtx Map.empty funcEnv
@@ -106,7 +106,7 @@ evalText textExpr = do
 getVar :: LispVal ->  Eval LispVal
 getVar (Atom atom) = do
   EnvCtx{..} <- ask
-  case Map.lookup atom (Map.union fenv env) of -- lookup, but prefer functions
+  case Map.lookup atom (Map.union env (Fun <$> fenv)) of -- lookup, but prefer functions
       Just x  -> return x
       Nothing -> throw $ UnboundVar atom
 getVar n = throw $ TypeMismatch  "failure to get variable: " n
@@ -131,13 +131,19 @@ getOdd (x:xs) = getEven xs
 applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal
 applyLambda expr params args = bindArgsEval params args expr
 
+stripToFunc :: LispVal -> IFunc
+stripToFunc (Lambda ifunc _) = ifunc
+stripToFunc (Fun ifunc) = ifunc
+stripToFunc x = throw $ TypeMismatch "Expected Func to be stored in Fenv" x
 
 bindArgsEval :: [LispVal] -> [LispVal] -> LispVal -> Eval LispVal
 bindArgsEval params args expr = do
   EnvCtx{..} <- ask
   let newVars = zipWith (\a b -> (extractVar a,b)) params args
   let (newEnv, newFenv) =  Map.partition (not . isLambda) $ Map.fromList newVars
-  local (const $ EnvCtx (newEnv <> env) (newFenv <> fenv)) $ eval expr
+  fenvN <- mapM eval newFenv
+  liftIO $ TIO.putStr $ T.concat [T.pack $ show newEnv, "\n"]
+  local (const $ EnvCtx (newEnv <> env) ((stripToFunc <$> fenvN) <> fenv)) $ eval expr
 
 
 isLambda :: LispVal -> Bool
@@ -149,7 +155,7 @@ eval :: LispVal -> Eval LispVal
 eval (List [Atom "dumpEnv", x]) = do
   EnvCtx{..} <- ask
   liftIO $ print $  toList env
-  liftIO $ print $  toList fenv
+  --liftIO $ print $  toList fenv
   eval x
 eval (Number i) = return $ Number i
 eval (String s) = return $ String s
@@ -229,8 +235,8 @@ eval x = throw $ Default  x --fall thru
 
 
 updateEnv :: T.Text -> LispVal -> EnvCtx -> EnvCtx
-updateEnv var e@(Fun _) EnvCtx{..} =  EnvCtx env $ Map.insert var e fenv
-updateEnv var e@(Lambda _ _) EnvCtx{..} = EnvCtx env $ Map.insert var e fenv
+updateEnv var e@(Fun f) EnvCtx{..} =  EnvCtx env $ Map.insert var f  fenv
+updateEnv var e@(Lambda f (EnvCtx lenv lfenv)) EnvCtx{..} = EnvCtx env $ Map.insert var f lfenv
 updateEnv var e  EnvCtx{..} = EnvCtx (Map.insert var e env) fenv
 
 evalBody :: LispVal -> Eval LispVal

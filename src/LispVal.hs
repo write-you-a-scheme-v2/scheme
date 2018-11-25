@@ -18,7 +18,7 @@ import Control.Exception
 import Control.Monad.Reader
 
 type ValCtx = Map.Map T.Text LispVal
-type FnCtx  = Map.Map T.Text LispVal
+type FnCtx  = Map.Map T.Text IFunc
 
 
 data EnvCtx = EnvCtx

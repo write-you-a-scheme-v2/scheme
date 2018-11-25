@@ -14,12 +14,12 @@ import Network.HTTP
 import Control.Monad.Except
 import Control.Exception hiding (handle)
 
-type Prim   = [(T.Text, LispVal)]
+type Prim   = [(T.Text, IFunc)]
 type Unary  = LispVal -> Eval LispVal
 type Binary = LispVal -> LispVal -> Eval LispVal
 
-mkF :: ([LispVal] -> Eval LispVal) -> LispVal
-mkF = Fun . IFunc
+mkF :: ([LispVal] -> Eval LispVal) -> IFunc
+mkF = IFunc
 
 primEnv :: Prim
 primEnv = [

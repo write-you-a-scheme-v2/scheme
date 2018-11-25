@@ -5,7 +5,7 @@ module LispVal (
   LispVal(..),
   Eval(..),
   IFunc(..),
-  EnvCtx,
+  EnvCtx(..),
   LispException(..),
   showVal,
 ) where
@@ -15,14 +15,16 @@ import qualified Data.Text as T
 import qualified Data.Map as Map
 
 import Control.Exception
---import Control.Monad.Except
 import Control.Monad.Reader
 
 type ValCtx = Map.Map T.Text LispVal
 type FnCtx  = Map.Map T.Text LispVal
 
 
-type EnvCtx = (ValCtx, FnCtx)
+data EnvCtx = EnvCtx
+  { env :: ValCtx
+  , fenv :: FnCtx
+  } deriving (Eq)
 
 newtype Eval a = Eval { unEval :: ReaderT EnvCtx IO a }
   deriving (Monad, Functor, Applicative, MonadReader EnvCtx,  MonadIO)
@@ -34,7 +36,6 @@ data LispVal
   | String T.Text
   | Fun IFunc
   | Lambda IFunc EnvCtx
-  | LambdaOpen LispVal [LispVal] EnvCtx
   | Nil
   | Bool Bool
   deriving (Typeable,Eq)
@@ -60,7 +61,6 @@ showVal val =
     (List contents) -> T.concat ["(", unwordsList contents, ")"]
     (Fun _ )        -> "(internal function)"
     (Lambda _ _)    -> "(lambda function)"
-    (LambdaOpen _ _ _) -> "(open lambda function)"
 
 
 unwordsList :: [LispVal] -> T.Text

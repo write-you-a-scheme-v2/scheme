@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Eval (
   evalText,
@@ -37,7 +38,7 @@ funcEnv = Map.fromList $ primEnv
              ("show", Fun $ IFunc $ unop (return . String . showVal))]
 
 basicEnv :: EnvCtx
-basicEnv = (Map.empty, funcEnv)
+basicEnv = EnvCtx Map.empty funcEnv
 
 readFn :: LispVal -> Eval LispVal
 readFn (String txt) = lineToEvalForm txt
@@ -104,7 +105,7 @@ evalText textExpr = do
 
 getVar :: LispVal ->  Eval LispVal
 getVar (Atom atom) = do
-  (env,fenv) <- ask
+  EnvCtx{..} <- ask
   case Map.lookup atom (Map.union fenv env) of -- lookup, but prefer functions
       Just x  -> return x
       Nothing -> throw $ UnboundVar atom
@@ -133,10 +134,10 @@ applyLambda expr params args = bindArgsEval params args expr
 
 bindArgsEval :: [LispVal] -> [LispVal] -> LispVal -> Eval LispVal
 bindArgsEval params args expr = do
-  (env, fenv) <- ask
+  EnvCtx{..} <- ask
   let newVars = zipWith (\a b -> (extractVar a,b)) params args
   let (newEnv, newFenv) =  Map.partition (not . isLambda) $ Map.fromList newVars
-  local (const (newEnv <> env, newFenv <> fenv)) $ eval expr
+  local (const $ EnvCtx (newEnv <> env) (newFenv <> fenv)) $ eval expr
 
 
 isLambda :: LispVal -> Bool
@@ -146,7 +147,7 @@ isLambda _  = False
 
 eval :: LispVal -> Eval LispVal
 eval (List [Atom "dumpEnv", x]) = do
-  (env, fenv) <- ask
+  EnvCtx{..} <- ask
   liftIO $ print $  toList env
   liftIO $ print $  toList fenv
   eval x
@@ -174,13 +175,13 @@ eval (List [Atom "begin", rest]) = evalBody rest
 eval (List ((:) (Atom "begin") rest )) = evalBody $ List rest
 
 eval (List [Atom "define", varExpr, defExpr]) = do --top-level define
-  (env, fenv)     <- ask
+  EnvCtx{..} <- ask
   varAtom <- ensureAtom varExpr
   evalVal <- eval defExpr
   bindArgsEval [varExpr] [defExpr] varExpr
 
 eval (List [Atom "let", List pairs, expr]) = do
-  (env, fenv)   <- ask
+  EnvCtx{..} <- ask
   atoms <- mapM ensureAtom $ getEven pairs
   vals  <- mapM eval       $ getOdd  pairs
   bindArgsEval atoms vals expr
@@ -188,9 +189,8 @@ eval (List (Atom "let":_) ) = throw $ BadSpecialForm "let function expects list 
 
 
 eval (List [Atom "lambda", List params, expr]) = do
-  (env, fenv) <- ask
-  return  $ Lambda (IFunc $ applyLambda expr params) (env,fenv)
-  --return $ LambdaOpen expr params (env, fenv)
+  ctx <- ask
+  return  $ Lambda (IFunc $ applyLambda expr params) ctx
 eval (List (Atom "lambda":_) ) = throw $ BadSpecialForm "lambda function expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)"
 
 
@@ -215,13 +215,13 @@ eval all@(List [Atom "car", arg@(List (x:xs))]) =
 
 
 eval all@(List ((:) x xs)) = do
-  (env, fenv)   <- ask
+  EnvCtx{..} <- ask
   funVar <- eval x
   xVal <- mapM eval xs
   --liftIO $ TIO.putStr $ T.concat ["eval:\n  ", T.pack $ show all,"\n  * fnCall:  ", T.pack $ show x, "\n  * fnVar  ", T.pack $ show funVar,"\n  * args:  ",T.concat (T.pack . show <$> xVal)    ,T.pack "\n"]
   case funVar of
       (Fun (IFunc internalFn)) -> internalFn xVal
-      (Lambda (IFunc definedFn) (benv, bfenv)) -> local (const (benv, fenv)) $ definedFn xVal
+      (Lambda (IFunc definedFn) (EnvCtx benv bfenv)) -> local (const $ EnvCtx benv fenv) $ definedFn xVal
 
       _                -> throw $ NotFunction funVar
 
@@ -229,9 +229,9 @@ eval x = throw $ Default  x --fall thru
 
 
 updateEnv :: T.Text -> LispVal -> EnvCtx -> EnvCtx
-updateEnv var e@(Fun _) (env,fenv) =  (env, Map.insert var e fenv)
-updateEnv var e@(Lambda _ _) (env,fenv)= (env, Map.insert var e fenv)
-updateEnv var e  (env,fenv)  = (Map.insert var e env, fenv)
+updateEnv var e@(Fun _) EnvCtx{..} =  EnvCtx env $ Map.insert var e fenv
+updateEnv var e@(Lambda _ _) EnvCtx{..} = EnvCtx env $ Map.insert var e fenv
+updateEnv var e  EnvCtx{..} = EnvCtx (Map.insert var e env) fenv
 
 evalBody :: LispVal -> Eval LispVal
 evalBody x@(List [List ((:) (Atom "define") [Atom var, defExpr]), rest]) = do

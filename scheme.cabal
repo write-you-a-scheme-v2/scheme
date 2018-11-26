@@ -9,6 +9,7 @@ library
     Repl
     Parser
     LispVal
+    ANorm
     Eval
     Cli
     Prim
@@ -24,7 +25,7 @@ library
     mtl                  >= 2.2 && <2.3,
     optparse-applicative >= 0.12 && <0.13,
     parsec               >= 3.1 && <3.2,
-    text                 >= 1.2 && <1.3,
+    text                 >= 1.2.1 && <1.3,
     transformers         >= 0.4 && <0.6,
     HTTP                 -any
 
@@ -75,7 +76,7 @@ test-Suite test
   default-language: Haskell2010
   build-depends:
     base         >= 4.8 && < 5.0,
-    text         >= 1.2 && <1.3,
+    text         >= 1.2.1 && <1.3,
     hspec        >= 2.2 && < 2.3,
     scheme == 0.1
 
@@ -86,7 +87,7 @@ test-Suite test-golden
   default-language: Haskell2010
   build-depends:
     base         >= 4.8 && < 5.0,
-    text         >= 1.2 && <1.3,
+    text         >= 1.2.1 && <1.3,
     tasty        >= 0.11 && <0.12,
     tasty-golden >= 2.3 && <2.5,
     bytestring   >= 0.10.8 && <0.11,

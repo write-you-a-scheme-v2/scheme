@@ -17,6 +17,7 @@ module Eval (
 import Prim
 import Parser
 import LispVal
+import ANorm()
 
 import Data.Map as Map
 import Data.Monoid
@@ -173,6 +174,8 @@ eval (List (Atom "let":_) ) = throw $ BadSpecialForm "let function expects list 
 
 eval (List [Atom "lambda", List params, expr]) = do
   envLocal <- ask
+  liftIO $ TIO.putStr $ T.pack $ show envLocal
+  liftIO $ TIO.putStr "\n"
   return  $ Lambda (IFunc $ applyLambda expr params) envLocal
 eval (List (Atom "lambda":_) ) = throw $ BadSpecialForm "lambda function expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)"
 
@@ -204,7 +207,7 @@ eval all@(List ((:) x xs)) = do
   --liftIO $ TIO.putStr $ T.concat ["eval:\n  ", T.pack $ show all,"\n  * fnCall:  ", T.pack $ show x, "\n  * fnVar  ", T.pack $ show funVar,"\n  * args:  ",T.concat (T.pack . show <$> xVal)    ,T.pack "\n"]
   case funVar of
       (Fun (IFunc internalFn)) -> internalFn xVal
-      (Lambda (IFunc definedFn) boundenv) -> local (const (boundenv <> env)) $ definedFn xVal
+      (Lambda (IFunc definedFn) boundenv) -> local (const (env <> boundenv)) $ definedFn xVal
 
       _                -> throw $ NotFunction funVar
 

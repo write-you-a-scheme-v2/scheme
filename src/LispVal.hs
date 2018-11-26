@@ -15,7 +15,6 @@ import qualified Data.Text as T
 import qualified Data.Map as Map
 
 import Control.Exception
---import Control.Monad.Except
 import Control.Monad.Reader
 
 type EnvCtx = Map.Map T.Text LispVal

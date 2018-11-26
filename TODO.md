@@ -1,14 +1,24 @@
 ##TODO list
 
+11/23/2018 Compile Scheme to LLVM
+- [ ] Solidify semantics, design decisions for compilation
+- [ ] Add ANF recursive func (let rec) 
+- [x] Add ANF If/else branching in ANF
+- [ ] LispValue -> ExprReduced converstion via AST
+- [ ] research LLVM implementation of ANF forms
+- [ ] type checking/inference step on LispVal
+- [ ] variable capture/substitution for non-unique names
+
+
 1/3/2016 Goal: End game
-- [ ] Figure out recursive functions (evalArg? why isn't fold working")
-- [ ] Tests for lexical scoping 
-- [ ] Figure out stdlib integration into exec
-- [ ] Write standard library chapter
-- [ ] Write testing chapter 
-- [ ] Add functions for io manipulation (readFile, execute file, writeToFile,
+- [x] Figure out recursive functions (evalArg? why isn't fold working")
+- [x] Tests for lexical scoping 
+- [x] Figure out stdlib integration into exec
+- [x] Write standard library chapter
+- [x] Write testing chapter 
+- [x] Add functions for io manipulation (readFile, execute file, writeToFile,
   etc)
-- [ ] Write IO chapter
+- [x] Write IO chapter
 
 11/11/2016 (Goal: Write tutorial chapters 00 to 04)
 - [x] Make sure resources from ./sources/* are added to introduction
@@ -23,7 +33,7 @@
 - [x] Outline Prim chapters
 - [x] Write Prim Chapter
 - [x] Write Error Chapter
-- [ ] Integrate test framework into narrative to demonstrate features of presented code.
+- [x] Integrate test framework into narrative to demonstrate features of presented code.
 - [x] Find an alternative to the ExceptT error IO a
 
 

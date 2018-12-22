@@ -5,7 +5,7 @@ module LispVal (
   LispVal(..),
   Eval(..),
   IFunc(..),
-  EnvCtx,
+  EnvCtx(..),
   LispException(..),
   showVal,
 ) where
@@ -15,10 +15,16 @@ import qualified Data.Text as T
 import qualified Data.Map as Map
 
 import Control.Exception
---import Control.Monad.Except
 import Control.Monad.Reader
 
-type EnvCtx = Map.Map T.Text LispVal
+type ValCtx = Map.Map T.Text LispVal
+type FnCtx  = Map.Map T.Text LispVal
+
+
+data EnvCtx = EnvCtx
+  { env :: ValCtx
+  , fenv :: FnCtx
+  } deriving (Eq)
 
 newtype Eval a = Eval { unEval :: ReaderT EnvCtx IO a }
   deriving (Monad, Functor, Applicative, MonadReader EnvCtx,  MonadIO)

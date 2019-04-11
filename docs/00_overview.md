@@ -123,7 +123,7 @@ If you are interested in building a typed language in Haskell, [this](http://okm
 Dynamic languages are not all doom and gloom: they give the user tremendous flexibility.  The R Programming Language is an excellent example of a dynamic language that excels at statistical computing by giving the user incredible flexibility and choice over how to implement ideas.
 
 A concept called Dynamic Dispatch allows functions to be determined, at runtime, by the types of the arguments passed in, so `(+ 1 1)` and `(+ "a" "b")` could use different versions of the `+` function.
-This is a key feature is dynamically typed programming languages, and we will be implementing this feature in our Scheme.
+This is a key feature in dynamically typed programming languages, and we will be implementing this feature in our Scheme.
 
 ## Interpreted
 We are building an interpreted language, an alternative to compiling to assembly language, LLVM or using a virtual machine like Java's JVM.

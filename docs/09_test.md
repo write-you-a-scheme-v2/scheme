@@ -1,5 +1,6 @@
 ---
 title: Testing our work
+header: Testing our work with HSpec and Golden
 date: June 28, 2017
 author: Adam Wespiser
 ---

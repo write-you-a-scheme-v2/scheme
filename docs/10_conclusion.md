@@ -1,5 +1,6 @@
 ---
 title: Conclusion & Further Resources
+header: Conclusion & Further Resources
 date: June 28, 2017
 author: Adam Wespiser
 ---

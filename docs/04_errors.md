@@ -1,5 +1,6 @@
 ---
 title: Error Checking and Exceptions
+header: Error Checking and Exceptions
 date: November 28, 2016
 author: Adam Wespiser
 ---

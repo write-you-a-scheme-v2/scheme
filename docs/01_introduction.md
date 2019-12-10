@@ -1,5 +1,6 @@
 ---
 title: Introduction: The Bolts and Nuts of Scheme Interpreters in Haskell
+header: Introduction: The Bolts and Nuts of Scheme Interpreters in Haskell
 date: November 28, 2016
 author: Adam Wespiser
 ---

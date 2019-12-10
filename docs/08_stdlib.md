@@ -1,5 +1,6 @@
 ---
 title: Towards a Standard Library
+header: Towards a Standard Library
 date: November 28, 2016
 author: Adam Wespiser
 ---

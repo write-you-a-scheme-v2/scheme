@@ -1,5 +1,6 @@
 ---
 title: Primitive Environment
+header: Primitive Environment
 date: November 28, 2016
 author: Adam Wespiser
 ---

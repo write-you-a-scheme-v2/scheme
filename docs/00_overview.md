@@ -1,5 +1,6 @@
 ---
 title: Write You A Scheme, Version 2.0
+header: Write You A Scheme, Version 2.0
 date: November 28, 2016
 author: Adam Wespiser
 ---

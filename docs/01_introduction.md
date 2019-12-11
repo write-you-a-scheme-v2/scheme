@@ -9,7 +9,7 @@ author: Adam Wespiser
 
 ## What do we need to build a Scheme?
 
-![](./img/WYAS-Lisp-Interpreter-Steps.png)
+<img src="./img/WYAS-Lisp-Interpreter-Steps.png" style="height:auto; width:70%;">
 
 To make a programming language, we must take user inputed text, turn that text into tokens, parse that into an abstract syntax tree, then evaluate that format into a result.
 Fortunately, we can use the same structure, `LispVal`, for the abstract syntax tree, which is returned by the parser and also the result of interpretation.
@@ -24,7 +24,7 @@ This may seem like a lot.  But don't worry, all these things, and more, are alre
 
 ## Project Road Map: What do we have?
 
-![](./img/WYAS-Dependency-Tree.png)
+<img src="./img/WYAS-Dependency-Tree.png" style="height:auto; width:70%;">
 
 * **Main.hs** Handles the creation of the binary executable, parsing of command line options.
 * **Repl.hs** Read Evaluate Print Loop code.

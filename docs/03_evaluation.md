@@ -10,7 +10,9 @@ author: Adam Wespiser
 
 
 #### Evaluation Context
-![img](../wyas/img/WYAS-Eval-If-Statement.png)
+
+<img src="./img/WYAS-Eval-If-Statement.png" style="height:auto; width:100%">
+
 LispVal.hs defines our key data structure for evaluation:   
 
 

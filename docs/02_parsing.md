@@ -8,7 +8,7 @@ author: Adam Wespiser
 
 > *Writing a really general parser is a major but different undertaking, by far the hardest points being sensitivity to context and resolution of ambiguity.*  **Graham Nelson**    
 
-<img src="./img/WYAS-Text-To-Eval.png" style="height=auto; width:70%">
+<img src="/img/WYAS-Text-To-Eval.png" style="height=auto; width:70%">
 
 ## What is Parsing?
 
@@ -19,7 +19,7 @@ First some definitions:
 * **lexer** A algorithm for lexical analysis that separates a stream of text into its component lexemes.  Defines the rules for individual words, or set of allowed symbols in a programming language.     
 * **parser** an algorithm for converting the lexemes into valid language grammar.  Operates on the level above the lexer, and defines the grammatical rules.
 
-<img src="./img/WYAS-Lisp-Interpreter-Steps.png" style="height:auto; width:70%">
+<img src="/img/WYAS-Lisp-Interpreter-Steps.png" style="height:auto; width:70%">
 
 Most basically, Parsing and Lexing is the process of reading the input text of either the REPL or program and converting that into a format that can be evaluated by the interpreter.
 That converted format, in our case, is `LispVal`.  The library we will use for parsing is called `Parsec`.

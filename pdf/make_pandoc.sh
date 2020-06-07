@@ -14,7 +14,7 @@ rm /tmp/scheme-pdf/*.pdf
 for markdown in $(ls ../docs | sort -n)
 do
   echo $markdown
-  pandoc -s -o /tmp/scheme-pdf/"${markdown}_tail.pdf" ../docs/$markdown
+  pandoc --pdf-engine=xelatex -V linkcolor:blue --metadata link-citations  -o /tmp/scheme-pdf/"${markdown}_tail.pdf" ../docs/$markdown
 done
 
 "/System/Library/Automator/Combine PDF Pages.action/Contents/Resources/join.py" -o WriteYouASchemeVersion2.pdf $(ls /tmp/scheme-pdf/*.pdf)

@@ -1,6 +1,7 @@
+{-# LANGUAGE OverloadedStrings, RankNTypes, ScopedTypeVariables, TypeApplications #-}
 module Main where
 
-import Prelude hiding ((*>))
+import Prelude
 import Development.Shake
 import Development.Shake.FilePath
 
@@ -14,12 +15,12 @@ main = shakeArgs shakeOptions $ do
       let targets = ["output" </> (f -<.> "wiki") | f <- files]
       need targets
 
-    "output/scheme.html" *> \out -> do
+    "output/scheme.html" %> \out -> do
         need ["resources/page.tmpl"]
         files <- fmap ("docs/" </>) <$> getDirectoryFiles "docs" ["*.md"]
         need files
-        cmd "pandoc" files ["-o"] out ["--template", "resources/page.tmpl"]
+        cmd ("pandoc" :: String) files ["-o" :: String] out (["--template", "resources/page.tmpl"] :: [String])
 
     "output//*.wiki" %> \out -> do
         let src = dropDirectory1 $ out -<.> "md"
-        cmd "pandoc" src "-o" out ["-t", "mediawiki"]
+        cmd ("pandoc" :: String) src ("-o" :: String) out (["-t", "mediawiki"] :: [String])

@@ -1,0 +1,87 @@
+name:                scheme
+version:             0.1
+synopsis:            Write You a Scheme
+license-file:        LICENSE
+author:              "Adam Wespiser"
+maintainer:          "adamwespiser@gmail.com"
+
+default-extensions:
+- OverloadedStrings
+
+dependencies:
+- base  >= 4.8 && <5.0
+- bytestring
+- containers
+- directory
+- haskeline
+- mtl
+- optparse-applicative
+- parsec
+- text
+- transformers
+- HTTP
+- tasty
+- tasty-golden
+- hspec
+
+ghc-options:
+- -Werror
+- -fno-warn-unused-do-bind
+- -fno-warn-unused-binds
+- -fno-warn-type-defaults
+- -fno-warn-type-defaults
+- -fno-warn-name-shadowing
+- -fwarn-duplicate-exports
+- -fwarn-dodgy-exports
+- -fwarn-dodgy-imports
+- -fwarn-incomplete-patterns
+- -fwarn-incomplete-record-updates
+- -fwarn-missing-fields
+- -fwarn-missing-methods
+- -fwarn-orphans
+- -fwarn-overlapping-patterns
+- -fwarn-unused-imports
+- -fwarn-tabs
+- -fwarn-unrecognised-pragmas
+
+library:
+  source-dirs: src/
+
+executables:
+  scheme:
+    main: Main.hs
+    source-dirs: exec
+    dependencies:
+    - base >= 4.8 && < 5
+    - scheme
+  docs:
+    main: Build.hs
+    dependencies:
+    - base >= 4.8 && < 5.0
+    - shake
+    - pandoc
+
+tests:
+  test:
+    main: Main.hs
+    source-dirs: test-hs/Spec/
+    dependencies:
+    - scheme
+    - hspec
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+  test-golden:
+    main: Main.hs
+    source-dirs: test-hs/Golden
+    dependencies:
+    - scheme
+    - tasty
+    - tasty-golden
+    - bytestring
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+

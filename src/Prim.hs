@@ -6,7 +6,6 @@ import LispVal
 
 import Data.Text as T
 import Data.Text.IO as TIO
-import Data.Monoid
 import System.Directory
 import System.IO
 import Network.HTTP

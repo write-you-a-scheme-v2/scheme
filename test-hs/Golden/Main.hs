@@ -2,7 +2,6 @@
 module Main (main) where
 
 import LispVal
-import Parser
 import Eval
 
 import qualified Data.Text as T
@@ -10,6 +9,7 @@ import qualified Data.Text as T
 import Test.Tasty
 import Test.Tasty.Golden
 import qualified Data.ByteString.Lazy.Char8 as C
+import Data.Functor ((<&>))
 
 main :: IO ()
 main = defaultMain tests
@@ -30,7 +30,7 @@ tests = testGroup "Golden Tests"
     , tastyGoldenRun "greater than"   "test/test_gt.scm"         "test/ans/test_gt.txt"
     , tastyGoldenRun "lexical scope 1" "test/test_scope1.scm"    "test/ans/test_scope1.txt"
     , tastyGoldenRun "lexical scope 2" "test/test_scope2.scm"    "test/ans/test_scope2.txt"
-    , tastyGoldenRun "issue #23"       "test/test_scope3.scm"    "test/ans/test_scope3.txt"
+    , tastyGoldenFail "issue #23"      "test/test_scope3.scm"    "test/ans/test_scope3.txt"
     , tastyGoldenRun "issue #25"       "test/test_scope4.scm"    "test/ans/test_scope4.txt"
     , tastyGoldenRun "Recursion 1"    "test/test_fix.scm"        "test/ans/test_fix.txt"
     , tastyGoldenRun "Recursion 2"    "test/test_fix2.scm"       "test/ans/test_fix2.txt"
@@ -40,13 +40,18 @@ tests = testGroup "Golden Tests"
   ]
 
 tastyGoldenRun :: TestName -> T.Text -> FilePath -> TestTree
-tastyGoldenRun testName testFile correct = goldenVsString testName correct  (evalTextTest (Just "lib/stdlib.scm") (testFile) >>= (return . C.pack .  show))
+tastyGoldenRun testName testFile correct =
+  goldenVsString testName correct $
+    evalTextTest "lib/stdlib.scm" testFile <&> C.pack . show
 
-evalTextTest :: Maybe T.Text -> T.Text -> IO LispVal --REPL
-evalTextTest (Just stdlib) file= do
-  stdlib <- getFileContents $ T.unpack  stdlib
-  f      <- getFileContents $ T.unpack file
-  runASTinEnv basicEnv $ textToEvalForm stdlib  f
-evalTextTest Nothing file = do
+tastyGoldenFail :: TestName -> T.Text -> FilePath -> TestTree
+tastyGoldenFail testName testFile correct =
+  goldenVsString testName correct $
+    (safeExec $ evalTextTest "lib/stdlib.scm" testFile) <&>
+      either C.pack (C.pack . show)
+
+evalTextTest :: T.Text -> T.Text -> IO LispVal --REPL
+evalTextTest stdlib file= do
+  stdlib' <- getFileContents $ T.unpack stdlib
   f <- getFileContents $ T.unpack file
-  runASTinEnv basicEnv $ fileToEvalForm (T.unpack file) f
+  runASTinEnv basicEnv $ textToEvalForm stdlib'  f

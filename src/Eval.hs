@@ -20,7 +20,6 @@ import Parser
 import LispVal
 
 import Data.Map as Map
-import Data.Monoid
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import System.Directory

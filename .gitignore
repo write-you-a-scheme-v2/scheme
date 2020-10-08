@@ -7,3 +7,5 @@ cabal.sandbox.config
 output/*
 *.hi
 *.o
+scheme.cabal
+stack.yaml.lock

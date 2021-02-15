@@ -38,9 +38,10 @@ Here's the overview of what we will be doing and where we will go:
 * [Errors & Exceptions](04_errors.html) Exception handling and messages used throughout project. Creation of error messages.
 * [Primitives](05_primitives.html) Primitive functions that are loaded into the environment.
 * [REPL](06_repl.html) Read Eval Print Loop to test out our work so far.
-* **IO** Reading and writing to files for both Scheme commands and the reading of program files.
-* **Standard Library** Creation of Scheme standard library from primitive functions.
-* **Conclusion** We conclude the project, giving some final
+* [IO](07_io.html) Reading and writing to files for both Scheme commands and the reading of program files.
+* [Standard Library](08_stdlib.html) Creation of Scheme standard library from primitive functions.
+* [Test](09_test.html) Confirm Scheme syntax and semantics.
+* [Conclusion](10_conclusion.html) We conclude the project, giving some final
   thoughts on the project.
 
 ## Why Lisp ?

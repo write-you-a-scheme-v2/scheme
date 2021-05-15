@@ -14,8 +14,9 @@ import Data.Typeable (Typeable)
 import qualified Data.Text as T
 import qualified Data.Map as Map
 
-import Control.Exception
+import Control.Exception ( Exception )
 import Control.Monad.Reader
+    ( MonadIO, MonadReader, ReaderT(ReaderT) )
 
 type ValCtx = Map.Map T.Text LispVal
 type FnCtx  = Map.Map T.Text LispVal

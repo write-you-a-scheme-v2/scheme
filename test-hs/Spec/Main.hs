@@ -1,14 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main (main) where
 
-import LispVal
-import Parser
+import LispVal ( LispVal(String, Nil, Atom, List, Bool, Number) )
+import Parser ( readExpr )
 import Eval
+    ( basicEnv,
+      fileToEvalForm,
+      getFileContents,
+      runASTinEnv,
+      textToEvalForm )
 
 import qualified Data.Text as T
 
-import Test.Hspec
-import System.IO.Unsafe
+import Test.Hspec ( hspec, describe, it, shouldBe, SpecWith )
+import System.IO.Unsafe ( unsafePerformIO )
 
 
 main :: IO ()

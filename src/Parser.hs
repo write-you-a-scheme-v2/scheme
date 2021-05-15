@@ -5,10 +5,26 @@ module Parser (
   readExprFile
 ) where
 
-import LispVal
+import LispVal ( LispVal(List, Bool, Nil, Number, String, Atom) )
 
 import Text.Parsec
-import Text.Parsec.Text
+    ( char,
+      digit,
+      hexDigit,
+      letter,
+      octDigit,
+      oneOf,
+      string,
+      eof,
+      many1,
+      sepBy,
+      (<?>),
+      (<|>),
+      parse,
+      try,
+      ParseError,
+      SourceName )
+import Text.Parsec.Text ( Parser )
 import qualified Text.Parsec.Token as Tok
 import qualified Text.Parsec.Language as Lang
 

@@ -125,6 +125,7 @@ manyLispVal = lispVal `sepBy` whitespace
 _Quote :: LispVal -> LispVal
 _Quote x = List [Atom "quote", x]
 
+contents :: Parser a -> Parser a
 contents p = whitespace *> lexeme p <* eof
 
 readExpr :: T.Text -> Either ParseError LispVal

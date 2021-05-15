@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings, RankNTypes, ScopedTypeVariables, TypeApplications #-}
-module Main where
 
 import Prelude
 import Development.Shake

@@ -184,13 +184,13 @@ eval (List [Atom "begin", rest]) = evalBody rest
 eval (List ((:) (Atom "begin") rest )) = evalBody $ List rest
 
 eval (List [Atom "define", varExpr, defExpr]) = do --top-level define
-  EnvCtx{..} <- ask
+  EnvCtx{} <- ask
   varAtom <- ensureAtom varExpr
   evalVal <- eval defExpr
   bindArgsEval [varExpr] [defExpr] varExpr
 
 eval (List [Atom "let", List pairs, expr]) = do
-  EnvCtx{..} <- ask
+  EnvCtx{} <- ask
   atoms <- mapM ensureAtom $ getEven pairs
   vals  <- mapM eval       $ getOdd  pairs
   bindArgsEval atoms vals expr

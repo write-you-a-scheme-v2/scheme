@@ -113,40 +113,40 @@ putTextFile fileName msg handle = do
 binopFold :: Binary -> LispVal -> [LispVal] -> Eval LispVal
 binopFold op farg args = case args of
                             [a,b]  -> op a b
-                            (a:as) -> foldM op farg args
+                            (_a:_as) -> foldM op farg args
                             []-> throw $ NumArgs 2 args
 
 numBool :: (Integer -> Bool) -> LispVal -> Eval LispVal
 numBool op (Number x) = return $ Bool $ op x
-numBool op  x         = throw $ TypeMismatch "numeric op " x
+numBool _   x         = throw $ TypeMismatch "numeric op " x
 
 numOp :: (Integer -> Integer -> Integer) -> LispVal -> LispVal -> Eval LispVal
 numOp op (Number x) (Number y) = return $ Number $ op x  y
-numOp op Nil        (Number y) = return $ Number y
-numOp op (Number x) Nil        = return $ Number x
-numOp op x          (Number y) = throw $ TypeMismatch "numeric op " x
-numOp op (Number x)  y         = throw $ TypeMismatch "numeric op " y
-numOp op x           y         = throw $ TypeMismatch "numeric op " x
+numOp _  Nil        (Number y) = return $ Number y
+numOp _  (Number x) Nil        = return $ Number x
+numOp _  x          (Number _) = throw $ TypeMismatch "numeric op " x
+numOp _  (Number _)  y         = throw $ TypeMismatch "numeric op " y
+numOp _  x           _         = throw $ TypeMismatch "numeric op " x
 
 strOp :: (T.Text -> T.Text -> T.Text) -> LispVal -> LispVal -> Eval LispVal
 strOp op (String x) (String y) = return $ String $ op x y
-strOp op Nil        (String y) = return $ String y
-strOp op (String x) Nil        = return $ String x
-strOp op x          (String y) = throw $ TypeMismatch "string op " x
-strOp op (String x)  y         = throw $ TypeMismatch "string op " y
-strOp op x           y         = throw $ TypeMismatch "string op " x
+strOp _  Nil        (String y) = return $ String y
+strOp _  (String x) Nil        = return $ String x
+strOp _  x          (String _) = throw $ TypeMismatch "string op " x
+strOp _  (String _)  y         = throw $ TypeMismatch "string op " y
+strOp _  x           _         = throw $ TypeMismatch "string op " x
 
 eqOp :: (Bool -> Bool -> Bool) -> LispVal -> LispVal -> Eval LispVal
 eqOp op (Bool x) (Bool y) = return $ Bool $ op x y
-eqOp op  x       (Bool y) = throw $ TypeMismatch "bool op " x
-eqOp op (Bool x)  y       = throw $ TypeMismatch "bool op " y
-eqOp op x         y       = throw $ TypeMismatch "bool op " x
+eqOp _   x       (Bool _) = throw $ TypeMismatch "bool op " x
+eqOp _  (Bool _)  y       = throw $ TypeMismatch "bool op " y
+eqOp _  x         _       = throw $ TypeMismatch "bool op " x
 
 numCmp :: (Integer -> Integer -> Bool) -> LispVal -> LispVal -> Eval LispVal
 numCmp op (Number x) (Number y) = return . Bool $ op x  y
-numCmp op x          (Number y) = throw $ TypeMismatch "numeric op " x
-numCmp op (Number x)  y         = throw $ TypeMismatch "numeric op " y
-numCmp op x         y           = throw $ TypeMismatch "numeric op " x
+numCmp _  x          (Number _) = throw $ TypeMismatch "numeric op " x
+numCmp _  (Number _)  y         = throw $ TypeMismatch "numeric op " y
+numCmp _  x         _           = throw $ TypeMismatch "numeric op " x
 
 
 notOp :: LispVal -> Eval LispVal
@@ -163,8 +163,8 @@ eqCmd  Nil        Nil       = return $ Bool True
 eqCmd  _          _         = return $ Bool False
 
 cons :: [LispVal] -> Eval LispVal
-cons [x,y@(List yList)] = return $ List $ x:yList
-cons [x,y]              = return $ List [x,y]
+cons [x,List yList] = return $ List $ x:yList
+cons [x,y]          = return $ List [x,y]
 cons _  = throw $ ExpectedList "cons, in second argumnet"
 
 
@@ -172,13 +172,13 @@ car :: [LispVal] -> Eval LispVal
 car [List []    ] = return Nil
 car [List (x:_)]  = return x
 car []            = return Nil
-car x             = throw $ ExpectedList "car"
+car _             = throw $ ExpectedList "car"
 
 cdr :: [LispVal] -> Eval LispVal
-cdr [List (x:xs)] = return $ List xs
+cdr [List (_:xs)] = return $ List xs
 cdr [List []]     = return Nil
 cdr []            = return Nil
-cdr x             = throw $ ExpectedList "cdr"
+cdr _             = throw $ ExpectedList "cdr"
 
 quote :: [LispVal] -> Eval LispVal
 quote [List xs]   = return $ List $ Atom "quote" : xs

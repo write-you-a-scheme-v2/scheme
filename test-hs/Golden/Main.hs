@@ -52,7 +52,7 @@ tastyGoldenRun testName testFile correct =
 tastyGoldenFail :: TestName -> T.Text -> FilePath -> TestTree
 tastyGoldenFail testName testFile correct =
   goldenVsString testName correct $
-    (safeExec $ evalTextTest "lib/stdlib.scm" testFile) <&>
+    safeExec (evalTextTest "lib/stdlib.scm" testFile) <&>
       either C.pack (C.pack . show)
 
 evalTextTest :: T.Text -> T.Text -> IO LispVal --REPL

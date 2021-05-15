@@ -35,7 +35,7 @@ import System.Directory ( doesFileExist )
 import Text.Parsec ( ParseError )
 
 import Control.Monad.Reader
-    ( MonadIO(liftIO), MonadReader(local, ask), ReaderT(runReaderT) )
+    ( asks, MonadIO(liftIO), MonadReader(local, ask), ReaderT(runReaderT) )
 import Control.Exception
     ( try, throw, Exception(fromException), SomeException )
 
@@ -76,7 +76,7 @@ lineToEvalForm input = either (throw . PError . show  )  eval $ readExpr input
 
 
 evalFile :: FilePath -> T.Text -> IO () --program file
-evalFile filePath fileExpr = (runASTinEnv basicEnv $ fileToEvalForm filePath fileExpr) >>= print
+evalFile filePath fileExpr = runASTinEnv basicEnv (fileToEvalForm filePath fileExpr) >>= print
 
 fileToEvalForm :: FilePath -> T.Text -> Eval LispVal
 fileToEvalForm filePath input = either (throw . PError . show )  evalBody $ readExprFile filePath input
@@ -198,8 +198,7 @@ eval (List (Atom "let":_) ) = throw $ BadSpecialForm "let function expects list 
 
 
 eval (List [Atom "lambda", List params, expr]) = do
-  ctx <- ask
-  return  $ Lambda (IFunc $ applyLambda expr params) ctx
+  asks (Lambda (IFunc $ applyLambda expr params))
 eval (List (Atom "lambda":_) ) = throw $ BadSpecialForm "lambda function expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)"
 
 
@@ -215,12 +214,12 @@ eval all@(List [Atom "cdr", arg@(List (x:xs))]) =
 
 
 eval all@(List [Atom "car", List [Atom "quote", List (x:xs)]]) =
-  return $  x
+  return x
 eval all@(List [Atom "car", arg@(List (x:xs))]) =
   case x of
       Atom _       -> do val <- eval arg
                          eval $ List [Atom "car", val]
-      _            -> return $ x
+      _            -> return x
 
 
 eval all@(List ((:) x xs)) = do

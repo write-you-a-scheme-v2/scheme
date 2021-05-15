@@ -28,6 +28,7 @@ import Text.Parsec.Text ( Parser )
 import qualified Text.Parsec.Token as Tok
 import qualified Text.Parsec.Language as Lang
 
+import Data.Functor (($>))
 import Data.Functor.Identity (Identity)
 import qualified Data.Text as T
 import Data.Char (digitToInt)
@@ -84,8 +85,8 @@ decimal = Tok.decimal lexer
 -- | Parse a sign, return either @id@ or @negate@ based on the sign parsed.
 -- Copied from Text.Parsec.Token
 sign :: Parser (Integer -> Integer)
-sign = char '-' *> return negate
-   <|> char '+' *> return id
+sign = char '-' $> negate
+   <|> char '+' $> id
    <|> return id
 
 intRadix :: Radix -> Parser Integer
@@ -95,12 +96,12 @@ textLiteral :: Parser T.Text
 textLiteral = T.pack <$> Tok.stringLiteral lexer
 
 nil :: Parser ()
-nil = try ((char '\'') *> string "()") *> return () <?> "nil"
+nil = try (char '\'' *> string "()") *> return () <?> "nil"
 
 hashVal :: Parser LispVal
 hashVal = lexeme $ char '#'
-  *> (char 't' *> return (Bool True)
-  <|> char 'f' *> return (Bool False)
+  *> (char 't' $> Bool True
+  <|> char 'f' $> Bool False
   <|> char 'b' *> (Number <$> intRadix (2, oneOf "01"))
   <|> char 'o' *> (Number <$> intRadix (8, octDigit))
   <|> char 'd' *> (Number <$> intRadix (10, digit))

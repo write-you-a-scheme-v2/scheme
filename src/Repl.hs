@@ -4,11 +4,12 @@ module Repl (
   mainLoop,
 ) where
 
-import Eval
-import Data.Text as T
+import Eval ( safeExec, runParseTest, evalText )
+import Data.Text as T ( pack )
 
-import Control.Monad.Trans
+import Control.Monad.Trans ( MonadIO(liftIO) )
 import System.Console.Haskeline
+    ( defaultSettings, getInputLine, outputStrLn, runInputT, InputT )
 
 type Repl a = InputT IO a
 

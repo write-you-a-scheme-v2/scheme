@@ -3,15 +3,20 @@
 module Prim where
 
 import LispVal
+    ( LispException(NumArgs, IOError, TypeMismatch, ExpectedList),
+      IFunc(IFunc),
+      LispVal(Atom, Fun, Number, String, Bool, Nil, List),
+      Eval )
 
-import Data.Text as T
-import Data.Text.IO as TIO
-import System.Directory
+import Data.Text as T ( Text, concat, pack, unpack )
+import Data.Text.IO as TIO ( hGetContents, hPutStr )
+import System.Directory ( doesFileExist )
 import System.IO
-import Network.HTTP
+    ( Handle, hIsWritable, withFile, IOMode(WriteMode, ReadMode) )
+import Network.HTTP ( getRequest, getResponseBody, simpleHTTP )
 
-import Control.Monad.Except
-import Control.Exception hiding (handle)
+import Control.Monad.Except ( foldM, MonadIO(liftIO) )
+import Control.Exception ( throw )
 
 type Prim   = [(T.Text, LispVal)]
 type Unary  = LispVal -> Eval LispVal

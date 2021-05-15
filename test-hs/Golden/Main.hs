@@ -1,13 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main (main) where
 
-import LispVal
+import LispVal ( LispVal )
 import Eval
+    ( basicEnv,
+      getFileContents,
+      runASTinEnv,
+      safeExec,
+      textToEvalForm )
 
 import qualified Data.Text as T
 
-import Test.Tasty
-import Test.Tasty.Golden
+import Test.Tasty ( defaultMain, testGroup, TestName, TestTree )
+import Test.Tasty.Golden ( goldenVsString )
 import qualified Data.ByteString.Lazy.Char8 as C
 import Data.Functor ((<&>))
 

@@ -15,19 +15,29 @@ module Eval (
   getFileContents
 ) where
 
-import Prim
-import Parser
+import Prim ( primEnv, unop )
+import Parser ( readExpr, readExprFile )
 import LispVal
+    ( LispException(Default, PError, UnboundVar, TypeMismatch,
+                    BadSpecialForm, NotFunction),
+      IFunc(IFunc),
+      LispVal(..),
+      Eval(unEval),
+      EnvCtx(..),
+      showVal )
 
 import Data.Map as Map
+    ( empty, fromList, insert, lookup, partition, toList, union, Map )
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import System.Directory
+import System.Directory ( doesFileExist )
 
-import Text.Parsec
+import Text.Parsec ( ParseError )
 
 import Control.Monad.Reader
+    ( MonadIO(liftIO), MonadReader(local, ask), ReaderT(runReaderT) )
 import Control.Exception
+    ( try, throw, Exception(fromException), SomeException )
 
 funcEnv :: Map.Map T.Text LispVal
 funcEnv = Map.fromList $ primEnv

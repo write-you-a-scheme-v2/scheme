@@ -3,7 +3,15 @@ module Main where
 
 import Prelude
 import Development.Shake
-import Development.Shake.FilePath
+    ( cmd,
+      shakeArgs,
+      shakeOptions,
+      getDirectoryFiles,
+      (%>),
+      need,
+      phony,
+      want )
+import Development.Shake.FilePath ( (-<.>), (</>), dropDirectory1 )
 
 main :: IO ()
 main = shakeArgs shakeOptions $ do

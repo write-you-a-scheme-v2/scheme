@@ -136,9 +136,9 @@ runExpr  std file val =
 
 evalTextTest :: Maybe T.Text -> T.Text -> IO LispVal --REPL
 evalTextTest (Just stdlib) file= do
-  stdlib <- getFileContents $ T.unpack  stdlib
-  f      <- getFileContents $ T.unpack file
-  runASTinEnv basicEnv $ textToEvalForm stdlib  f
+  stdlibC <- getFileContents $ T.unpack  stdlib
+  f       <- getFileContents $ T.unpack file
+  runASTinEnv basicEnv $ textToEvalForm stdlibC f
 
 evalTextTest Nothing file = do
   f <- getFileContents $ T.unpack file

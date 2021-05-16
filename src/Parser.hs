@@ -30,6 +30,7 @@ import qualified Text.Parsec.Language as Lang
 
 import Data.Functor (($>))
 import Data.Functor.Identity (Identity)
+import Data.List ( foldl' )
 import qualified Data.Text as T
 import Data.Char (digitToInt)
 import Control.Monad (mzero)
@@ -76,7 +77,7 @@ type Radix = (Integer, Parser Char)
 numberWithRadix :: Radix -> Parser Integer
 numberWithRadix (base, baseDigit) = do
   digits <- many1 baseDigit
-  let n = foldl (\x d -> base*x + toInteger (digitToInt d)) 0 digits
+  let n = foldl' (\x d -> base*x + toInteger (digitToInt d)) 0 digits
   seq n (return n)
 
 decimal :: Parser Integer

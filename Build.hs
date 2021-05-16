@@ -8,6 +8,8 @@ import Development.Shake
       (%>),
       need,
       phony,
+      putInfo,
+      removeFilesAfter,
       want )
 import Development.Shake.FilePath ( (-<.>), (</>), dropDirectory1 )
 
@@ -20,6 +22,10 @@ main = shakeArgs shakeOptions $ do
       files <- fmap ("docs/" </>) <$> getDirectoryFiles "docs" ["*.md"]
       let targets = ["output" </> (f -<.> "wiki") | f <- files]
       need targets
+
+    phony "clean" $ do
+      putInfo "Cleaning files in output"
+      removeFilesAfter "output" ["//*"]
 
     "output/scheme.html" %> \out -> do
         need ["resources/page.tmpl"]

@@ -4,7 +4,8 @@ module Repl (
   mainLoop,
 ) where
 
-import Eval ( safeExec, runParseTest, evalText )
+import Eval ( safeExec, evalText )
+--import Eval ( runParseTest )
 import Data.Text as T ( pack )
 
 import Control.Monad.Trans ( MonadIO(liftIO) )
@@ -29,5 +30,5 @@ process str = do
   res <- safeExec $ evalText $ T.pack str
   either putStrLn return res
 
-processToAST :: String -> IO ()
-processToAST str = print $ runParseTest $ T.pack str
+--processToAST :: String -> IO ()
+--processToAST str = print $ runParseTest $ T.pack str

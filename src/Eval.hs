@@ -172,8 +172,8 @@ eval (List ((:) (Atom "showSF") rest)) = return . String . T.pack . show $ List 
 
 eval (List [Atom "quote", val]) = return val
 
-eval (List [Atom "if", pred, truExpr, flsExpr]) = do
-  ifRes        <- eval pred
+eval (List [Atom "if", predicate, truExpr, flsExpr]) = do
+  ifRes        <- eval predicate
   case ifRes of
     (Bool True)  -> eval truExpr
     (Bool False) -> eval flsExpr

@@ -24,22 +24,10 @@ common common-options
   other-modules:      Paths_scheme
   autogen-modules:    Paths_scheme
   ghc-options:
-    -Wall -Wextra -Wcompat -Widentities -Wincomplete-uni-patterns
+    -Werror -Wall -Wextra -Wcompat -Widentities -Wincomplete-uni-patterns
     -Wincomplete-record-updates -Wredundant-constraints
     -Wnoncanonical-monad-instances
 
-  ghc-options:
-    -fno-warn-unused-do-bind -fno-warn-unused-binds
-    -fno-warn-type-defaults -fno-warn-type-defaults
-    -fno-warn-name-shadowing -fwarn-duplicate-exports
-    -fwarn-dodgy-exports -fwarn-dodgy-imports
-    -fwarn-incomplete-patterns -fwarn-incomplete-record-updates
-    -fwarn-missing-fields -fwarn-missing-methods -fwarn-orphans
-    -fwarn-overlapping-patterns -fwarn-unused-imports -fwarn-tabs
-    -fwarn-unrecognised-pragmas
---    -fno-warn-unused-matches
-
-  --    -Werror
   if impl(ghc >=8.2)
     ghc-options: -fhide-source-paths
 
@@ -48,8 +36,7 @@ common common-options
 
   if impl(ghc >=8.8)
     ghc-options: -fwrite-ide-info -hiedir=.hie
-
-  --    ghc-options: -Wmissing-deriving-strategies -fwrite-ide-info -hiedir=.hie
+--    ghc-options: -Wmissing-deriving-strategies -fwrite-ide-info -hiedir=.hie
 
   if impl(ghc >=8.10)
     ghc-options: -Wunused-packages

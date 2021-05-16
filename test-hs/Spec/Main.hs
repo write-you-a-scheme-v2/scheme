@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -fno-cse -fno-full-laziness#-} -- make unsafePerformIO safer
 module Main (main) where
 
 import LispVal ( LispVal(String, Nil, Atom, List, Bool, Number) )
@@ -127,12 +128,13 @@ tExpr :: T.Text -> T.Text -> LispVal -> SpecWith ()
 tExpr note expr val =
     it (T.unpack note) $ evalVal `shouldBe` val
     where evalVal = unsafePerformIO $ runASTinEnv basicEnv $ fileToEvalForm "" expr
-
+{-# NOINLINE tExpr #-}
 
 runExpr :: Maybe T.Text -> T.Text -> LispVal -> SpecWith ()
 runExpr  std file val =
     it (T.unpack file) $ evalVal  `shouldBe` val
     where evalVal = unsafePerformIO $ evalTextTest std file
+{-# NOINLINE runExpr #-}
 
 evalTextTest :: Maybe T.Text -> T.Text -> IO LispVal --REPL
 evalTextTest (Just stdlib) file= do
@@ -149,6 +151,7 @@ tExprStd :: T.Text -> T.Text -> LispVal -> SpecWith ()
 tExprStd note  expr  val =
     it (T.unpack note ) $ evalVal `shouldBe` val
     where evalVal = unsafePerformIO $ evalExprTest expr
+{-# NOINLINE tExprStd #-}
 
 evalExprTest ::  T.Text -> IO LispVal --REPL
 evalExprTest expr = do

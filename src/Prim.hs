@@ -182,5 +182,5 @@ cdr _             = throw $ ExpectedList "cdr"
 
 quote :: [LispVal] -> Eval LispVal
 quote [List xs]   = return $ List $ Atom "quote" : xs
-quote [exp]       = return $ List $ Atom "quote" : [exp]
+quote [expr]      = return $ List $ Atom "quote" : [expr]
 quote args        = throw $ NumArgs 1 args

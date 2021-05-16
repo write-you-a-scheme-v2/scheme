@@ -15,19 +15,29 @@ module Eval (
   getFileContents
 ) where
 
-import Prim
-import Parser
+import Prim ( primEnv, unop )
+import Parser ( readExpr, readExprFile )
 import LispVal
+    ( LispException(Default, PError, UnboundVar, TypeMismatch,
+                    BadSpecialForm, NotFunction),
+      IFunc(IFunc),
+      LispVal(..),
+      Eval(unEval),
+      EnvCtx(..),
+      showVal )
 
 import Data.Map as Map
+    ( empty, fromList, insert, lookup, partition, toList, union, Map )
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import System.Directory
+import System.Directory ( doesFileExist )
 
-import Text.Parsec
+import Text.Parsec ( ParseError )
 
 import Control.Monad.Reader
+    ( asks, MonadIO(liftIO), MonadReader(local, ask), ReaderT(runReaderT) )
 import Control.Exception
+    ( try, throw, Exception(fromException), SomeException )
 
 funcEnv :: Map.Map T.Text LispVal
 funcEnv = Map.fromList $ primEnv
@@ -66,7 +76,7 @@ lineToEvalForm input = either (throw . PError . show  )  eval $ readExpr input
 
 
 evalFile :: FilePath -> T.Text -> IO () --program file
-evalFile filePath fileExpr = (runASTinEnv basicEnv $ fileToEvalForm filePath fileExpr) >>= print
+evalFile filePath fileExpr = runASTinEnv basicEnv (fileToEvalForm filePath fileExpr) >>= print
 
 fileToEvalForm :: FilePath -> T.Text -> Eval LispVal
 fileToEvalForm filePath input = either (throw . PError . show )  evalBody $ readExprFile filePath input
@@ -111,7 +121,7 @@ getVar (Atom atom) = do
 getVar n = throw $ TypeMismatch  "failure to get variable: " n
 
 ensureAtom :: LispVal -> Eval LispVal
-ensureAtom n@(Atom txt) = return  n
+ensureAtom n@(Atom _) = return n
 ensureAtom n = throw $ TypeMismatch "expected an atomic value" n
 
 extractVar :: LispVal -> T.Text
@@ -124,7 +134,7 @@ getEven (x:xs) = x : getOdd xs
 
 getOdd :: [t] -> [t]
 getOdd [] = []
-getOdd (x:xs) = getEven xs
+getOdd (_:xs) = getEven xs
 
 
 applyLambda :: LispVal -> [LispVal] -> [LispVal] -> Eval LispVal
@@ -162,25 +172,25 @@ eval (List ((:) (Atom "showSF") rest)) = return . String . T.pack . show $ List 
 
 eval (List [Atom "quote", val]) = return val
 
-eval (List [Atom "if", pred, truExpr, flsExpr]) = do
-  ifRes        <- eval pred
+eval (List [Atom "if", predicate, truExpr, flsExpr]) = do
+  ifRes        <- eval predicate
   case ifRes of
     (Bool True)  -> eval truExpr
     (Bool False) -> eval flsExpr
     _            -> throw $ BadSpecialForm "if's first arg must eval into a boolean"
-eval args@(List ( (:) (Atom "if") _))  = throw $ BadSpecialForm "(if <bool> <s-expr> <s-expr>)"
+eval (List ( (:) (Atom "if") _))  = throw $ BadSpecialForm "(if <bool> <s-expr> <s-expr>)"
 
 eval (List [Atom "begin", rest]) = evalBody rest
 eval (List ((:) (Atom "begin") rest )) = evalBody $ List rest
 
 eval (List [Atom "define", varExpr, defExpr]) = do --top-level define
-  EnvCtx{..} <- ask
-  varAtom <- ensureAtom varExpr
-  evalVal <- eval defExpr
+  EnvCtx{} <- ask
+  _varAtom <- ensureAtom varExpr
+  _evalVal <- eval defExpr
   bindArgsEval [varExpr] [defExpr] varExpr
 
 eval (List [Atom "let", List pairs, expr]) = do
-  EnvCtx{..} <- ask
+  EnvCtx{} <- ask
   atoms <- mapM ensureAtom $ getEven pairs
   vals  <- mapM eval       $ getOdd  pairs
   bindArgsEval atoms vals expr
@@ -188,15 +198,14 @@ eval (List (Atom "let":_) ) = throw $ BadSpecialForm "let function expects list 
 
 
 eval (List [Atom "lambda", List params, expr]) = do
-  ctx <- ask
-  return  $ Lambda (IFunc $ applyLambda expr params) ctx
+  asks (Lambda (IFunc $ applyLambda expr params))
 eval (List (Atom "lambda":_) ) = throw $ BadSpecialForm "lambda function expects list of parameters and S-Expression body\n(lambda <params> <s-expr>)"
 
 
 -- needed to get cadr, etc to work
-eval all@(List [Atom "cdr", List [Atom "quote", List (x:xs)]]) =
+eval (List [Atom "cdr", List [Atom "quote", List (_:xs)]]) =
   return $  List xs
-eval all@(List [Atom "cdr", arg@(List (x:xs))]) =
+eval (List [Atom "cdr", arg@(List (x:xs))]) =
   case x of
       -- proxy for if the list can be evaluated
       Atom  _ -> do val <- eval arg
@@ -204,23 +213,23 @@ eval all@(List [Atom "cdr", arg@(List (x:xs))]) =
       _           -> return $ List xs
 
 
-eval all@(List [Atom "car", List [Atom "quote", List (x:xs)]]) =
-  return $  x
-eval all@(List [Atom "car", arg@(List (x:xs))]) =
+eval (List [Atom "car", List [Atom "quote", List (x:_)]]) =
+  return x
+eval (List [Atom "car", arg@(List (x:_))]) =
   case x of
       Atom _       -> do val <- eval arg
                          eval $ List [Atom "car", val]
-      _            -> return $ x
+      _            -> return x
 
 
-eval all@(List ((:) x xs)) = do
+eval (List ((:) x xs)) = do
   EnvCtx{..} <- ask
   funVar <- eval x
   xVal <- mapM eval xs
   --liftIO $ TIO.putStr $ T.concat ["eval:\n  ", T.pack $ show all,"\n  * fnCall:  ", T.pack $ show x, "\n  * fnVar  ", T.pack $ show funVar,"\n  * args:  ",T.concat (T.pack . show <$> xVal)    ,T.pack "\n"]
   case funVar of
       (Fun (IFunc internalFn)) -> internalFn xVal
-      (Lambda (IFunc definedFn) (EnvCtx benv bfenv)) -> local (const $ EnvCtx benv fenv) $ definedFn xVal
+      (Lambda (IFunc definedFn) (EnvCtx benv _bfenv)) -> local (const $ EnvCtx benv fenv) $ definedFn xVal
 
       _                -> throw $ NotFunction funVar
 
@@ -233,12 +242,12 @@ updateEnv var e@(Lambda _ _) EnvCtx{..} = EnvCtx env $ Map.insert var e fenv
 updateEnv var e  EnvCtx{..} = EnvCtx (Map.insert var e env) fenv
 
 evalBody :: LispVal -> Eval LispVal
-evalBody x@(List [List ((:) (Atom "define") [Atom var, defExpr]), rest]) = do
+evalBody (List [List ((:) (Atom "define") [Atom var, defExpr]), rest]) = do
   evalVal <- eval defExpr
   ctx <- ask
   local (const $ updateEnv var evalVal ctx) $ eval rest
 
-evalBody x@(List ((:) (List ((:) (Atom "define") [Atom var, defExpr])) rest)) = do
+evalBody (List ((:) (List ((:) (Atom "define") [Atom var, defExpr])) rest)) = do
   evalVal <- eval defExpr
   ctx <- ask
   local (const $ updateEnv var evalVal ctx) $ evalBody $ List rest

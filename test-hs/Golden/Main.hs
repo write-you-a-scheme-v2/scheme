@@ -1,13 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main (main) where
 
-import LispVal
+import LispVal ( LispVal )
 import Eval
+    ( basicEnv,
+      getFileContents,
+      runASTinEnv,
+      safeExec,
+      textToEvalForm )
 
 import qualified Data.Text as T
 
-import Test.Tasty
-import Test.Tasty.Golden
+import Test.Tasty ( defaultMain, testGroup, TestName, TestTree )
+import Test.Tasty.Golden ( goldenVsString )
 import qualified Data.ByteString.Lazy.Char8 as C
 import Data.Functor ((<&>))
 
@@ -47,7 +52,7 @@ tastyGoldenRun testName testFile correct =
 tastyGoldenFail :: TestName -> T.Text -> FilePath -> TestTree
 tastyGoldenFail testName testFile correct =
   goldenVsString testName correct $
-    (safeExec $ evalTextTest "lib/stdlib.scm" testFile) <&>
+    safeExec (evalTextTest "lib/stdlib.scm" testFile) <&>
       either C.pack (C.pack . show)
 
 evalTextTest :: T.Text -> T.Text -> IO LispVal --REPL

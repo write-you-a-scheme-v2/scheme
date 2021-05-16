@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+cabal build
+cabal exec scheme -- -r

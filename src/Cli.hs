@@ -2,11 +2,25 @@ module Cli (
   cliIface
 ) where
 
-import Eval -- evalFile :: T.Text -> IO ()
-import Repl -- Repl.mainLoop :: IO ()
-import System.Directory
-import Data.Text.IO as TIO
+import Eval ( evalFile ) -- evalFile :: T.Text -> IO ()
+import Repl ( mainLoop ) -- Repl.mainLoop :: IO ()
+import System.Directory ( doesFileExist )
+import Data.Text.IO as TIO ( readFile, putStrLn )
 import Options.Applicative
+    ( helper,
+      execParser,
+      strOption,
+      short,
+      progDesc,
+      metavar,
+      long,
+      info,
+      help,
+      header,
+      fullDesc,
+      flag',
+      Alternative((<|>)),
+      Parser )
 
 -- SOURCES
 --http://book.realworldhaskell.org/read/io.html

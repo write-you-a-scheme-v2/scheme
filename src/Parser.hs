@@ -5,14 +5,32 @@ module Parser (
   readExprFile
 ) where
 
-import LispVal
+import LispVal ( LispVal(List, Bool, Nil, Number, String, Atom) )
 
 import Text.Parsec
-import Text.Parsec.Text
+    ( char,
+      digit,
+      hexDigit,
+      letter,
+      octDigit,
+      oneOf,
+      string,
+      eof,
+      many1,
+      sepBy,
+      (<?>),
+      (<|>),
+      parse,
+      try,
+      ParseError,
+      SourceName )
+import Text.Parsec.Text ( Parser )
 import qualified Text.Parsec.Token as Tok
 import qualified Text.Parsec.Language as Lang
 
+import Data.Functor (($>))
 import Data.Functor.Identity (Identity)
+import Data.List ( foldl' )
 import qualified Data.Text as T
 import Data.Char (digitToInt)
 import Control.Monad (mzero)
@@ -59,7 +77,7 @@ type Radix = (Integer, Parser Char)
 numberWithRadix :: Radix -> Parser Integer
 numberWithRadix (base, baseDigit) = do
   digits <- many1 baseDigit
-  let n = foldl (\x d -> base*x + toInteger (digitToInt d)) 0 digits
+  let n = foldl' (\x d -> base*x + toInteger (digitToInt d)) 0 digits
   seq n (return n)
 
 decimal :: Parser Integer
@@ -68,8 +86,8 @@ decimal = Tok.decimal lexer
 -- | Parse a sign, return either @id@ or @negate@ based on the sign parsed.
 -- Copied from Text.Parsec.Token
 sign :: Parser (Integer -> Integer)
-sign = char '-' *> return negate
-   <|> char '+' *> return id
+sign = char '-' $> negate
+   <|> char '+' $> id
    <|> return id
 
 intRadix :: Radix -> Parser Integer
@@ -79,12 +97,12 @@ textLiteral :: Parser T.Text
 textLiteral = T.pack <$> Tok.stringLiteral lexer
 
 nil :: Parser ()
-nil = try ((char '\'') *> string "()") *> return () <?> "nil"
+nil = try (char '\'' *> string "()") *> return () <?> "nil"
 
 hashVal :: Parser LispVal
 hashVal = lexeme $ char '#'
-  *> (char 't' *> return (Bool True)
-  <|> char 'f' *> return (Bool False)
+  *> (char 't' $> Bool True
+  <|> char 'f' $> Bool False
   <|> char 'b' *> (Number <$> intRadix (2, oneOf "01"))
   <|> char 'o' *> (Number <$> intRadix (8, octDigit))
   <|> char 'd' *> (Number <$> intRadix (10, digit))
@@ -109,6 +127,7 @@ manyLispVal = lispVal `sepBy` whitespace
 _Quote :: LispVal -> LispVal
 _Quote x = List [Atom "quote", x]
 
+contents :: Parser a -> Parser a
 contents p = whitespace *> lexeme p <* eof
 
 readExpr :: T.Text -> Either ParseError LispVal

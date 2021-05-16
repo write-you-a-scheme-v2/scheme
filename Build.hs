@@ -1,9 +1,17 @@
-{-# LANGUAGE OverloadedStrings, RankNTypes, ScopedTypeVariables, TypeApplications #-}
-module Main where
 
 import Prelude
 import Development.Shake
-import Development.Shake.FilePath
+    ( cmd,
+      shakeArgs,
+      shakeOptions,
+      getDirectoryFiles,
+      (%>),
+      need,
+      phony,
+      putInfo,
+      removeFilesAfter,
+      want )
+import Development.Shake.FilePath ( (-<.>), (</>), dropDirectory1 )
 
 main :: IO ()
 main = shakeArgs shakeOptions $ do
@@ -14,6 +22,10 @@ main = shakeArgs shakeOptions $ do
       files <- fmap ("docs/" </>) <$> getDirectoryFiles "docs" ["*.md"]
       let targets = ["output" </> (f -<.> "wiki") | f <- files]
       need targets
+
+    phony "clean" $ do
+      putInfo "Cleaning files in output"
+      removeFilesAfter "output" ["//*"]
 
     "output/scheme.html" %> \out -> do
         need ["resources/page.tmpl"]

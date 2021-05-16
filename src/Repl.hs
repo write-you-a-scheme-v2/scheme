@@ -4,11 +4,13 @@ module Repl (
   mainLoop,
 ) where
 
-import Eval
-import Data.Text as T
+import Eval ( safeExec, evalText )
+--import Eval ( runParseTest )
+import Data.Text as T ( pack )
 
-import Control.Monad.Trans
+import Control.Monad.Trans ( MonadIO(liftIO) )
 import System.Console.Haskeline
+    ( defaultSettings, getInputLine, outputStrLn, runInputT, InputT )
 
 type Repl a = InputT IO a
 
@@ -28,5 +30,5 @@ process str = do
   res <- safeExec $ evalText $ T.pack str
   either putStrLn return res
 
-processToAST :: String -> IO ()
-processToAST str = print $ runParseTest $ T.pack str
+--processToAST :: String -> IO ()
+--processToAST str = print $ runParseTest $ T.pack str

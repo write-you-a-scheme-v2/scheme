@@ -8,12 +8,18 @@ Shortcut build:
 ```bash
 $ ./build 
 ```
+for building with `stack` or
+```bash
+$ ./build-cabal
+```
+for building with `cabal`
 
 Shortcut repl:
 
 ```bash 
 $ ./repl
 ```
+or use `./repl-cabal`
 
 Shortcut run binary executable
 
@@ -22,6 +28,7 @@ $ ./run -r                 # Interactive shell
 $ ./run -s test/let.scheme # Run file
 $ ./run --help
 ```
+or use `run-cabal`.
 
 Building the reference implementation.
 
@@ -45,6 +52,7 @@ Building the HTML and MediaWiki files for the tutorial text.
 ```bash
 $ stack exec docs
 ```
+(or substitute `cabal` for `stack` in each case).
 
 The Wikipedia files are generated to ``output/docs/*.wiki``. To view the HTML
 output.

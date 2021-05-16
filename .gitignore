@@ -61,5 +61,4 @@ TAGS
 output/*
 *.hi
 *.o
-scheme.cabal
 stack.yaml.lock

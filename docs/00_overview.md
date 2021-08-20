@@ -14,7 +14,7 @@ You may be familiar with the original [Write Yourself a Scheme in 48 hours by Jo
 We use as much modern, industry ready Haskell to implement a Scheme that is well on its way to being ready for production.
 This series will teach how to create a programming language by walking the reader through the components of a Scheme variant Lisp in Haskell.
 This should take about a weekend of study/programming for a beginner who might have to look up a few new concepts to really internalize the material.
-The ideal reader with have some experience in Haskell, and eager to see how all the pieces come together in a medium to large sized project.
+The ideal reader has some experience in Haskell, and is eager to see how all the pieces come together in a medium to large sized project.
 
 We won't have time to go into a lot of detail on things like monad transformers or interpreter theory.
 Instead, links to further information will be provided when needed.
@@ -136,7 +136,7 @@ For the motivated, Lisp In Small Pieces walks you through over 30 interpreted an
 You can find the program code  [here](https://pages.lip6.fr/Christian.Queinnec/WWW/LiSP.html). If you want to write a language with performance in mind, you'll want to use an [LLVM backend](http://stephendiehl.com/llvm).
 I warn you: there be dragons!
 
-#### On Type System Complexity, Cautionary Tail
+#### On Type System Complexity, Cautionary Tale
 Type systems are extremely complex to build, and balancing programming productivity versus performance gains is difficult.
 For instance, Guy Steele has worked on successful languages like Common Lisp and Java, but spent most of the 8 years building Fortress getting the type system right.
 Steele cited issues with the complexity of the type system when winding down development on Fortress.
@@ -195,7 +195,7 @@ For a full Scheme specification, see [The R5RS Specification](https://github.com
 It's not the most modern, but its complete enough to work.
 
 #### [Understanding Check]
-* What form does Scheme use to represent data? what about code?
+* What form does Scheme use to represent data? What about code?
 * How would you create a function in Scheme? How about set a variable?
 * If Scheme is a Dynamically-Typed Interpreted Functional Language, what does this make C, or your favorite programming language?
 * Can you rearrange `let` expressions into `lambda`? What about `lambda` into `let`?

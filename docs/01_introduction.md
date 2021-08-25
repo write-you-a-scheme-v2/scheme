@@ -73,7 +73,7 @@ data LispVal
   | Fun IFunc
   | Lambda IFunc EnvCtx
   | Nil
-  | Bool Bool deriving (Typeable)
+  | Bool Bool deriving (Eq)
 
 data IFunc = IFunc { fn :: [LispVal] -> Eval LispVal }
 ```
@@ -95,7 +95,6 @@ To handle lexical scoping, the lambda function must enclose the environment pres
 Conceptually, the easiest way is to just bring the environment along with the function.
 For an implementation, the data constructor `Lambda` accepts  `EnvCtx`, which is the lexical environment, as well as `IFunc`, which is a Haskell function.
 You'll notice it takes its arguments as a list of `LispVal`, then returns an object of type `Eval LispVal`.  For more on `Eval`, read the next section.
-There's also a `deriving (Typeable)`, which is needed for error handling.  More on that later!
 
 ## Evaluation Monad
 (from [LispVal.hs](https://github.com/write-you-a-scheme-v2/scheme/tree/master/src/LispVal.hs))
@@ -116,7 +115,6 @@ newtype Eval a = Eval { unEval :: ReaderT EnvCtx IO a }
            , Applicative
            , MonadReader EnvCtx
            , MonadIO)
-
 ```
 
 For evaluation, we need to handle the context of a couple of things: the environment of variable/value bindings, exception handling, and IO.

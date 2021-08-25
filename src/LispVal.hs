@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module LispVal (
@@ -10,7 +9,6 @@ module LispVal (
   showVal,
 ) where
 
-import Data.Typeable (Typeable)
 import qualified Data.Text as T
 import qualified Data.Map as Map
 
@@ -28,7 +26,7 @@ data EnvCtx = EnvCtx
   } deriving (Eq)
 
 newtype Eval a = Eval { unEval :: ReaderT EnvCtx IO a }
-  deriving (Monad, Functor, Applicative, MonadReader EnvCtx,  MonadIO)
+  deriving (Monad, Functor, Applicative, MonadReader EnvCtx, MonadIO)
 
 data LispVal
   = Atom T.Text
@@ -39,13 +37,12 @@ data LispVal
   | Lambda IFunc EnvCtx
   | Nil
   | Bool Bool
-  deriving (Typeable,Eq)
+  deriving (Eq)
 
 instance Show LispVal where
   show = T.unpack . showVal
 
 data IFunc = IFunc { fn :: [LispVal] -> Eval LispVal }
-  deriving (Typeable)
 
 instance Eq IFunc where
  (==) _ _ = False
@@ -79,7 +76,6 @@ data LispException
   | Default LispVal
   | PError String -- from show anyway
   | IOError T.Text
-  deriving (Typeable)
 
 instance Exception LispException
 

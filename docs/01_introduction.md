@@ -26,13 +26,13 @@ This may seem like a lot.  But don't worry, all these things, and more, are alre
 
 <img src="/img/WYAS-Dependency-Tree.png" style="height:auto; width:70%;">
 
-* **Main.hs** Handles the creation of the binary executable, parsing of command line options.
+* **Main.hs** Handles the creation of the binary executable.
+* **Cli.hs** Parsing of command line options, command line interface.
 * **Repl.hs** Read Evaluate Print Loop code.
 * **Parser.hs** Lexer and Parser using Parsec code. Responsibility for the creation of LispVal object from Text input.
 * **Eval.hs** Contains the evaluation function, `eval`. Patten matches on all configurations of S-Expressions and computes the resultant `LispVal`.
 * **LispVal.hs** defines LispVal, evaluation monad, LispException, and report printing functions.
-* **Prims.hs** Creates the primitive environment functions, which themselves are contained in a map.  These primitive functions are Haskell functions mapped to `LispVal`s.
-* **Pretty.hs** Pretty Printer, used for formatting error messages. Might drop this, what do you think?
+* **Prim.hs** Creates the primitive environment functions, which themselves are contained in a map.  These primitive functions are Haskell functions mapped to `LispVal`s.
 
 ## An Engineering Preface
 Before we start, there is a note I have to make on efficient memory usage Haskell.

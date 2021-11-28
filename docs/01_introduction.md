@@ -30,7 +30,7 @@ This may seem like a lot.  But don't worry, all these things, and more, are alre
 * **Cli.hs** Parsing of command line options, command line interface.
 * **Repl.hs** Read Evaluate Print Loop code.
 * **Parser.hs** Lexer and Parser using Parsec code. Responsibility for the creation of LispVal object from Text input.
-* **Eval.hs** Contains the evaluation function, `eval`. Patten matches on all configurations of S-Expressions and computes the resultant `LispVal`.
+* **Eval.hs** Contains the evaluation function, `eval`. Pattern matches on all configurations of S-Expressions and computes the resultant `LispVal`.
 * **LispVal.hs** defines LispVal, evaluation monad, LispException, and report printing functions.
 * **Prim.hs** Creates the primitive environment functions, which themselves are contained in a map.  These primitive functions are Haskell functions mapped to `LispVal`s.
 

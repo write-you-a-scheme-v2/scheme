@@ -70,8 +70,7 @@ runParseTest input = either (T.pack . show)
                             $ readExpr input
 
 runASTinEnv :: EnvCtx -> Eval b -> IO b
-runASTinEnv code action = runResourceT
-                          $ runReaderT (unEval action) code
+runASTinEnv code action = runReaderT (unEval action) code
 
 ```
 

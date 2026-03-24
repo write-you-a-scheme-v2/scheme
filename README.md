@@ -1,6 +1,10 @@
 Write You a Scheme
 ==================
 
+Built by Adam Wespiser
+- Blog: https://wespiser.com
+- GitHub: https://github.com/adamwespiser
+
 [About this project](https://www.wespiser.com/writings/wyas/home.html)
 
 Shortcut build:

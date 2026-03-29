@@ -90,9 +90,9 @@ showError :: LispException -> T.Text
 showError err =
   case err of
     (IOError txt)          -> T.concat ["Error reading file: ", txt]
-    (NumArgs int args)     -> T.concat ["Error Number Arguments, expected ", T.pack $ show int, " recieved args: ", unwordsList args]
+    (NumArgs int args)     -> T.concat ["Error Number Arguments, expected ", T.pack $ show int, " received args: ", unwordsList args]
     (LengthOfList txt int) -> T.concat ["Error Length of List in ", txt, " length: ", T.pack $ show int]
-    (ExpectedList txt)     -> T.concat ["Error Expected List in funciton ", txt]
+    (ExpectedList txt)     -> T.concat ["Error Expected List in function ", txt]
     (TypeMismatch txt val) -> T.concat ["Error Type Mismatch: ", txt, showVal val]
     (BadSpecialForm txt)   -> T.concat ["Error Bad Special Form: ", txt]
     (NotFunction val)      -> T.concat ["Error Not a Function: ", showVal val]
